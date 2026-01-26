@@ -26,6 +26,17 @@ enum AppStatus {
         }
     }
 
+    func displayText(localization: LocalizationHelper) -> String {
+        switch self {
+        case .idle:
+            return localization.localized(.idle)
+        case .recording:
+            return localization.localized(.recording)
+        case .processing:
+            return localization.localized(.processing)
+        }
+    }
+
     var iconName: String {
         switch self {
         case .idle:

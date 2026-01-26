@@ -40,7 +40,12 @@ class WhisperService {
 
     // MARK: - Transcribe
 
-    func transcribe(audioFileURL: URL, language: String = "zh", completion: @escaping (Result<String, WhisperError>) -> Void) {
+    /// 轉錄音訊檔案，自動辨識語言
+    /// - Parameters:
+    ///   - audioFileURL: 音訊檔案 URL
+    ///   - language: 可選的語言代碼（留空則自動辨識）
+    ///   - completion: 完成回調
+    func transcribe(audioFileURL: URL, language: String? = nil, completion: @escaping (Result<String, WhisperError>) -> Void) {
         // 檢查 API Key
         guard let apiKey = keychainHelper.get(key: "openai_api_key"), !apiKey.isEmpty else {
             completion(.failure(.noAPIKey))
@@ -69,10 +74,12 @@ class WhisperService {
         body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
         body.append("whisper-1\r\n".data(using: .utf8)!)
 
-        // 添加 language 參數
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
-        body.append("\(language)\r\n".data(using: .utf8)!)
+        // 如果指定語言，添加 language 參數（否則自動辨識）
+        if let language = language {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(language)\r\n".data(using: .utf8)!)
+        }
 
         // 添加音訊檔案
         body.append("--\(boundary)\r\n".data(using: .utf8)!)

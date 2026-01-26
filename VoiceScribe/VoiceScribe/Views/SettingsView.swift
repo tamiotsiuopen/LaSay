@@ -11,17 +11,22 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var apiKey: String = ""
-    @State private var selectedLanguage: String = "zh"
+    @State private var hasAPIKey: Bool = false
+    @State private var showingAPIKeyInput: Bool = false
+    @State private var selectedUILanguage: String = "zh"
     @State private var restoreClipboard: Bool = true
     @State private var autoPaste: Bool = true
     @State private var enableAIPolish: Bool = false
     @State private var customSystemPrompt: String = ""
     @State private var showingSaveAlert = false
+    @State private var showAPIKey: Bool = false
+    @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
 
     private let keychainHelper = KeychainHelper.shared
     private let openAIService = OpenAIService.shared
+    private let localization = LocalizationHelper.shared
 
-    let languages = [
+    let uiLanguages = [
         ("zh", "繁體中文"),
         ("en", "English")
     ]
@@ -29,49 +34,124 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 20) {
             // 標題
-            Text("設定")
+            Text(localization.localized(.settings))
                 .font(.title)
                 .fontWeight(.bold)
+                .id(refreshUI)  // 用於強制刷新
 
             Divider()
 
             // API Key 設定
             VStack(alignment: .leading, spacing: 8) {
-                Text("OpenAI API Key")
+                Text(localization.localized(.openAIAPIKey))
                     .font(.headline)
 
-                SecureField("請輸入 API Key", text: $apiKey)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 400)
+                if hasAPIKey && !showingAPIKeyInput {
+                    HStack {
+                        Text(localization.localized(.apiKeySet))
+                            .foregroundColor(.green)
 
-                Text("用於 Whisper 語音轉錄，請從 OpenAI 官網取得")
+                        if showAPIKey {
+                            Text(apiKey)
+                                .font(.system(.body, design: .monospaced))
+                                .textSelection(.enabled)
+                        } else {
+                            Text("(\(apiKey.prefix(7))...\(apiKey.suffix(4)))")
+                                .font(.system(.body, design: .monospaced))
+                        }
+
+                        Spacer()
+
+                        Button(localization.localized(showAPIKey ? .hide : .show)) {
+                            showAPIKey.toggle()
+                        }
+                        .font(.caption)
+
+                        Button(localization.localized(.update)) {
+                            showingAPIKeyInput = true
+                        }
+                        .font(.caption)
+                    }
+                    .frame(width: 400)
+                } else {
+                    HStack {
+                        if showAPIKey {
+                            TextField(localization.localized(.enterAPIKey), text: $apiKey)
+                                .textFieldStyle(.roundedBorder)
+                        } else {
+                            SecureField(localization.localized(.enterAPIKey), text: $apiKey)
+                                .textFieldStyle(.roundedBorder)
+                        }
+
+                        Button(localization.localized(showAPIKey ? .hide : .show)) {
+                            showAPIKey.toggle()
+                        }
+                        .font(.caption)
+
+                        // 立即保存按鈕
+                        Button("Save") {
+                            if !apiKey.isEmpty {
+                                let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
+                                if success {
+                                    hasAPIKey = true
+                                    showingAPIKeyInput = false
+                                    print("💾 [SettingsView] API Key 已保存")
+                                    // 刷新 menu
+                                    NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+                                }
+                            }
+                        }
+                        .font(.caption)
+                        .buttonStyle(.borderedProminent)
+
+                        if hasAPIKey {
+                            Button(localization.localized(.cancel)) {
+                                showingAPIKeyInput = false
+                                loadAPIKey()
+                            }
+                            .font(.caption)
+                        }
+                    }
+                    .frame(width: 400)
+                }
+
+                Text(localization.localized(.apiKeyDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
-            // 語言設定
+            // 介面語言設定
             VStack(alignment: .leading, spacing: 8) {
-                Text("轉錄語言")
+                Text(localization.localized(.uiLanguage))
                     .font(.headline)
 
-                Picker("語言", selection: $selectedLanguage) {
-                    ForEach(languages, id: \.0) { code, name in
+                Picker(localization.localized(.language), selection: $selectedUILanguage) {
+                    ForEach(uiLanguages, id: \.0) { code, name in
                         Text(name).tag(code)
                     }
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 400)
+                .onChange(of: selectedUILanguage) { newValue in
+                    // 儲存語言設定並刷新 UI
+                    UserDefaults.standard.set(newValue, forKey: "ui_language")
+                    refreshUI.toggle()
+                }
+
+                Text(localization.localized(.autoDetectLanguage))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             Divider()
 
             // 快捷鍵設定
             VStack(alignment: .leading, spacing: 8) {
-                Text("全域快捷鍵")
+                Text(localization.localized(.globalHotkey))
                     .font(.headline)
 
                 HStack {
-                    Text("當前快捷鍵：")
+                    Text(localization.localized(.currentHotkey))
                     Text("Fn + Space")
                         .font(.system(.body, design: .monospaced))
                         .padding(.horizontal, 8)
@@ -80,7 +160,7 @@ struct SettingsView: View {
                         .cornerRadius(4)
                 }
 
-                Text("在任何 app 中按住此快捷鍵即可開始錄音")
+                Text(localization.localized(.hotkeyDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -89,19 +169,24 @@ struct SettingsView: View {
 
             // AI 潤飾設定
             VStack(alignment: .leading, spacing: 8) {
-                Text("AI 文字潤飾")
+                Text(localization.localized(.aiPolish))
                     .font(.headline)
 
-                Toggle("啟用 AI 潤飾（使用 GPT-5-mini）", isOn: $enableAIPolish)
+                Toggle(localization.localized(.enableAIPolish), isOn: $enableAIPolish)
                     .toggleStyle(.checkbox)
+                    .onChange(of: enableAIPolish) { newValue in
+                        // 立即保存 AI 潤飾設定
+                        UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
+                        print("💾 [SettingsView] AI 潤飾設定已保存：\(newValue)")
+                    }
 
-                Text("移除口語贅字、修正文法、優化句子結構")
+                Text(localization.localized(.aiPolishDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
 
                 if enableAIPolish {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("自訂 System Prompt（選填）")
+                        Text(localization.localized(.customSystemPrompt))
                             .font(.subheadline)
 
                         TextEditor(text: $customSystemPrompt)
@@ -110,18 +195,18 @@ struct SettingsView: View {
                             .border(Color.secondary.opacity(0.3))
 
                         HStack {
-                            Button("使用預設 Prompt") {
+                            Button(localization.localized(.useDefaultPrompt)) {
                                 customSystemPrompt = openAIService.getDefaultSystemPrompt()
                             }
                             .font(.caption)
 
-                            Button("清空") {
+                            Button(localization.localized(.clear)) {
                                 customSystemPrompt = ""
                             }
                             .font(.caption)
                         }
 
-                        Text("留空則使用預設 prompt")
+                        Text(localization.localized(.emptyForDefault))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -133,17 +218,27 @@ struct SettingsView: View {
 
             // 貼上設定
             VStack(alignment: .leading, spacing: 8) {
-                Text("貼上設定")
+                Text(localization.localized(.pasteSettings))
                     .font(.headline)
 
-                Toggle("自動貼上轉錄文字", isOn: $autoPaste)
+                Toggle(localization.localized(.autoPaste), isOn: $autoPaste)
                     .toggleStyle(.checkbox)
+                    .onChange(of: autoPaste) { newValue in
+                        // 立即保存自動貼上設定
+                        UserDefaults.standard.set(newValue, forKey: "auto_paste")
+                        print("💾 [SettingsView] 自動貼上設定已保存：\(newValue)")
+                    }
 
-                Toggle("貼上後還原剪貼簿", isOn: $restoreClipboard)
+                Toggle(localization.localized(.restoreClipboard), isOn: $restoreClipboard)
                     .toggleStyle(.checkbox)
                     .disabled(!autoPaste)
+                    .onChange(of: restoreClipboard) { newValue in
+                        // 立即保存還原剪貼簿設定
+                        UserDefaults.standard.set(newValue, forKey: "restore_clipboard")
+                        print("💾 [SettingsView] 還原剪貼簿設定已保存：\(newValue)")
+                    }
 
-                Text("轉錄完成後自動將文字貼到當前游標位置")
+                Text(localization.localized(.pasteDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -152,16 +247,23 @@ struct SettingsView: View {
 
             // 按鈕
             HStack(spacing: 12) {
-                Button("關閉") {
+                Button(localization.localized(.close)) {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
 
-                Button("儲存並關閉") {
+                Button(localization.localized(.saveAndClose)) {
                     saveSettings()
                 }
                 .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
             }
+
+            // 提示文字
+            Text(localization.localized(.autoSaveHint))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding(30)
         .frame(width: 550, height: enableAIPolish ? 650 : 550)
@@ -171,8 +273,8 @@ struct SettingsView: View {
         .onDisappear {
             saveSettingsWithoutAlert()
         }
-        .alert("設定已儲存", isPresented: $showingSaveAlert) {
-            Button("確定") {
+        .alert(localization.localized(.settingsSaved), isPresented: $showingSaveAlert) {
+            Button(localization.localized(.ok)) {
                 dismiss()
             }
         }
@@ -183,14 +285,11 @@ struct SettingsView: View {
     func loadSettings() {
         print("🔍 [SettingsView] 開始載入設定...")
 
-        // 載入 API Key
-        if let savedAPIKey = keychainHelper.get(key: "openai_api_key") {
-            apiKey = savedAPIKey
-        }
+        loadAPIKey()
 
-        // 載入語言設定
-        if let savedLanguage = UserDefaults.standard.string(forKey: "transcription_language") {
-            selectedLanguage = savedLanguage
+        // 載入介面語言設定
+        if let savedUILanguage = UserDefaults.standard.string(forKey: "ui_language") {
+            selectedUILanguage = savedUILanguage
         }
 
         // 載入 AI 潤飾設定
@@ -217,14 +316,31 @@ struct SettingsView: View {
         }
     }
 
+    func loadAPIKey() {
+        // 載入 API Key
+        if let savedAPIKey = keychainHelper.get(key: "openai_api_key"), !savedAPIKey.isEmpty {
+            apiKey = savedAPIKey
+            hasAPIKey = true
+            showingAPIKeyInput = false
+        } else {
+            apiKey = ""
+            hasAPIKey = false
+            showingAPIKeyInput = true
+        }
+    }
+
     func saveSettings() {
         // 儲存 API Key
         if !apiKey.isEmpty {
-            _ = keychainHelper.save(key: "openai_api_key", value: apiKey)
+            let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
+            if success {
+                hasAPIKey = true
+                showingAPIKeyInput = false
+            }
         }
 
-        // 儲存語言設定
-        UserDefaults.standard.set(selectedLanguage, forKey: "transcription_language")
+        // 儲存介面語言設定
+        UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
 
         // 儲存 AI 潤飾設定
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
@@ -236,6 +352,9 @@ struct SettingsView: View {
 
         // 標記已經啟動過
         UserDefaults.standard.set(true, forKey: "has_launched_before")
+
+        // 通知 AppDelegate 刷新 menu
+        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
 
         showingSaveAlert = true
     }
@@ -243,11 +362,15 @@ struct SettingsView: View {
     func saveSettingsWithoutAlert() {
         // 儲存 API Key
         if !apiKey.isEmpty {
-            _ = keychainHelper.save(key: "openai_api_key", value: apiKey)
+            let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
+            if success {
+                hasAPIKey = true
+                showingAPIKeyInput = false
+            }
         }
 
-        // 儲存語言設定
-        UserDefaults.standard.set(selectedLanguage, forKey: "transcription_language")
+        // 儲存介面語言設定
+        UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
 
         // 儲存 AI 潤飾設定
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
@@ -259,6 +382,9 @@ struct SettingsView: View {
 
         // 標記已經啟動過
         UserDefaults.standard.set(true, forKey: "has_launched_before")
+
+        // 通知 AppDelegate 刷新 menu
+        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
 
         print("💾 設定已自動儲存")
     }

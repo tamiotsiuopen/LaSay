@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 import QuartzCore
 import AVFoundation
+import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
@@ -23,6 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var hotkeyManager = HotkeyManager.shared
     var localEventMonitor: Any?
     var settingsWindow: NSWindow?
+    var localization = LocalizationHelper.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 創建 menu bar 圖示
@@ -40,6 +42,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 監聽狀態變化
         observeStateChanges()
 
+        // 監聽設定變化（用於刷新 menu）
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsChanged),
+            name: NSNotification.Name("RefreshMenu"),
+            object: nil
+        )
+
+        // 請求通知權限
+        requestNotificationPermission()
+
         // 請求麥克風權限
         requestMicrophonePermission()
 
@@ -48,6 +61,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 設定全域快捷鍵（階段 6）
         setupGlobalHotkey()
+
+        // 首次啟動引導
+        checkFirstLaunch()
+    }
+
+    @objc func handleSettingsChanged() {
+        // 重新設定選單
+        setupMenu()
     }
 
     @objc func togglePopover() {
@@ -58,8 +79,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func setupMenu() {
         let menu = NSMenu()
 
+        // Menu bar 固定使用英文
         // 狀態顯示（動態更新）
-        let statusMenuItem = NSMenuItem(title: "狀態：\(appState.status.displayText)", action: nil, keyEquivalent: "")
+        let statusText: String
+        switch appState.status {
+        case .idle:
+            statusText = "Status: Idle"
+        case .recording:
+            statusText = "Status: Recording..."
+        case .processing:
+            statusText = "Status: Processing..."
+        }
+        let statusMenuItem = NSMenuItem(title: statusText, action: nil, keyEquivalent: "")
         statusMenuItem.isEnabled = false
         menu.addItem(statusMenuItem)
 
@@ -68,11 +99,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 快捷鍵提示
         let hotkeyHint: String
         if appState.status == .idle {
-            hotkeyHint = "💡 按住 Fn+Space 開始錄音"
+            hotkeyHint = "💡 Hold Fn+Space to start recording"
         } else if appState.status == .recording {
-            hotkeyHint = "🎤 錄音中...（放開 Fn+Space 停止）"
+            hotkeyHint = "🎤 Recording... (Release Fn+Space to stop)"
         } else {
-            hotkeyHint = "⏳ 處理中..."
+            hotkeyHint = "⏳ Processing..."
         }
         let hintItem = NSMenuItem(title: hotkeyHint, action: nil, keyEquivalent: "")
         hintItem.isEnabled = false
@@ -85,29 +116,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let transcriptionText = appState.lastTranscription.count > 30
                 ? String(appState.lastTranscription.prefix(30)) + "..."
                 : appState.lastTranscription
-            let transcriptionItem = NSMenuItem(title: "最後轉錄：\(transcriptionText)", action: nil, keyEquivalent: "")
+            let transcriptionItem = NSMenuItem(title: "Last Transcription: \(transcriptionText)", action: nil, keyEquivalent: "")
             transcriptionItem.isEnabled = false
             menu.addItem(transcriptionItem)
             menu.addItem(NSMenuItem.separator())
         }
 
+        // API Key 狀態檢查
+        let apiKey = KeychainHelper.shared.get(key: "openai_api_key")
+        if apiKey == nil || apiKey?.isEmpty == true {
+            let apiKeyItem = NSMenuItem(title: "⚠️ Please set OpenAI API Key first", action: #selector(openSettings), keyEquivalent: "")
+            menu.addItem(apiKeyItem)
+            menu.addItem(NSMenuItem.separator())
+        }
+
         // 權限狀態檢查
         if !hotkeyManager.checkAccessibilityPermission() {
-            let permissionItem = NSMenuItem(title: "⚠️ 需要授予輔助使用權限", action: #selector(requestAccessibilityPermission), keyEquivalent: "")
+            let permissionItem = NSMenuItem(title: "⚠️ Accessibility permission required", action: #selector(requestAccessibilityPermission), keyEquivalent: "")
             menu.addItem(permissionItem)
             menu.addItem(NSMenuItem.separator())
         }
 
-        // 設定選項
-        menu.addItem(NSMenuItem(title: "設定...", action: #selector(openSettings), keyEquivalent: ","))
+        // Menu bar 選單固定使用英文
+        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
 
-        // 關於
-        menu.addItem(NSMenuItem(title: "關於 VoiceScribe", action: #selector(showAbout), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "About LaSay", action: #selector(showAbout), keyEquivalent: ""))
 
         menu.addItem(NSMenuItem.separator())
 
-        // 結束
-        menu.addItem(NSMenuItem(title: "結束 VoiceScribe", action: #selector(quitApp), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit LaSay", action: #selector(quitApp), keyEquivalent: "q"))
 
         statusItem?.menu = menu
     }
@@ -125,7 +162,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let hostingController = NSHostingController(rootView: settingsView)
 
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "VoiceScribe 設定"
+        // 視窗標題根據介面語言顯示
+        let windowTitle = localization.currentLanguage == "en" ? "LaSay Settings" : "LaSay 設定"
+        window.title = windowTitle
         window.styleMask = [.titled, .closable]
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -137,11 +176,61 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showAbout() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+
         let alert = NSAlert()
-        alert.messageText = "VoiceScribe"
-        alert.informativeText = "語音輸入工具\n版本 1.0.0"
+        alert.messageText = "LaSay"
+
+        // 根據介面語言顯示不同內容
+        let isEnglish = localization.currentLanguage == "en"
+
+        if isEnglish {
+            alert.informativeText = """
+            macOS System-wide Voice Input Tool
+
+            Version: \(version) (Build \(build)) - Beta
+
+            Features:
+            • Whisper Speech Transcription
+            • GPT-5-mini AI Text Polishing
+            • Global Hotkey: Fn + Space
+
+            Privacy:
+            • No data collection
+            • All processing via OpenAI API
+            • API Key stored securely locally
+
+            Contact:
+            • Slack: Tamio Tsiu
+            • Email: tamio.tsiu@gmail.com
+            • Email: tamio.tsiu@opennet.tw
+            """
+        } else {
+            alert.informativeText = """
+            macOS 系統級語音輸入工具
+
+            版本：\(version) (Build \(build)) - 測試版
+
+            功能：
+            • Whisper 語音轉錄
+            • GPT-5-mini AI 文字潤飾
+            • 全域快捷鍵：Fn + Space
+
+            隱私：
+            • 不收集任何使用資料
+            • 所有處理透過 OpenAI API
+            • API Key 安全儲存於本機
+
+            聯繫方式：
+            • Slack: Tamio Tsiu
+            • Email: tamio.tsiu@gmail.com
+            • Email: tamio.tsiu@opennet.tw
+            """
+        }
+
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "確定")
+        alert.addButton(withTitle: localization.localized(.ok))
         alert.runModal()
     }
 
@@ -166,7 +255,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem?.button else { return }
 
         let status = appState.status
-        let image = NSImage(systemSymbolName: status.iconName, accessibilityDescription: "VoiceScribe")
+        let image = NSImage(systemSymbolName: status.iconName, accessibilityDescription: "LaSay")
         image?.isTemplate = false  // 使用彩色圖示
 
         button.image = image
@@ -241,11 +330,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showMicrophonePermissionAlert() {
         let alert = NSAlert()
-        alert.messageText = "需要麥克風權限"
-        alert.informativeText = "VoiceScribe 需要麥克風權限才能錄音。請在系統設定中允許麥克風存取。"
+        alert.messageText = localization.localized(.microphonePermissionTitle)
+        alert.informativeText = localization.localized(.microphonePermissionMessage)
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "打開系統設定")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: localization.localized(.openSystemSettings))
+        alert.addButton(withTitle: localization.localized(.cancel))
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
@@ -258,6 +347,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func requestAccessibilityPermission() {
         hotkeyManager.showAccessibilityAlert()
+    }
+
+    // MARK: - Notification Permission
+
+    func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if granted {
+                print("✅ 通知權限已授予")
+            } else {
+                print("❌ 通知權限被拒絕")
+            }
+        }
+    }
+
+    func showNotification(title: String, body: String, isError: Bool = false) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = isError ? .defaultCritical : .default
+
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ 發送通知失敗：\(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: - First Launch
+
+    func checkFirstLaunch() {
+        let hasLaunched = UserDefaults.standard.bool(forKey: "has_launched_before")
+        if !hasLaunched {
+            // 延遲 1 秒後自動打開設定
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.openSettings()
+            }
+        }
     }
 
     // MARK: - Global Hotkey (階段 6)
@@ -300,11 +427,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         print("📁 錄音檔案：\(audioURL.path)")
 
-        // 取得語言設定
-        let language = UserDefaults.standard.string(forKey: "transcription_language") ?? "zh"
-
-        // 調用 Whisper API
-        whisperService.transcribe(audioFileURL: audioURL, language: language) { [weak self] result in
+        // 調用 Whisper API（自動辨識語言）
+        whisperService.transcribe(audioFileURL: audioURL) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let transcribedText):
@@ -336,6 +460,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                                 case .failure(let error):
                                     print("❌ AI 潤飾失敗：\(error.localizedDescription)")
                                     print("⚠️ 使用原始轉錄文字")
+
+                                    // 顯示錯誤通知（但不阻斷流程）
+                                    self?.showNotification(
+                                        title: self?.localization.localized(.aiPolishFailed) ?? "AI Polishing Failed",
+                                        body: (self?.localization.localized(.usingOriginalText) ?? "Using original text: ") + error.localizedDescription,
+                                        isError: false
+                                    )
+
                                     finalText = transcribedText
                                 }
 
@@ -352,7 +484,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
                 case .failure(let error):
                     print("❌ 轉錄失敗：\(error.localizedDescription)")
-                    self?.showError(error.localizedDescription)
+
+                    // 顯示錯誤通知
+                    self?.showNotification(
+                        title: self?.localization.localized(.transcriptionFailed) ?? "Transcription Failed",
+                        body: error.localizedDescription,
+                        isError: true
+                    )
 
                     // 即使失敗也重新啟動監聽
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

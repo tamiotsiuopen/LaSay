@@ -40,17 +40,68 @@ class HotkeyManager {
 
     /// 顯示權限引導視窗
     func showAccessibilityAlert() {
+        let localization = LocalizationHelper.shared
+
         let alert = NSAlert()
-        alert.messageText = "需要輔助使用權限"
-        alert.informativeText = "VoiceScribe 需要輔助使用權限才能監聽全域快捷鍵。\n\n請在系統設定中允許 VoiceScribe。"
+        alert.messageText = localization.localized(.accessibilityPermissionTitle)
+        alert.informativeText = localization.localized(.accessibilityPermissionMessage)
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "打開系統設定")
-        alert.addButton(withTitle: "稍後設定")
+        alert.addButton(withTitle: localization.localized(.openSystemSettings))
+        alert.addButton(withTitle: localization.localized(.restartLater))
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
             openAccessibilitySettings()
+
+            // 啟動背景檢查，監聽權限變化
+            startPermissionMonitoring()
         }
+    }
+
+    /// 監聽權限變化，授予後自動提示重啟
+    private func startPermissionMonitoring() {
+        // 每 1 秒檢查一次權限狀態
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
+
+            if self.checkAccessibilityPermission() {
+                timer.invalidate()  // 停止檢查
+                self.showRestartAlert()
+            }
+        }
+    }
+
+    /// 顯示重啟提示
+    private func showRestartAlert() {
+        let localization = LocalizationHelper.shared
+
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = localization.localized(.accessibilityGrantedTitle)
+            alert.informativeText = localization.localized(.accessibilityGrantedMessage)
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: localization.localized(.restartNow))
+            alert.addButton(withTitle: localization.localized(.restartLater))
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                self.restartApp()
+            }
+        }
+    }
+
+    /// 重啟 app
+    private func restartApp() {
+        let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
+        let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
+        let task = Process()
+        task.launchPath = "/usr/bin/open"
+        task.arguments = [path]
+        task.launch()
+        exit(0)
     }
 
     /// 打開系統設定的輔助使用頁面
@@ -73,7 +124,7 @@ class HotkeyManager {
         guard hasPermission else {
             print("⚠️ [HotkeyManager] 沒有 Accessibility 權限")
             print("💡 [HotkeyManager] 系統應該會顯示權限請求對話框")
-            print("💡 [HotkeyManager] 請在系統設定中允許 VoiceScribe 並重新啟動 app")
+            print("💡 [HotkeyManager] 請在系統設定中允許 LaSay 並重新啟動 app")
             return
         }
 
@@ -102,10 +153,10 @@ class HotkeyManager {
             print("❌ [HotkeyManager] 無法創建事件監聽器（CGEvent.tapCreate 返回 nil）")
             print("❌ [HotkeyManager] 這表示 Accessibility 權限未正確授予或未生效")
             print("💡 [HotkeyManager] 請嘗試以下步驟：")
-            print("   1. 完全退出 VoiceScribe")
+            print("   1. 完全退出 LaSay")
             print("   2. 系統設定 → 隱私權與安全性 → 輔助使用")
-            print("   3. 移除 VoiceScribe（點擊 - 按鈕）")
-            print("   4. 重新啟動 VoiceScribe，會再次請求權限")
+            print("   3. 移除 LaSay（點擊 - 按鈕）")
+            print("   4. 重新啟動 LaSay，會再次請求權限")
             return
         }
 

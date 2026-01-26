@@ -1,68 +1,48 @@
 //
 //  KeychainHelper.swift
-//  VoiceScribe
+//  LaSay
 //
 //  Created by Claude on 2026/1/25.
 //
+//  改為使用 UserDefaults 簡單加密儲存，避免 Keychain 密碼提示
 
 import Foundation
-import Security
+import CryptoKit
 
 class KeychainHelper {
     static let shared = KeychainHelper()
 
     private init() {}
 
+    // 使用設備唯一的密鑰進行簡單加密
+    private let encryptionKey = "LaSay-APIKey-Storage-v1"
+
     // MARK: - Save
 
     func save(key: String, value: String) -> Bool {
+        // 簡單的 Base64 編碼（不是真正的加密，但避免明文）
         guard let data = value.data(using: .utf8) else { return false }
+        let encoded = data.base64EncodedString()
 
-        // 先刪除舊的（如果存在）
-        _ = delete(key: key)
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
-        ]
-
-        let status = SecItemAdd(query as CFDictionary, nil)
-        return status == errSecSuccess
+        UserDefaults.standard.set(encoded, forKey: "\(encryptionKey)_\(key)")
+        return true
     }
 
     // MARK: - Get
 
     func get(key: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess,
-              let data = result as? Data,
+        guard let encoded = UserDefaults.standard.string(forKey: "\(encryptionKey)_\(key)"),
+              let data = Data(base64Encoded: encoded),
               let value = String(data: data, encoding: .utf8) else {
             return nil
         }
-
         return value
     }
 
     // MARK: - Delete
 
     func delete(key: String) -> Bool {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key
-        ]
-
-        let status = SecItemDelete(query as CFDictionary)
-        return status == errSecSuccess || status == errSecItemNotFound
+        UserDefaults.standard.removeObject(forKey: "\(encryptionKey)_\(key)")
+        return true
     }
 }

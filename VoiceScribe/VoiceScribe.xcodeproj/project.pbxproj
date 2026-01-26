@@ -268,7 +268,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "VoiceScribe 需要使用麥克風來錄製您的語音,以便轉換為文字輸入。";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "LaSay 需要使用麥克風來錄製您的語音,以便轉換為文字輸入。";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -314,7 +314,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "VoiceScribe 需要使用麥克風來錄製您的語音,以便轉換為文字輸入。";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "LaSay 需要使用麥克風來錄製您的語音,以便轉換為文字輸入。";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

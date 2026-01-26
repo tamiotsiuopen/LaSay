@@ -55,3 +55,8 @@ Temporary Items
 
 # Project specific
 lasay-icon-transparent.png
+*.dmg
+*.log
+coverage-*
+.claude/
+rw.*.dmg
