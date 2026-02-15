@@ -19,7 +19,6 @@ class HotkeyManager {
     var onHotkeyReleased: (() -> Void)?
 
     // 預設快捷鍵：Fn + Space
-    private var modifierFlags: CGEventFlags = [.maskSecondaryFn]
     private var keyCode: CGKeyCode = 49  // Space 鍵
 
     private init() {}
@@ -251,22 +250,4 @@ class HotkeyManager {
         return Unmanaged.passRetained(event)
     }
 
-    // MARK: - Custom Hotkey (預留給階段 6 後期實作)
-
-    /// 設定自訂快捷鍵
-    func setCustomHotkey(keyCode: CGKeyCode, modifiers: CGEventFlags) {
-        self.keyCode = keyCode
-        self.modifierFlags = modifiers
-
-        // 重新啟動監聽
-        if eventTap != nil {
-            stopMonitoring()
-            startMonitoring()
-        }
-    }
-
-    /// 取得當前快捷鍵描述
-    func getCurrentHotkeyDescription() -> String {
-        return "Fn + Space"  // 目前固定為此組合
-    }
 }

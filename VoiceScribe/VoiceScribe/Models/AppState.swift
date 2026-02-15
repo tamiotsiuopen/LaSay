@@ -15,28 +15,6 @@ enum AppStatus {
     case recording   // 錄音中
     case processing  // 處理中（轉錄/AI 潤飾）
 
-    var displayText: String {
-        switch self {
-        case .idle:
-            return "待機"
-        case .recording:
-            return "錄音中..."
-        case .processing:
-            return "處理中..."
-        }
-    }
-
-    func displayText(localization: LocalizationHelper) -> String {
-        switch self {
-        case .idle:
-            return localization.localized(.idle)
-        case .recording:
-            return localization.localized(.recording)
-        case .processing:
-            return localization.localized(.processing)
-        }
-    }
-
     var iconName: String {
         switch self {
         case .idle:

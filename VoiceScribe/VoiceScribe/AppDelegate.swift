@@ -14,7 +14,6 @@ import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
-    var popover: NSPopover?
     var appState = AppState.shared
     var cancellables = Set<AnyCancellable>()
     var audioRecorder = AudioRecorder.shared
@@ -22,7 +21,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var openAIService = OpenAIService.shared
     var textInputService = TextInputService.shared
     var hotkeyManager = HotkeyManager.shared
-    var localEventMonitor: Any?
     var settingsWindow: NSWindow?
     var localization = LocalizationHelper.shared
 
@@ -33,7 +31,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             // 使用 SF Symbol 作為圖示
             updateMenuBarIcon()
-            button.action = #selector(togglePopover)
         }
 
         // 設定選單
@@ -69,11 +66,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func handleSettingsChanged() {
         // 重新設定選單
         setupMenu()
-    }
-
-    @objc func togglePopover() {
-        // 暫時顯示選單而不是 popover
-        // 之後會改成顯示狀態視窗
     }
 
     func setupMenu() {
@@ -297,20 +289,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 rotationAnimation.repeatCount = .infinity
                 rotationAnimation.timingFunction = CAMediaTimingFunction(name: .linear)
                 imageView.layer?.add(rotationAnimation, forKey: "rotation")
-            }
-        }
-    }
-
-    // MARK: - Testing Methods (暫時用於測試狀態切換)
-
-    @objc func testRecording() {
-        appState.updateStatus(.recording)
-        // 3 秒後切換到處理中
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            self?.appState.updateStatus(.processing)
-            // 再 2 秒後回到待機
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-                self?.appState.updateStatus(.idle)
             }
         }
     }
@@ -559,13 +537,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.runModal()
     }
 
-    func showError(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = "錯誤"
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "確定")
-        alert.runModal()
-    }
 }
 

@@ -7,7 +7,6 @@
 //  改為使用 UserDefaults 簡單加密儲存，避免 Keychain 密碼提示
 
 import Foundation
-import CryptoKit
 
 class KeychainHelper {
     static let shared = KeychainHelper()
