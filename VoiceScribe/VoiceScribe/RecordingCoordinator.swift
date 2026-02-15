@@ -293,6 +293,8 @@ final class RecordingCoordinator {
             }
         }
 
+        debugLog("[DEBUG] [RecordingCoordinator] Mode: \(selectedMode.rawValue), Language: \(languageCode ?? "auto")")
+        
         switch selectedMode {
         case .local:
             localWhisperService.transcribe(

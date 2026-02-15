@@ -53,7 +53,11 @@ final class LocalWhisperService {
         progressHandler: DownloadProgressHandler? = nil,
         completion: @escaping (Result<String, WhisperError>) -> Void
     ) {
+        debugLog("[DEBUG] [LocalWhisper] transcribe called, audio: \(audioFileURL.path)")
+        debugLog("[DEBUG] [LocalWhisper] CLI downloaded: \(isCLIDownloaded), Model downloaded: \(isModelDownloaded)")
+        
         guard fileManager.fileExists(atPath: audioFileURL.path) else {
+            debugLog("[ERROR] [LocalWhisper] Audio file not found: \(audioFileURL.path)")
             completion(.failure(.invalidAudioFile))
             return
         }
@@ -228,6 +232,9 @@ final class LocalWhisperService {
     // MARK: - Run CLI
 
     private func runWhisperCLI(cliURL: URL, modelURL: URL, audioFileURL: URL, language: String?, completion: @escaping (Result<String, WhisperError>) -> Void) {
+        debugLog("[DEBUG] [LocalWhisper] Running CLI: \(cliURL.path)")
+        debugLog("[DEBUG] [LocalWhisper] Model: \(modelURL.path)")
+        debugLog("[DEBUG] [LocalWhisper] Audio: \(audioFileURL.path)")
         DispatchQueue.global(qos: .userInitiated).async {
             let outputPrefix = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             var arguments = [
@@ -245,6 +252,7 @@ final class LocalWhisperService {
             let process = Process()
             process.executableURL = cliURL
             process.arguments = arguments
+            debugLog("[DEBUG] [LocalWhisper] CLI arguments: \(arguments)")
 
             let pipe = Pipe()
             process.standardOutput = pipe
@@ -252,8 +260,11 @@ final class LocalWhisperService {
 
             do {
                 try process.run()
+                debugLog("[DEBUG] [LocalWhisper] CLI process started, pid: \(process.processIdentifier)")
                 process.waitUntilExit()
+                debugLog("[DEBUG] [LocalWhisper] CLI process exited with status: \(process.terminationStatus)")
             } catch {
+                debugLog("[ERROR] [LocalWhisper] CLI process failed to start: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     completion(.failure(.networkError(error)))
                 }
@@ -263,6 +274,7 @@ final class LocalWhisperService {
             if process.terminationStatus != 0 {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 let errorOutput = String(data: data, encoding: .utf8) ?? "Unknown error"
+                debugLog("[ERROR] [LocalWhisper] CLI error output: \(errorOutput)")
                 DispatchQueue.main.async {
                     completion(.failure(.apiError(errorOutput)))
                 }
