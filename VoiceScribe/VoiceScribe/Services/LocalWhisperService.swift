@@ -231,15 +231,68 @@ final class LocalWhisperService {
 
     // MARK: - Run CLI
 
+    /// Convert m4a/aac to 16kHz mono WAV (required by whisper-cli)
+    private func convertToWAV(inputURL: URL) -> URL? {
+        let wavURL = inputURL.deletingPathExtension().appendingPathExtension("wav")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/afconvert")
+        process.arguments = [
+            inputURL.path,
+            wavURL.path,
+            "-d", "LEI16",      // 16-bit little-endian integer PCM
+            "-f", "WAVE",       // WAV format
+            "-r", "16000",      // 16kHz sample rate
+            "-c", "1"           // mono
+        ]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus == 0 {
+                debugLog("[OK] [LocalWhisper] Converted to WAV: \(wavURL.path)")
+                return wavURL
+            } else {
+                debugLog("[ERROR] [LocalWhisper] afconvert failed with status: \(process.terminationStatus)")
+                return nil
+            }
+        } catch {
+            debugLog("[ERROR] [LocalWhisper] afconvert error: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
     private func runWhisperCLI(cliURL: URL, modelURL: URL, audioFileURL: URL, language: String?, completion: @escaping (Result<String, WhisperError>) -> Void) {
         debugLog("[DEBUG] [LocalWhisper] Running CLI: \(cliURL.path)")
         debugLog("[DEBUG] [LocalWhisper] Model: \(modelURL.path)")
         debugLog("[DEBUG] [LocalWhisper] Audio: \(audioFileURL.path)")
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            // Convert m4a to WAV (whisper-cli requires WAV format)
+            guard let self = self else { return }
+            let wavURL: URL
+            if audioFileURL.pathExtension.lowercased() != "wav" {
+                debugLog("[DEBUG] [LocalWhisper] Converting \(audioFileURL.pathExtension) to WAV...")
+                guard let converted = self.convertToWAV(inputURL: audioFileURL) else {
+                    debugLog("[ERROR] [LocalWhisper] Audio conversion failed")
+                    DispatchQueue.main.async {
+                        completion(.failure(.invalidAudioFile))
+                    }
+                    return
+                }
+                wavURL = converted
+            } else {
+                wavURL = audioFileURL
+            }
+            defer {
+                // Clean up WAV file if we created one
+                if wavURL != audioFileURL {
+                    try? FileManager.default.removeItem(at: wavURL)
+                }
+            }
+            
             let outputPrefix = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             var arguments = [
                 "-m", modelURL.path,
-                "-f", audioFileURL.path,
+                "-f", wavURL.path,
                 "-of", outputPrefix,
                 "-otxt",
                 "-nt"
