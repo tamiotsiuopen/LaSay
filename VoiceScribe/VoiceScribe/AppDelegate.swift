@@ -104,9 +104,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let alert = NSAlert()
         alert.messageText = localization.localized(.aboutTitle)
 
-        let description = String(format: localization.localized(.aboutDescription), version, build)
-        alert.informativeText = description
+        let description: String
+        if localization.currentLanguage == "zh" {
+            description = """
+            給開發者的語音輸入工具
 
+            版本：\(version) (Build \(build)) - 測試版
+
+            專為用兩種語言思考的開發者設計。
+            口述技術討論、筆記、混語言想法 — LaSay 會保留你的技術術語。
+
+            功能：
+            • 本地 + 雲端語音辨識
+            • AI 文字清理（保留技術術語）
+            • 全域快捷鍵：Fn + Space
+            • 任何 app 都能用，包括 Terminal 和 IDE
+
+            聯繫：tamio.tsiu@gmail.com
+            """
+        } else {
+            description = """
+            Voice Input for Developers
+
+            Version: \(version) (Build \(build)) - Beta
+
+            Built for developers who think in two languages.
+            Dictate code discussions, technical notes, and mixed-language thoughts — LaSay keeps your technical terms intact.
+
+            Features:
+            • Local + Cloud speech recognition
+            • AI text cleanup (preserves technical terms)
+            • Global Hotkey: Fn + Space
+            • Works in any app, including Terminal and IDE
+
+            Contact: tamio.tsiu@gmail.com
+            """
+        }
+
+        alert.informativeText = description
         alert.alertStyle = .informational
         alert.addButton(withTitle: localization.localized(.ok))
         alert.runModal()

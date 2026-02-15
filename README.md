@@ -1,6 +1,6 @@
-# LaSay
+# LaSay — Voice Input for Developers
 
-> macOS 系統級語音輸入工具 - 在任何 app 中快速將語音轉換為文字
+> Dictate in your native language + English technical terms. LaSay keeps them intact.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![macOS](https://img.shields.io/badge/macOS-13.0+-green)
@@ -8,9 +8,11 @@
 
 ## ✨ 功能特色
 
+- 🌏 **混語言輸入**：母語 + 英文技術術語混著說，輸出保持原樣
+- 🧠 **保留技術術語**：框架、工具、程式碼識別字不被改寫
+- 💻 **IDE / Terminal 皆可用**：任何 app 的輸入框都能直接貼上
 - 🎤 **全域語音輸入**：按住 **Fn + Space** 即可在任何 app 中錄音
-- 🤖 **AI 文字潤飾**：使用 GPT-5-mini 自動移除口語贅字、修正文法
-- 🌏 **多語言支援**：支援繁體中文和英文
+- 🤖 **AI 文字清理**：移除口語贅字、修正文法與標點
 - ⚡ **即時貼上**：轉錄完成後自動貼到游標位置
 - 🔒 **安全儲存**：API Key 安全加密儲存
 
@@ -39,7 +41,7 @@
 3. 輸入你的 **OpenAI API Key**
    - 從 [OpenAI Platform](https://platform.openai.com/api-keys) 取得
 4. 選擇轉錄語言（繁體中文 / English）
-5. （選填）啟用 **AI 潤飾**
+5. （選填）啟用 **AI 文字清理**
 
 ## 🎯 使用方式
 
@@ -58,8 +60,8 @@ LaSay 使用 OpenAI API：
 
 ## 🔧 進階設定
 
-- **AI 潤飾**：可開關，使用 GPT-5-mini 優化轉錄文字
-- **自訂 Prompt**：自訂 AI 潤飾的行為
+- **AI 文字清理**：可開關，使用 GPT-5-mini 優化轉錄文字
+- **自訂 Prompt**：自訂 AI 文字清理的行為
 - **自動貼上**：可選擇是否自動貼上文字
 - **剪貼簿還原**：貼上後可選擇是否還原原剪貼簿內容
 
@@ -84,10 +86,10 @@ A: 每次使用約 $0.001-0.002 USD，100 次使用約 $0.10-0.20 USD。
 ## 🙏 致謝
 
 - OpenAI Whisper - 語音轉錄
-- OpenAI GPT-5-mini - 文字潤飾
+- OpenAI GPT-5-mini - 文字清理
 - 開發協助：Claude Sonnet 4.5
 
 ---
 
 **版本**：1.0.0
-**最後更新**：2026-01-26
+**最後更新**：2026-02-15
