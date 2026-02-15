@@ -17,7 +17,7 @@ enum TranscriptionMode: String, CaseIterable {
         case .cloud:
             return language == "zh" ? "雲端（OpenAI）" : "Cloud (OpenAI)"
         case .local:
-            return language == "zh" ? "本地（Whisper.cpp）" : "Local (Whisper.cpp)"
+            return language == "zh" ? "本地（實驗性）" : "Local (Experimental)"
         }
     }
 }

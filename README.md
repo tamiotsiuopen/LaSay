@@ -23,7 +23,7 @@ Works in any app -- VS Code, Terminal, Slack, browser, anywhere you type.
 - **Two transcription modes** -- Cloud (OpenAI Whisper API) or Local (whisper.cpp, fully offline)
 - **AI text cleanup** -- removes filler words, fixes grammar, preserves technical terms (GPT-5-mini)
 - **Global hotkey** -- Fn+Space works in any application
-- **Auto-paste** -- transcribed text is pasted directly at cursor position
+- **Instant paste** -- text appears at your cursor the moment transcription completes
 - **Secure storage** -- API keys stored in macOS Keychain
 
 ## Quick Start
@@ -86,9 +86,7 @@ Access via menu bar icon > Settings:
 - **Transcription mode** -- Cloud or Local
 - **Transcription language** -- Auto / Chinese / English / Japanese / Korean
 - **AI text cleanup** -- toggle on/off, custom prompt supported
-- **Auto-paste** -- paste transcription directly at cursor
-- **Sound feedback** -- audio cue for recording start/stop
-- **Preview mode** -- review text before pasting
+- **API Key** -- required for Cloud mode and AI cleanup
 
 ### API Key
 
