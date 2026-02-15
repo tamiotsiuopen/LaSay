@@ -19,6 +19,16 @@ enum TranscriptionMode: String, CaseIterable {
             return "Local (Whisper.cpp)"
         }
     }
+
+    var localizedDisplayName: String {
+        let language = LocalizationHelper.shared.currentLanguage
+        switch self {
+        case .cloud:
+            return language == "zh" ? "雲端（OpenAI）" : "Cloud (OpenAI)"
+        case .local:
+            return language == "zh" ? "本地（Whisper.cpp）" : "Local (Whisper.cpp)"
+        }
+    }
 }
 
 enum TranscriptionLanguage: String, CaseIterable {
@@ -72,6 +82,22 @@ enum PolishTemplate: String, CaseIterable {
             return "Social Post"
         case .todo:
             return "TODO List"
+        }
+    }
+
+    var localizedDisplayName: String {
+        let language = LocalizationHelper.shared.currentLanguage
+        switch self {
+        case .general:
+            return language == "zh" ? "一般對話" : "General"
+        case .meeting:
+            return language == "zh" ? "會議紀錄" : "Meeting"
+        case .email:
+            return language == "zh" ? "Email" : "Email"
+        case .social:
+            return language == "zh" ? "社群貼文" : "Social"
+        case .todo:
+            return language == "zh" ? "待辦清單" : "TODO"
         }
     }
 }

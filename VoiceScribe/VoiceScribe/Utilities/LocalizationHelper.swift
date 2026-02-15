@@ -23,6 +23,12 @@ class LocalizationHelper {
         // 設定視窗
         case .settings:
             return language == "zh" ? "設定" : "Settings"
+        case .generalTab:
+            return language == "zh" ? "一般" : "General"
+        case .transcriptionTab:
+            return language == "zh" ? "轉錄" : "Transcription"
+        case .aiPolishTab:
+            return language == "zh" ? "AI 潤飾" : "AI Polish"
         case .openAIAPIKey:
             return language == "zh" ? "OpenAI API Key" : "OpenAI API Key"
         case .apiKeySet:
@@ -79,8 +85,8 @@ class LocalizationHelper {
             return language == "zh" ? "選擇預設輸出格式，亦可用自訂 Prompt 覆蓋" : "Choose a default format or override with a custom prompt"
         case .customSystemPrompt:
             return language == "zh" ? "自訂 System Prompt（選填）" : "Custom System Prompt (Optional)"
-        case .useDefaultPrompt:
-            return language == "zh" ? "使用預設 Prompt" : "Use Default Prompt"
+        case .loadTemplatePrompt:
+            return language == "zh" ? "載入模板 Prompt" : "Load Template Prompt"
         case .clear:
             return language == "zh" ? "清空" : "Clear"
         case .emptyForDefault:
@@ -107,10 +113,16 @@ class LocalizationHelper {
             return language == "zh" ? "確定" : "OK"
         case .autoSaveHint:
             return language == "zh" ? "關閉視窗時會自動儲存設定" : "Settings will be saved automatically when closing"
+        case .changesSavedAutomatically:
+            return language == "zh" ? "變更會自動儲存" : "Changes are saved automatically"
 
         // Menu Bar
         case .status:
             return language == "zh" ? "狀態：" : "Status: "
+        case .modeLabel:
+            return language == "zh" ? "模式：" : "Mode: "
+        case .templateLabel:
+            return language == "zh" ? "模板：" : "Template: "
         case .idle:
             return language == "zh" ? "待機" : "Idle"
         case .recording:
@@ -188,6 +200,20 @@ class LocalizationHelper {
             return language == "zh" ? "AI 潤飾失敗" : "AI Polishing Failed"
         case .usingOriginalText:
             return language == "zh" ? "已使用原始轉錄文字：" : "Using original transcription: "
+        case .modelDownloadFailed:
+            return language == "zh" ? "模型下載失敗" : "Model download failed"
+        case .noNetworkConnection:
+            return language == "zh" ? "無網路連接" : "No internet connection"
+        case .invalidAPIKey:
+            return language == "zh" ? "API Key 無效" : "Invalid API Key"
+        case .networkErrorPrefix:
+            return language == "zh" ? "網路錯誤：" : "Network error: "
+        case .apiErrorPrefix:
+            return language == "zh" ? "API 錯誤：" : "API error: "
+        case .downloadingModel:
+            return language == "zh" ? "正在下載語音模型" : "Downloading speech model"
+        case .downloadingBinary:
+            return language == "zh" ? "正在下載轉錄工具" : "Downloading transcription tool"
         }
     }
 }
@@ -195,6 +221,9 @@ class LocalizationHelper {
 enum LocalizationKey {
     // 設定視窗
     case settings
+    case generalTab
+    case transcriptionTab
+    case aiPolishTab
     case openAIAPIKey
     case apiKeySet
     case show
@@ -227,7 +256,7 @@ enum LocalizationKey {
     case polishTemplate
     case polishTemplateHint
     case customSystemPrompt
-    case useDefaultPrompt
+    case loadTemplatePrompt
     case clear
     case emptyForDefault
 
@@ -243,9 +272,12 @@ enum LocalizationKey {
     case settingsSaved
     case ok
     case autoSaveHint
+    case changesSavedAutomatically
 
     // Menu Bar
     case status
+    case modeLabel
+    case templateLabel
     case idle
     case recording
     case processing
@@ -278,4 +310,11 @@ enum LocalizationKey {
     case transcriptionFailed
     case aiPolishFailed
     case usingOriginalText
+    case modelDownloadFailed
+    case noNetworkConnection
+    case invalidAPIKey
+    case networkErrorPrefix
+    case apiErrorPrefix
+    case downloadingModel
+    case downloadingBinary
 }
