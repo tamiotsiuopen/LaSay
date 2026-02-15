@@ -6,19 +6,8 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXContainerItemProxy section */
-		50FE9B03A8C24AD6B6AEC9CA /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 31E4AED42F262512002093FB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 31E4AEDB2F262512002093FB;
-			remoteInfo = VoiceScribe;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		31E4AEDC2F262512002093FB /* VoiceScribe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoiceScribe.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		43F6D742810140CDB95F473D /* VoiceScribeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceScribeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -27,22 +16,10 @@
 			path = VoiceScribe;
 			sourceTree = "<group>";
 		};
-		EAC55C81027645B48B21124A /* VoiceScribeTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = VoiceScribeTests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		31E4AED92F262512002093FB /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		DE16D18B15324B679941730F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -64,7 +41,6 @@
 			isa = PBXGroup;
 			children = (
 				31E4AEDC2F262512002093FB /* VoiceScribe.app */,
-				43F6D742810140CDB95F473D /* VoiceScribeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,29 +69,6 @@
 			productName = VoiceScribe;
 			productReference = 31E4AEDC2F262512002093FB /* VoiceScribe.app */;
 			productType = "com.apple.product-type.application";
-		};
-		1B29BA1242084F8389E54B61 /* VoiceScribeTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 2E6D880745EB49ED865B2037 /* Build configuration list for PBXNativeTarget "VoiceScribeTests" */;
-			buildPhases = (
-				06C27A2AD50F440584D42376 /* Sources */,
-				DE16D18B15324B679941730F /* Frameworks */,
-				B27B06589A82405CA83708FC /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				C94046441D5F4E4283D94BEC /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				EAC55C81027645B48B21124A /* VoiceScribeTests */,
-			);
-			name = VoiceScribeTests;
-			packageProductDependencies = (
-			);
-			productName = VoiceScribeTests;
-			productReference = 43F6D742810140CDB95F473D /* VoiceScribeTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -147,29 +100,12 @@
 			projectRoot = "";
 			targets = (
 				31E4AEDB2F262512002093FB /* VoiceScribe */,
-				1B29BA1242084F8389E54B61 /* VoiceScribeTests */,
 			);
 		};
 /* End PBXProject section */
 
-
-/* Begin PBXTargetDependency section */
-		C94046441D5F4E4283D94BEC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 31E4AEDB2F262512002093FB /* VoiceScribe */;
-			targetProxy = 50FE9B03A8C24AD6B6AEC9CA /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin PBXResourcesBuildPhase section */
 		31E4AEDA2F262512002093FB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B27B06589A82405CA83708FC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -180,13 +116,6 @@
 
 /* Begin PBXSourcesBuildPhase section */
 		31E4AED82F262512002093FB /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		06C27A2AD50F440584D42376 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -346,7 +275,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tamio.LaSay;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tamio.VoiceScribe;
 				PRODUCT_NAME = LaSay;
 				INFOPLIST_KEY_CFBundleDisplayName = LaSay;
 				INFOPLIST_KEY_CFBundleName = LaSay;
@@ -392,7 +321,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tamio.LaSay;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tamio.VoiceScribe;
 				PRODUCT_NAME = LaSay;
 				INFOPLIST_KEY_CFBundleDisplayName = LaSay;
 				INFOPLIST_KEY_CFBundleName = LaSay;
@@ -403,39 +332,6 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		B9E70CC941944840AA944C93 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tamio.LaSayTests;
-				PRODUCT_NAME = $(TARGET_NAME);
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LaSay.app/Contents/MacOS/LaSay";
-				BUNDLE_LOADER = "$(TEST_HOST)";
-			};
-			name = Debug;
-		};
-		42EA8CE1113A42C490E7EC00 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tamio.LaSayTests;
-				PRODUCT_NAME = $(TARGET_NAME);
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LaSay.app/Contents/MacOS/LaSay";
-				BUNDLE_LOADER = "$(TEST_HOST)";
 			};
 			name = Release;
 		};
@@ -456,15 +352,6 @@
 			buildConfigurations = (
 				31E4AEE82F262513002093FB /* Debug */,
 				31E4AEE92F262513002093FB /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		2E6D880745EB49ED865B2037 /* Build configuration list for PBXNativeTarget "VoiceScribeTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B9E70CC941944840AA944C93 /* Debug */,
-				42EA8CE1113A42C490E7EC00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
