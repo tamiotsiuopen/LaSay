@@ -271,25 +271,59 @@ final class LocalWhisperService {
                 return
             }
 
+            let stderrData = pipe.fileHandleForReading.readDataToEndOfFile()
+            let stderrOutput = String(data: stderrData, encoding: .utf8) ?? ""
+            
             if process.terminationStatus != 0 {
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let errorOutput = String(data: data, encoding: .utf8) ?? "Unknown error"
-                debugLog("[ERROR] [LocalWhisper] CLI error output: \(errorOutput)")
+                debugLog("[ERROR] [LocalWhisper] CLI error output: \(stderrOutput)")
                 DispatchQueue.main.async {
-                    completion(.failure(.apiError(errorOutput)))
+                    completion(.failure(.apiError(stderrOutput)))
                 }
                 return
             }
+            
+            debugLog("[DEBUG] [LocalWhisper] CLI stderr: \(stderrOutput.prefix(500))")
 
+            // whisper-cli with -otxt writes to <outputPrefix>.txt
             let outputURL = URL(fileURLWithPath: outputPrefix + ".txt")
-            guard let rawText = try? String(contentsOf: outputURL, encoding: .utf8) else {
+            debugLog("[DEBUG] [LocalWhisper] Expected output file: \(outputURL.path)")
+            debugLog("[DEBUG] [LocalWhisper] Output file exists: \(FileManager.default.fileExists(atPath: outputURL.path))")
+            
+            // Also check if whisper wrote stdout directly
+            if !FileManager.default.fileExists(atPath: outputURL.path) {
+                // Try reading from stdout (some whisper-cli versions print to stdout with -nt)
+                let stdoutText = stderrOutput  // stdout and stderr share the same pipe
+                debugLog("[WARN] [LocalWhisper] Output file not found, checking stdout...")
+                
+                // List files in temp dir with our prefix
+                let prefixDir = URL(fileURLWithPath: outputPrefix).deletingLastPathComponent()
+                let prefixName = URL(fileURLWithPath: outputPrefix).lastPathComponent
+                if let files = try? FileManager.default.contentsOfDirectory(atPath: prefixDir.path) {
+                    let matching = files.filter { $0.hasPrefix(prefixName) }
+                    debugLog("[DEBUG] [LocalWhisper] Files with prefix: \(matching)")
+                }
+                
                 DispatchQueue.main.async {
                     completion(.failure(.invalidResponse))
                 }
                 return
             }
+            
+            guard let rawText = try? String(contentsOf: outputURL, encoding: .utf8) else {
+                debugLog("[ERROR] [LocalWhisper] Could not read output file")
+                DispatchQueue.main.async {
+                    completion(.failure(.invalidResponse))
+                }
+                return
+            }
+            
+            debugLog("[DEBUG] [LocalWhisper] Raw output: \(rawText.prefix(200))")
 
             let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Clean up output file
+            try? FileManager.default.removeItem(at: outputURL)
+            
             DispatchQueue.main.async {
                 completion(.success(trimmed))
             }
