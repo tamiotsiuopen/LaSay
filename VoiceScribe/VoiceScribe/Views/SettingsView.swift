@@ -21,7 +21,6 @@ struct SettingsView: View {
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
     @State private var showAPIKey: Bool = false
-    @State private var enableSoundFeedback: Bool = true
     @State private var enablePreviewMode: Bool = false
     @State private var isPasteAdvancedExpanded: Bool = true
     @State private var isAIPolishAdvancedExpanded: Bool = true
@@ -155,15 +154,6 @@ struct SettingsView: View {
                     .accessibilityValue(autoPaste ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
                     .onChange(of: autoPaste) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "auto_paste")
-                    }
-
-                Toggle(localization.localized(.soundFeedback), isOn: $enableSoundFeedback)
-                    .toggleStyle(.checkbox)
-                    .accessibilityLabel(localization.localized(.soundFeedbackAccessibility))
-                    .accessibilityHint(localization.localized(.toggleAccessibilityHint))
-                    .accessibilityValue(enableSoundFeedback ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
-                    .onChange(of: enableSoundFeedback) { newValue in
-                        UserDefaults.standard.set(newValue, forKey: "enable_sound_feedback")
                     }
 
                 DisclosureGroup(localization.localized(.advanced), isExpanded: $isPasteAdvancedExpanded) {
@@ -465,13 +455,6 @@ struct SettingsView: View {
             autoPaste = true
         }
 
-        if UserDefaults.standard.object(forKey: "enable_sound_feedback") == nil {
-            enableSoundFeedback = true
-            UserDefaults.standard.set(true, forKey: "enable_sound_feedback")
-        } else {
-            enableSoundFeedback = UserDefaults.standard.bool(forKey: "enable_sound_feedback")
-        }
-
         if UserDefaults.standard.object(forKey: "enable_preview_mode") == nil {
             enablePreviewMode = false
             UserDefaults.standard.set(false, forKey: "enable_preview_mode")
@@ -517,7 +500,6 @@ struct SettingsView: View {
         // 儲存貼上設定
         UserDefaults.standard.set(autoPaste, forKey: "auto_paste")
         UserDefaults.standard.set(enablePreviewMode, forKey: "enable_preview_mode")
-        UserDefaults.standard.set(enableSoundFeedback, forKey: "enable_sound_feedback")
 
         // 標記已經啟動過
         UserDefaults.standard.set(true, forKey: "has_launched_before")

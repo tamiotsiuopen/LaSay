@@ -139,9 +139,6 @@ final class RecordingCoordinator {
 
     private func startRecording() {
         debugLog("[REC] 開始錄音...")
-        if isSoundFeedbackEnabled() {
-            NSSound(named: "Tink")?.play()
-        }
         appState.updateStatus(.recording)
         audioRecorder.startRecording()
     }
@@ -373,10 +370,6 @@ final class RecordingCoordinator {
             let correctedText = TechTermsDictionary.apply(to: text)
             self.appState.saveTranscription(correctedText)
 
-            if self.isSoundFeedbackEnabled() {
-                NSSound(named: "Pop")?.play()
-            }
-
             let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
 
             let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "has_launched_before")
@@ -453,14 +446,6 @@ final class RecordingCoordinator {
     private func closePreviewPanel() {
         previewPanel?.close()
         previewPanel = nil
-    }
-
-    private func isSoundFeedbackEnabled() -> Bool {
-        let defaults = UserDefaults.standard
-        if defaults.object(forKey: "enable_sound_feedback") == nil {
-            return true
-        }
-        return defaults.bool(forKey: "enable_sound_feedback")
     }
 
     private func setupAudioRecorderCallbacks() {
