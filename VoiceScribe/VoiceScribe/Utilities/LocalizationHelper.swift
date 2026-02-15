@@ -47,6 +47,8 @@ class LocalizationHelper {
             return language == "zh" ? "請輸入 API Key (sk-...)" : "Enter API Key (sk-...)"
         case .apiKeyDescription:
             return language == "zh" ? "用於 Whisper 語音轉錄與 AI 文字潤飾" : "Used for Whisper transcription and AI text polishing"
+        case .getAPIKey:
+            return language == "zh" ? "取得 API Key → platform.openai.com" : "Get API Key → platform.openai.com"
 
         // 介面語言
         case .uiLanguage:
@@ -54,9 +56,9 @@ class LocalizationHelper {
         case .language:
             return language == "zh" ? "語言" : "Language"
         case .languageChineseLabel:
-            return "繁體中文 (Chinese)"
+            return "繁體中文 Traditional Chinese"
         case .languageEnglishLabel:
-            return "English (英文)"
+            return "English"
         case .autoDetectLanguage:
             return language == "zh" ? "語音轉錄會自動辨識所有語言" : "Speech transcription automatically detects all languages"
 
@@ -134,7 +136,7 @@ class LocalizationHelper {
         case .paste:
             return language == "zh" ? "貼上" : "Paste"
         case .changesSavedAutomatically:
-            return language == "zh" ? "變更會自動儲存" : "Changes are saved automatically"
+            return language == "zh" ? "設定會在關閉時自動儲存（API Key 需手動儲存）" : "Settings auto-save on close (API Key requires manual save)"
         case .back:
             return language == "zh" ? "返回" : "Back"
         case .next:
@@ -365,6 +367,8 @@ class LocalizationHelper {
             return language == "zh" ? "API Key 無效。請在設定中檢查您的 API Key。" : "Invalid API key. Check your API key in Settings."
         case .processingTimeout:
             return language == "zh" ? "處理逾時。請重試。" : "Processing timeout. Please try again."
+        case .transcriptionComplete:
+            return language == "zh" ? "轉錄完成" : "Transcription Complete"
         }
     }
 }
@@ -384,6 +388,7 @@ enum LocalizationKey {
     case cancel
     case enterAPIKey
     case apiKeyDescription
+    case getAPIKey
 
     // 介面語言
     case uiLanguage
@@ -538,4 +543,5 @@ enum LocalizationKey {
     case networkErrorActionable
     case invalidAPIKeyActionable
     case processingTimeout
+    case transcriptionComplete
 }

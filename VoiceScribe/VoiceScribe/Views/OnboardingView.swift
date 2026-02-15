@@ -35,8 +35,10 @@ struct OnboardingView: View {
             }
 
             if step == 0 {
-                welcomeStep
+                languageStep
             } else if step == 1 {
+                welcomeStep
+            } else if step == 2 {
                 permissionsStep
             } else {
                 tryItStep
@@ -55,7 +57,7 @@ struct OnboardingView: View {
 
                 Spacer()
 
-                if step < 2 {
+                if step < 3 {
                     Button(localization.localized(.next)) {
                         step += 1
                     }
@@ -96,24 +98,31 @@ struct OnboardingView: View {
         }
     }
 
+    private var languageStep: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Spacer()
+            
+            Text("Choose Language / 選擇語言")
+                .font(.title)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack(spacing: 16) {
+                languageSelectionButton(title: "繁體中文\nTraditional Chinese", code: "zh")
+                    .accessibilityLabel("繁體中文 Traditional Chinese")
+                    .accessibilityHint(localization.localized(.languageButtonAccessibility))
+                languageSelectionButton(title: "English", code: "en")
+                    .accessibilityLabel("English")
+                    .accessibilityHint(localization.localized(.languageButtonAccessibility))
+            }
+            .frame(maxWidth: 420)
+            
+            Spacer()
+        }
+    }
+
     private var welcomeStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.onboardingLanguageTitle))
-                    .font(.headline)
-
-                HStack(spacing: 12) {
-                    languageSelectionButton(title: "🇹🇼 繁體中文", code: "zh")
-                        .accessibilityLabel("繁體中文 Traditional Chinese")
-                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
-                    languageSelectionButton(title: "🇺🇸 English", code: "en")
-                        .accessibilityLabel("English")
-                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
-                }
-            }
-
-            Divider()
-
             Text(localization.localized(.onboardingWelcomeTitle))
                 .font(.title)
                 .fontWeight(.bold)
@@ -220,8 +229,9 @@ struct OnboardingView: View {
         }) {
             Text(title)
                 .font(.headline)
+                .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.vertical, 20)
                 .background(localization.currentLanguage == code ? Color.accentColor : Color.secondary.opacity(0.15))
                 .foregroundColor(localization.currentLanguage == code ? .white : .primary)
                 .cornerRadius(10)

@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var recordingCoordinator: RecordingCoordinator?
     private var settingsWindow: NSWindow?
     private var onboardingWindow: NSWindow?
+    private var aboutWindow: NSWindow?
     private var floatingIndicator: FloatingIndicatorController?
     private let localization = LocalizationHelper.shared
 
@@ -64,8 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 視窗標題根據介面語言顯示
         window.title = localization.localized(.settingsWindowTitle)
         window.styleMask = [.titled, .closable]
-        let fittingSize = hostingController.view.fittingSize
-        window.setContentSize(NSSize(width: 500, height: fittingSize.height))
+        window.setContentSize(NSSize(width: 500, height: 480))
         window.center()
         window.makeKeyAndOrderFront(nil)
 
@@ -100,53 +100,82 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showAbout() {
+        // Reuse existing window if already open
+        if let window = aboutWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
 
-        let alert = NSAlert()
-        alert.messageText = localization.localized(.aboutTitle)
-
-        let description: String
-        if localization.currentLanguage == "zh" {
-            description = """
-            給開發者的語音輸入工具
-
-            版本：\(version) (Build \(build)) - 測試版
-
-            專為用兩種語言思考的開發者設計。
-            口述技術討論、筆記、混語言想法 — LaSay 會保留你的技術術語。
-
-            功能：
-            • 本地 + 雲端語音辨識
-            • AI 文字清理（保留技術術語）
-            • 全域快捷鍵：Fn + Space
-            • 任何 app 都能用，包括 Terminal 和 IDE
-
-            聯繫：tamio.tsiu@gmail.com
-            """
-        } else {
-            description = """
-            Voice Input for Developers
-
-            Version: \(version) (Build \(build)) - Beta
-
-            Built for developers who think in two languages.
-            Dictate code discussions, technical notes, and mixed-language thoughts — LaSay keeps your technical terms intact.
-
-            Features:
-            • Local + Cloud speech recognition
-            • AI text cleanup (preserves technical terms)
-            • Global Hotkey: Fn + Space
-            • Works in any app, including Terminal and IDE
-
-            Contact: tamio.tsiu@gmail.com
-            """
+        // Create AboutView inline
+        let aboutView = VStack(spacing: 16) {
+            if let appIcon = NSApp.applicationIconImage {
+                Image(nsImage: appIcon)
+                    .resizable()
+                    .frame(width: 80, height: 80)
+            }
+            
+            Text("LaSay")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            Text(localization.currentLanguage == "zh" 
+                 ? "版本 \(version) (Build \(build)) - 測試版"
+                 : "Version \(version) (Build \(build)) - Beta")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Text(localization.currentLanguage == "zh"
+                 ? "給開發者的語音輸入工具"
+                 : "Voice Input for Developers")
+                .font(.headline)
+                .padding(.top, 4)
+            
+            Divider()
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.currentLanguage == "zh" ? "功能：" : "Features:")
+                    .font(.headline)
+                
+                if localization.currentLanguage == "zh" {
+                    Text("• 本地 + 雲端語音辨識")
+                    Text("• AI 文字清理（保留技術術語）")
+                    Text("• 全域快捷鍵：Fn + Space")
+                    Text("• 任何 app 都能用，包括 Terminal 和 IDE")
+                } else {
+                    Text("• Local + Cloud speech recognition")
+                    Text("• AI text cleanup (preserves technical terms)")
+                    Text("• Global Hotkey: Fn + Space")
+                    Text("• Works in any app, including Terminal and IDE")
+                }
+            }
+            .font(.caption)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Divider()
+            
+            Text(localization.currentLanguage == "zh"
+                 ? "聯繫：tamio.tsiu@gmail.com"
+                 : "Contact: tamio.tsiu@gmail.com")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
+        .padding(24)
+        .frame(width: 400, height: 350)
 
-        alert.informativeText = description
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: localization.localized(.ok))
-        alert.runModal()
+        let hostingController = NSHostingController(rootView: aboutView)
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = localization.localized(.aboutTitle)
+        window.styleMask = [.titled, .closable]
+        window.setContentSize(NSSize(width: 400, height: 350))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        aboutWindow = window
     }
 
     @objc func quitApp() {

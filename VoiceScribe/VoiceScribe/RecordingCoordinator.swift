@@ -396,6 +396,15 @@ final class RecordingCoordinator {
 
             if shouldAutoPaste {
                 self.textInputService.pasteText(correctedText, restoreClipboard: shouldRestore)
+                
+                // Show completion notification with text preview
+                let previewText = correctedText.count > 50 
+                    ? String(correctedText.prefix(50)) + "..." 
+                    : correctedText
+                self.showNotification(
+                    title: self.localization.localized(.transcriptionComplete),
+                    body: previewText
+                )
             } else {
                 self.showTranscriptionResult(correctedText)
             }

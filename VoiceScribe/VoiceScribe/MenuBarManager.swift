@@ -78,21 +78,9 @@ final class MenuBarManager: NSObject {
         statusMenuItem.isEnabled = false
         menu.addItem(statusMenuItem)
 
-        // 快捷鍵提示
-        let hotkeyHint: String
-        if appState.status == .idle {
-            hotkeyHint = localization.localized(.holdFnSpace)
-        } else if appState.status == .recording {
-            hotkeyHint = localization.localized(.recordingHint)
-        } else {
-            hotkeyHint = localization.localized(.processingHint)
-        }
-        let hintItem = NSMenuItem(title: hotkeyHint, action: nil, keyEquivalent: "")
-        hintItem.isEnabled = false
-        menu.addItem(hintItem)
-
         menu.addItem(NSMenuItem.separator())
 
+        // 模式選擇
         let currentMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
         for mode in TranscriptionMode.allCases {
             let title = localization.localized(.modeLabel) + mode.localizedDisplayName
@@ -101,35 +89,6 @@ final class MenuBarManager: NSObject {
             item.state = mode == currentMode ? .on : .off
             item.target = self
             menu.addItem(item)
-        }
-
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 最後轉錄結果（如果有）
-        if !appState.lastTranscription.isEmpty {
-            let transcriptionText = appState.lastTranscription.count > 30
-                ? String(appState.lastTranscription.prefix(30)) + "..."
-                : appState.lastTranscription
-            let transcriptionItem = NSMenuItem(title: localization.localized(.lastTranscription) + transcriptionText, action: nil, keyEquivalent: "")
-            transcriptionItem.isEnabled = false
-            menu.addItem(transcriptionItem)
-            menu.addItem(NSMenuItem.separator())
-        }
-
-        // API Key 狀態檢查
-        let apiKey = KeychainHelper.shared.get(key: "openai_api_key")
-        if apiKey == nil || apiKey?.isEmpty == true {
-            let apiKeyItem = NSMenuItem(title: localization.localized(.needAPIKey), action: #selector(openSettings), keyEquivalent: "")
-            apiKeyItem.target = self
-            menu.addItem(apiKeyItem)
-        }
-
-        // 權限狀態檢查
-        if !hotkeyManager.checkAccessibilityPermission() {
-            let permissionItem = NSMenuItem(title: localization.localized(.needAccessibility), action: #selector(requestAccessibilityPermission), keyEquivalent: "")
-            permissionItem.target = self
-            menu.addItem(permissionItem)
         }
 
         menu.addItem(NSMenuItem.separator())

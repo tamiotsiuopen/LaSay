@@ -417,6 +417,9 @@ struct SettingsView: View {
             Text(localization.localized(.apiKeyDescription))
                 .font(.caption)
                 .foregroundColor(.secondary)
+            
+            Link(localization.localized(.getAPIKey), destination: URL(string: "https://platform.openai.com/api-keys")!)
+                .font(.caption)
         }
     }
 

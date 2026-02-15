@@ -6,17 +6,21 @@
 //
 
 import SwiftUI
+import Combine
 
 struct FloatingIndicatorView: View {
     let status: AppStatus
     private let localization = LocalizationHelper.shared
+    
+    @State private var elapsedSeconds: Int = 0
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         HStack(spacing: 8) {
             statusIcon
                 .foregroundColor(iconColor)
 
-            Text(statusText)
+            Text(statusTextWithTimer)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white)
         }
@@ -28,7 +32,17 @@ struct FloatingIndicatorView: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(localization.localized(.floatingIndicatorAccessibility))
-        .accessibilityValue(statusText)
+        .accessibilityValue(statusTextWithTimer)
+        .onReceive(timer) { _ in
+            if status == .recording {
+                elapsedSeconds += 1
+            }
+        }
+        .onChange(of: status) { newStatus in
+            if newStatus != .recording {
+                elapsedSeconds = 0
+            }
+        }
     }
 
     @ViewBuilder
@@ -68,6 +82,17 @@ struct FloatingIndicatorView: View {
             return localization.localized(.recording)
         case .processing:
             return localization.localized(.processing)
+        }
+    }
+    
+    private var statusTextWithTimer: String {
+        if status == .recording {
+            let minutes = elapsedSeconds / 60
+            let seconds = elapsedSeconds % 60
+            let timeString = String(format: "%02d:%02d", minutes, seconds)
+            return "\(statusText) \(timeString)"
+        } else {
+            return statusText
         }
     }
 }
