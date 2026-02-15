@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 struct FloatingIndicatorView: View {
-    let status: AppStatus
+    @ObservedObject var appState: AppState
     private let localization = LocalizationHelper.shared
     
     @State private var elapsedSeconds: Int = 0
@@ -30,15 +30,16 @@ struct FloatingIndicatorView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.black.opacity(0.75))
         )
+        .fixedSize()
         .accessibilityElement(children: .combine)
         .accessibilityLabel(localization.localized(.floatingIndicatorAccessibility))
         .accessibilityValue(statusTextWithTimer)
         .onReceive(timer) { _ in
-            if status == .recording {
+            if appState.status == .recording {
                 elapsedSeconds += 1
             }
         }
-        .onChange(of: status) { newStatus in
+        .onChange(of: appState.status) { newStatus in
             if newStatus != .recording {
                 elapsedSeconds = 0
             }
@@ -47,7 +48,7 @@ struct FloatingIndicatorView: View {
 
     @ViewBuilder
     private var statusIcon: some View {
-        switch status {
+        switch appState.status {
         case .idle:
             EmptyView()
         case .recording:
@@ -64,7 +65,7 @@ struct FloatingIndicatorView: View {
     }
 
     private var iconColor: Color {
-        switch status {
+        switch appState.status {
         case .idle:
             return .gray
         case .recording:
@@ -75,7 +76,7 @@ struct FloatingIndicatorView: View {
     }
 
     private var statusText: String {
-        switch status {
+        switch appState.status {
         case .idle:
             return localization.localized(.idle)
         case .recording:
@@ -86,7 +87,7 @@ struct FloatingIndicatorView: View {
     }
     
     private var statusTextWithTimer: String {
-        if status == .recording {
+        if appState.status == .recording {
             let minutes = elapsedSeconds / 60
             let seconds = elapsedSeconds % 60
             let timeString = String(format: "%02d:%02d", minutes, seconds)
@@ -117,8 +118,7 @@ struct PulseAnimation: ViewModifier {
 
 #Preview {
     VStack(spacing: 20) {
-        FloatingIndicatorView(status: .recording)
-        FloatingIndicatorView(status: .processing)
+        FloatingIndicatorView(appState: AppState.shared)
     }
     .padding()
 }

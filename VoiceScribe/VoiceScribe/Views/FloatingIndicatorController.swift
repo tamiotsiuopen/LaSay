@@ -34,25 +34,20 @@ final class FloatingIndicatorController {
         case .idle:
             hideIndicator()
         case .recording, .processing:
-            showIndicator(for: status)
+            showIndicator()
         }
     }
 
-    private func showIndicator(for status: AppStatus) {
-        if panel != nil {
-            // 更新現有面板
-            if let hostingController = hostingController {
-                hostingController.rootView = FloatingIndicatorView(status: status)
-            }
-            return
-        }
+    private func showIndicator() {
+        // Already showing — SwiftUI observes appState directly, no rootView swap needed
+        if panel != nil { return }
 
-        // 創建新面板
-        let indicatorView = FloatingIndicatorView(status: status)
-        let hostingController = NSHostingController(rootView: indicatorView)
-        self.hostingController = hostingController
+        // Create new panel
+        let indicatorView = FloatingIndicatorView(appState: appState)
+        let hosting = NSHostingController(rootView: indicatorView)
+        self.hostingController = hosting
 
-        let panel = NSPanel(contentViewController: hostingController)
+        let panel = NSPanel(contentViewController: hosting)
         panel.styleMask = [.borderless, .nonactivatingPanel]
         panel.level = .floating
         panel.isFloatingPanel = true
@@ -62,10 +57,10 @@ final class FloatingIndicatorController {
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary]
         panel.ignoresMouseEvents = false
 
-        // 定位到螢幕右上角
+        // Position top-right
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
-            let panelSize = hostingController.view.fittingSize
+            let panelSize = hosting.view.fittingSize
             let xPos = screenFrame.maxX - panelSize.width - 20
             let yPos = screenFrame.maxY - panelSize.height - 20
             panel.setFrame(NSRect(origin: CGPoint(x: xPos, y: yPos), size: panelSize), display: true)
