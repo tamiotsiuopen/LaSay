@@ -23,8 +23,8 @@ struct SettingsView: View {
     @State private var showAPIKey: Bool = false
     @State private var enableSoundFeedback: Bool = true
     @State private var enablePreviewMode: Bool = false
-    @State private var isPasteAdvancedExpanded: Bool = false
-    @State private var isAIPolishAdvancedExpanded: Bool = false
+    @State private var isPasteAdvancedExpanded: Bool = true
+    @State private var isAIPolishAdvancedExpanded: Bool = true
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
 
     private var isUsingCustomPrompt: Bool {
