@@ -1,99 +1,152 @@
-# LaSay — Voice Input for Developers
+# LaSay
 
-> Dictate in your native language + English technical terms. LaSay keeps them intact.
+Voice input for developers. Dictate in your native language with English technical terms -- LaSay keeps them intact.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![macOS](https://img.shields.io/badge/macOS-13.0+-green)
-![Swift](https://img.shields.io/badge/Swift-5.0-orange)
+![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
+![Swift](https://img.shields.io/badge/Swift-5-orange)
+![License](https://img.shields.io/badge/license-proprietary-lightgrey)
 
-## 功能特色
+## Why LaSay
 
-- **混語言輸入**：母語 + 英文技術術語混著說，輸出保持原樣
-- **保留技術術語**：框架、工具、程式碼識別字不被改寫
-- **IDE / Terminal 皆可用**：任何 app 的輸入框都能直接貼上
-- **全域語音輸入**：按住 **Fn + Space** 即可在任何 app 中錄音
-- **AI 文字清理**：移除口語贅字、修正文法與標點
-- **即時貼上**：轉錄完成後自動貼到游標位置
-- **安全儲存**：API Key 安全加密儲存
+Developers think in mixed languages. You say "help me refactor the useEffect hook" in Mandarin, and every transcription tool mangles "useEffect" into nonsense. LaSay solves this with a 300+ term technical dictionary and AI post-processing that preserves code identifiers, framework names, and technical jargon exactly as spoken.
 
-## 安裝
+**Hold Fn+Space. Speak. Release. Text appears at your cursor.**
 
-1. 下載 `LaSay.dmg`
-2. 雙擊開啟，將 LaSay.app 拖到 Applications 資料夾
-3. 右鍵點擊 LaSay.app → 選擇「打開」（首次執行需要）
+Works in any app -- VS Code, Terminal, Slack, browser, anywhere you type.
 
-## Quick Start (for Developers)
+## Features
 
-1. Install LaSay.app → Applications
-2. First launch: Grant Microphone + Accessibility permissions
-3. Menu bar → Settings → Paste your OpenAI API Key
-4. Done. Hold **Fn+Space** anywhere to dictate.
+- **Mixed-language transcription** -- speak your native language with English technical terms
+- **300+ technical terms preserved** -- React, FastAPI, Kubernetes, camelCase identifiers, all kept intact
+- **Two transcription modes** -- Cloud (OpenAI Whisper API) or Local (whisper.cpp, fully offline)
+- **AI text cleanup** -- removes filler words, fixes grammar, preserves technical terms (GPT-5-mini)
+- **Global hotkey** -- Fn+Space works in any application
+- **Auto-paste** -- transcribed text is pasted directly at cursor position
+- **Secure storage** -- API keys stored in macOS Keychain
 
-That's it. No account, no signup, no cloud sync. Your API key = your access.
+## Quick Start
 
-## 設定
+```
+1. Install LaSay.app to /Applications
+2. Grant Microphone + Accessibility permissions on first launch
+3. Menu bar → Settings → enter your OpenAI API Key
+4. Hold Fn+Space anywhere to dictate
+```
 
-### 1. 授予權限
+No account. No signup. No cloud sync. Your API key, your data.
 
-#### 麥克風權限
-- **系統設定** → **隱私權與安全性** → **麥克風**
-- 勾選 **LaSay**
+## Architecture
 
-#### Accessibility 權限（全域快捷鍵）
-- **系統設定** → **隱私權與安全性** → **輔助使用**
-- 勾選 **LaSay**
+```
+Fn+Space (hold)
+    │
+    ▼
+AudioRecorder (16kHz mono AAC)
+    │
+    ├─► Cloud: OpenAI Whisper API ──► transcription
+    │
+    └─► Local: whisper.cpp CLI ─────► transcription
+                                          │
+                                          ▼
+                                   TechTermsDictionary
+                                   (300+ regex corrections)
+                                          │
+                                          ▼
+                                   AI Polish (optional)
+                                   GPT-5-mini text cleanup
+                                          │
+                                          ▼
+                                   Auto-paste at cursor
+```
 
-### 2. 設定 API Key
+## Transcription Modes
 
-1. 點擊 menu bar 的 LaSay 圖示
-2. 選擇「設定...」
-3. 輸入你的 **OpenAI API Key**
-   - 從 [OpenAI Platform](https://platform.openai.com/api-keys) 取得
-4. 選擇轉錄語言（繁體中文 / English）
-5. （選填）啟用 **AI 文字清理**
+| Mode | Engine | Latency | Cost | Offline |
+|------|--------|---------|------|---------|
+| Cloud | OpenAI Whisper API | ~1-2s | ~$0.001/use | No |
+| Local | whisper.cpp (ggml-base) | ~2-4s | Free | Yes |
 
-## 使用方式
+Local mode auto-downloads the whisper.cpp binary and ggml-base model (~142MB) on first use.
 
-1. 在任何 app 中將游標放在輸入框
-2. **按住 Fn + Space**
-3. 開始說話
-4. **放開 Fn + Space**
-5. 文字會自動出現在游標位置
+## Configuration
 
-## 費用
+### Permissions
 
-LaSay 使用 OpenAI API：
-- **Whisper**：約 $0.001 USD / 次
-- **GPT-5-mini**（如啟用）：約 $0.00004 USD / 次
-- **總計**：約 $0.001-0.002 USD / 次
+LaSay requires two macOS permissions:
 
-## 進階設定
+- **Microphone** -- System Settings > Privacy & Security > Microphone
+- **Accessibility** -- System Settings > Privacy & Security > Accessibility (for global hotkey)
 
-- **AI 文字清理**：可開關，使用 GPT-5-mini 優化轉錄文字
-- **自訂 Prompt**：自訂 AI 文字清理的行為
-- **自動貼上**：可選擇是否自動貼上文字
-- **剪貼簿還原**：貼上後可選擇是否還原原剪貼簿內容
+### Settings
 
-## 常見問題
+Access via menu bar icon > Settings:
 
-### Q: 為什麼快捷鍵沒反應？
-A: 請確認已授予 **Accessibility 權限**，並重新啟動 LaSay。
+- **Transcription mode** -- Cloud or Local
+- **Transcription language** -- Auto / Chinese / English / Japanese / Korean
+- **AI text cleanup** -- toggle on/off, custom prompt supported
+- **Auto-paste** -- paste transcription directly at cursor
+- **Sound feedback** -- audio cue for recording start/stop
+- **Preview mode** -- review text before pasting
 
-### Q: Terminal 中無法使用？
-A: Terminal 有特殊的鍵盤處理機制，建議在其他 app 使用（如 TextEdit、Chrome、Slack）。
+### API Key
 
-### Q: 轉錄語言不正確？
-A: 在設定中選擇正確的語言（繁體中文 / English）。
+Required for Cloud mode and AI text cleanup. Get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 
-### Q: 費用會很高嗎？
-A: 每次使用約 $0.001-0.002 USD，100 次使用約 $0.10-0.20 USD。
+Stored in macOS Keychain (not UserDefaults, not plaintext).
 
-## 致謝
+## Cost
 
-- OpenAI Whisper - 語音轉錄
-- OpenAI GPT-5-mini - 文字清理
+Using Cloud mode with AI cleanup enabled:
+
+| Component | Cost per use |
+|-----------|-------------|
+| Whisper API | ~$0.001 |
+| GPT-5-mini (if enabled) | ~$0.00004 |
+| **Total** | **~$0.001** |
+
+100 uses per day = ~$3/month. Local mode is free.
+
+## Supported Languages
+
+Transcription: Auto-detect, Chinese (zh), English (en), Japanese (ja), Korean (ko)
+
+UI: Traditional Chinese, English
+
+## FAQ
+
+**Hotkey not working?**
+Grant Accessibility permission and restart LaSay. macOS requires a restart after granting this permission.
+
+**Works in Terminal?**
+Yes, via simulated Cmd+V paste. Some terminal emulators may require additional configuration.
+
+**How accurate is the technical term preservation?**
+The dictionary covers 300+ terms across major languages (Python, JavaScript, TypeScript, Swift, Rust, Java, C/C++/C#), frameworks (React, FastAPI, Django, Spring), databases (PostgreSQL, MongoDB, Redis), DevOps tools (Docker, Kubernetes, Terraform), and common abbreviations (API, SDK, CI/CD, ORM).
+
+**Can I use it without an API key?**
+Yes. Switch to Local mode -- it runs whisper.cpp entirely on your machine. AI text cleanup requires an API key.
+
+**Where is my API key stored?**
+In macOS Keychain via the Security framework. Not in UserDefaults, not in plaintext files.
+
+## System Requirements
+
+- macOS 13.0 (Ventura) or later
+- Apple Silicon or Intel Mac
+- Internet connection (Cloud mode only)
+- OpenAI API key (Cloud mode and AI cleanup)
+
+## Build from Source
+
+```bash
+git clone https://github.com/tamiotsiuopen/LaSay.git
+cd LaSay/VoiceScribe
+open VoiceScribe.xcodeproj
+# Xcode → Product → Build (Cmd+B)
+```
+
+No external dependencies. No CocoaPods. No SPM packages.
 
 ---
 
-**版本**：1.0.0
-**最後更新**：2026-02-15
+Built by [Tamio Tsiu](mailto:tamio.tsiu@gmail.com)
