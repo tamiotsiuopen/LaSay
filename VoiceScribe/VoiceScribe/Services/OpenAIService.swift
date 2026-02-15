@@ -70,20 +70,20 @@ class OpenAIService {
     func cancelCurrentRequest() {
         currentTask?.cancel()
         currentTask = nil
-        debugLog("🚫 [OpenAIService] 已取消當前請求")
+        debugLog("[CANCEL] [OpenAIService] 已取消當前請求")
     }
 
     // MARK: - Polish Text
 
     /// 使用 GPT-5-mini 優化文字
     func polishText(_ text: String, customPrompt: String? = nil, completion: @escaping (Result<String, OpenAIError>) -> Void) {
-        debugLog("🔍 [OpenAIService] 開始 AI 潤飾")
-        debugLog("🔍 [OpenAIService] 輸入文字：\(text)")
-        debugLog("🔍 [OpenAIService] 文字長度：\(text.count) 字元")
+        debugLog("[DEBUG] [OpenAIService] 開始 AI 潤飾")
+        debugLog("[DEBUG] [OpenAIService] 輸入文字：\(text)")
+        debugLog("[DEBUG] [OpenAIService] 文字長度：\(text.count) 字元")
 
         // 檢查 API Key
         guard let apiKey = keychainHelper.get(key: "openai_api_key"), !apiKey.isEmpty else {
-            debugLog("❌ [OpenAIService] 沒有 API Key")
+            debugLog("[ERROR] [OpenAIService] 沒有 API Key")
             completion(.failure(.noAPIKey))
             return
         }
@@ -91,7 +91,7 @@ class OpenAIService {
         // 使用自訂 prompt 或預設 prompt
         let trimmedPrompt = customPrompt?.trimmingCharacters(in: .whitespacesAndNewlines)
         let systemPrompt = (trimmedPrompt?.isEmpty == false ? trimmedPrompt : defaultSystemPrompt) ?? defaultSystemPrompt
-        debugLog("🔍 [OpenAIService] 使用的 System Prompt：\(systemPrompt.prefix(100))...")
+        debugLog("[DEBUG] [OpenAIService] 使用的 System Prompt：\(systemPrompt.prefix(100))...")
 
         // 建立請求
         var request = URLRequest(url: URL(string: apiURL)!)
@@ -115,22 +115,22 @@ class OpenAIService {
             ]
         ]
 
-        debugLog("🔍 [OpenAIService] 請求 body 已建立（使用 gpt-5-mini）")
+        debugLog("[DEBUG] [OpenAIService] 請求 body 已建立（使用 gpt-5-mini）")
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
             // Debug: 印出請求內容
             if let jsonString = String(data: request.httpBody!, encoding: .utf8) {
-                debugLog("🔍 [OpenAIService] 請求 JSON：\(jsonString)")
+                debugLog("[DEBUG] [OpenAIService] 請求 JSON：\(jsonString)")
             }
         } catch {
-            debugLog("❌ [OpenAIService] 建立請求 body 失敗：\(error)")
+            debugLog("[ERROR] [OpenAIService] 建立請求 body 失敗：\(error)")
             completion(.failure(.networkError(error)))
             return
         }
 
-        debugLog("📡 [OpenAIService] 發送請求到 OpenAI API...")
+        debugLog("[DEBUG] [OpenAIService] 發送請求到 OpenAI API...")
 
         // 發送請求
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
@@ -140,23 +140,23 @@ class OpenAIService {
             if let error = error {
                 // Check if it was cancelled
                 if (error as NSError).code == NSURLErrorCancelled {
-                    debugLog("🚫 [OpenAIService] 請求已被取消")
+                    debugLog("[CANCEL] [OpenAIService] 請求已被取消")
                     return
                 }
-                debugLog("❌ [OpenAIService] 網路錯誤：\(error.localizedDescription)")
+                debugLog("[ERROR] [OpenAIService] 網路錯誤：\(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
             }
 
             guard let data = data else {
-                debugLog("❌ [OpenAIService] 沒有收到資料")
+                debugLog("[ERROR] [OpenAIService] 沒有收到資料")
                 completion(.failure(.invalidResponse))
                 return
             }
 
             // Debug: 印出原始回應
             if let responseString = String(data: data, encoding: .utf8) {
-                debugLog("🔍 [OpenAIService] API 回應：\(responseString.prefix(500))...")
+                debugLog("[DEBUG] [OpenAIService] API 回應：\(responseString.prefix(500))...")
             }
 
             // 解析回應
@@ -165,7 +165,7 @@ class OpenAIService {
                     // 檢查是否有錯誤
                     if let errorObj = json["error"] as? [String: Any],
                        let message = errorObj["message"] as? String {
-                        debugLog("❌ [OpenAIService] API 錯誤：\(message)")
+                        debugLog("[ERROR] [OpenAIService] API 錯誤：\(message)")
                         completion(.failure(.apiError(message)))
                         return
                     }
@@ -176,16 +176,16 @@ class OpenAIService {
                        let message = firstChoice["message"] as? [String: Any],
                        let content = message["content"] as? String {
                         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-                        debugLog("✅ [OpenAIService] AI 潤飾結果：\(trimmedContent)")
+                        debugLog("[OK] [OpenAIService] AI 潤飾結果：\(trimmedContent)")
                         completion(.success(trimmedContent))
                         return
                     }
                 }
 
-                debugLog("❌ [OpenAIService] 無法解析回應")
+                debugLog("[ERROR] [OpenAIService] 無法解析回應")
                 completion(.failure(.invalidResponse))
             } catch {
-                debugLog("❌ [OpenAIService] 解析錯誤：\(error)")
+                debugLog("[ERROR] [OpenAIService] 解析錯誤：\(error)")
                 completion(.failure(.networkError(error)))
             }
         }

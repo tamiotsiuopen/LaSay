@@ -52,7 +52,7 @@ class AudioRecorder: NSObject {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                debugLog("❌ 發送麥克風權限通知失敗：\(error.localizedDescription)")
+                debugLog("[ERROR] 發送麥克風權限通知失敗：\(error.localizedDescription)")
             }
         }
     }
@@ -63,7 +63,7 @@ class AudioRecorder: NSObject {
     func startRecording() {
         // 檢查權限
         guard checkMicrophonePermission() else {
-            debugLog("❌ 沒有麥克風權限")
+            debugLog("[ERROR] 沒有麥克風權限")
             showMicrophonePermissionDeniedNotification()
             return
         }
@@ -93,7 +93,7 @@ class AudioRecorder: NSObject {
             audioRecorder?.delegate = self
             audioRecorder?.record()
 
-            debugLog("✅ 開始錄音：\(url.path)")
+            debugLog("[OK] 開始錄音：\(url.path)")
         } catch {
             // 使用 defer 確保錯誤時清理臨時檔案
             defer {
@@ -103,7 +103,7 @@ class AudioRecorder: NSObject {
                 recordingURL = nil
             }
             
-            debugLog("❌ 錄音失敗：\(error.localizedDescription)")
+            debugLog("[ERROR] 錄音失敗：\(error.localizedDescription)")
             onError?(error)
         }
     }
@@ -111,12 +111,12 @@ class AudioRecorder: NSObject {
     /// 停止錄音
     func stopRecording() {
         guard let recorder = audioRecorder, recorder.isRecording else {
-            debugLog("⚠️ 沒有正在進行的錄音")
+            debugLog("[WARN] 沒有正在進行的錄音")
             return
         }
 
         recorder.stop()
-        debugLog("✅ 停止錄音")
+        debugLog("[OK] 停止錄音")
     }
 
     /// 取得最後一次錄音的 URL
@@ -128,9 +128,9 @@ class AudioRecorder: NSObject {
     func deleteRecording(at url: URL) {
         do {
             try FileManager.default.removeItem(at: url)
-            debugLog("✅ 刪除錄音檔案：\(url.path)")
+            debugLog("[OK] 刪除錄音檔案：\(url.path)")
         } catch {
-            debugLog("❌ 刪除錄音檔案失敗：\(error.localizedDescription)")
+            debugLog("[ERROR] 刪除錄音檔案失敗：\(error.localizedDescription)")
         }
     }
     
@@ -153,10 +153,10 @@ extension AudioRecorder: AVAudioRecorderDelegate {
         }
         
         if flag {
-            debugLog("✅ 錄音完成：\(recorder.url.path)")
+            debugLog("[OK] 錄音完成：\(recorder.url.path)")
             onRecordingComplete?(recorder.url)
         } else {
-            debugLog("❌ 錄音未成功完成")
+            debugLog("[ERROR] 錄音未成功完成")
             // 錄音失敗，立即清理檔案
             deleteRecording(at: recorder.url)
             recordingURL = nil
@@ -174,7 +174,7 @@ extension AudioRecorder: AVAudioRecorderDelegate {
         }
         
         if let error = error {
-            debugLog("❌ 錄音編碼錯誤：\(error.localizedDescription)")
+            debugLog("[ERROR] 錄音編碼錯誤：\(error.localizedDescription)")
             onError?(error)
         }
     }

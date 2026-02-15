@@ -426,7 +426,7 @@ struct SettingsView: View {
     // MARK: - Methods
 
     func loadSettings() {
-        debugLog("🔍 [SettingsView] 開始載入設定...")
+        debugLog("[DEBUG] [SettingsView] 開始載入設定...")
 
         loadAPIKey()
 
@@ -448,14 +448,14 @@ struct SettingsView: View {
 
         // 載入 AI 潤飾設定
         let savedAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
-        debugLog("🔍 [SettingsView] UserDefaults 讀取 enable_ai_polish: \(savedAIPolish)")
+        debugLog("[DEBUG] [SettingsView] UserDefaults 讀取 enable_ai_polish: \(savedAIPolish)")
         enableAIPolish = savedAIPolish
-        debugLog("🔍 [SettingsView] 設定 enableAIPolish 為: \(enableAIPolish)")
+        debugLog("[DEBUG] [SettingsView] 設定 enableAIPolish 為: \(enableAIPolish)")
 
 
         if let savedPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt") {
             customSystemPrompt = savedPrompt
-            debugLog("🔍 [SettingsView] 載入自訂 prompt: \(savedPrompt.prefix(50))...")
+            debugLog("[DEBUG] [SettingsView] 載入自訂 prompt: \(savedPrompt.prefix(50))...")
         }
 
         // 載入貼上設定
@@ -525,7 +525,7 @@ struct SettingsView: View {
         // 通知 AppDelegate 刷新 menu
         NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
 
-        debugLog("💾 設定已自動儲存")
+        debugLog("[SAVE] 設定已自動儲存")
     }
 }
 

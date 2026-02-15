@@ -112,7 +112,7 @@ final class LocalWhisperService {
             return
         }
 
-        debugLog("⬇️ [LocalWhisper] Downloading model to: \(modelFileURL.path)")
+        debugLog("[DEBUG] [LocalWhisper] Downloading model to: \(modelFileURL.path)")
 
         downloadFile(
             from: modelDownloadURL,
@@ -123,7 +123,7 @@ final class LocalWhisperService {
         ) { result in
             switch result {
             case .success:
-                debugLog("✅ [LocalWhisper] Model downloaded")
+                debugLog("[OK] [LocalWhisper] Model downloaded")
                 completion(.success(self.modelFileURL))
             case .failure:
                 completion(.failure(.modelDownloadFailed))
@@ -153,7 +153,7 @@ final class LocalWhisperService {
         let downloadURL = arch == "arm64" ? binaryDownloadURLArm64 : binaryDownloadURLX86
         let zipURL = fileManager.temporaryDirectory.appendingPathComponent("whisper-cli-\(UUID().uuidString).zip")
 
-        debugLog("⬇️ [LocalWhisper] Downloading whisper.cpp CLI (\(arch))")
+        debugLog("[DEBUG] [LocalWhisper] Downloading whisper.cpp CLI (\(arch))")
 
         downloadFile(
             from: downloadURL,
@@ -345,7 +345,7 @@ final class LocalWhisperService {
 
         let observation = task.progress.observe(\.fractionCompleted) { progress, _ in
             let percent = Int(progress.fractionCompleted * 100)
-            debugLog("⬇️ [LocalWhisper] \(label) download progress: \(percent)%")
+            debugLog("[DEBUG] [LocalWhisper] \(label) download progress: \(percent)%")
             DispatchQueue.main.async {
                 progressHandler?(DownloadProgress(
                     kind: kind,

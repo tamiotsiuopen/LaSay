@@ -22,6 +22,15 @@
 2. 雙擊開啟，將 LaSay.app 拖到 Applications 資料夾
 3. 右鍵點擊 LaSay.app → 選擇「打開」（首次執行需要）
 
+## Quick Start (for Developers)
+
+1. Install LaSay.app → Applications
+2. First launch: Grant Microphone + Accessibility permissions
+3. Menu bar → Settings → Paste your OpenAI API Key
+4. Done. Hold **Fn+Space** anywhere to dictate.
+
+That's it. No account, no signup, no cloud sync. Your API key = your access.
+
 ## 設定
 
 ### 1. 授予權限

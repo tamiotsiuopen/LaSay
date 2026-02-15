@@ -166,7 +166,13 @@ struct OnboardingView: View {
                     Text(localization.localized(.onboardingMicrophone))
                         .font(.headline)
                     Spacer()
-                    Text(microphoneGranted ? "✅" : "⚪️")
+                    if microphoneGranted {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    } else {
+                        Image(systemName: "circle")
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 Button(localization.localized(.onboardingGrantMicrophone)) {
@@ -186,7 +192,13 @@ struct OnboardingView: View {
                     Text(localization.localized(.onboardingAccessibility))
                         .font(.headline)
                     Spacer()
-                    Text(accessibilityGranted ? "✅" : "⚪️")
+                    if accessibilityGranted {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    } else {
+                        Image(systemName: "circle")
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 Button(localization.localized(.onboardingOpenAccessibility)) {

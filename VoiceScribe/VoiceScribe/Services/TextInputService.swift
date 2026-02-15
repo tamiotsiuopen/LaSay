@@ -76,7 +76,7 @@ class TextInputService {
             }
         }
 
-        debugLog("✅ 剪貼簿已還原")
+        debugLog("[OK] 剪貼簿已還原")
     }
 
     // MARK: - Keyboard Simulation
@@ -86,7 +86,7 @@ class TextInputService {
         // 創建 V 鍵按下事件（keyCode 9 是 V）
         guard let keyDownEvent = CGEvent(keyboardEventSource: nil, virtualKey: 9, keyDown: true),
               let keyUpEvent = CGEvent(keyboardEventSource: nil, virtualKey: 9, keyDown: false) else {
-            debugLog("❌ 無法創建鍵盤事件")
+            debugLog("[ERROR] 無法創建鍵盤事件")
             return
         }
 
@@ -98,6 +98,6 @@ class TextInputService {
         keyDownEvent.post(tap: .cghidEventTap)
         keyUpEvent.post(tap: .cghidEventTap)
 
-        debugLog("✅ 已模擬 ⌘V")
+        debugLog("[OK] 已模擬 ⌘V")
     }
 }

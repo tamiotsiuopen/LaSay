@@ -25,7 +25,7 @@ class KeychainHelper {
     /// 儲存值到 Keychain
     func save(key: String, value: String) -> Bool {
         guard let data = value.data(using: .utf8) else {
-            debugLog("❌ KeychainHelper: 無法將字串轉換為 Data")
+            debugLog("[ERROR] KeychainHelper: 無法將字串轉換為 Data")
             return false
         }
 
@@ -43,7 +43,7 @@ class KeychainHelper {
         let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
 
         if updateStatus == errSecSuccess {
-            debugLog("✅ KeychainHelper: 更新成功 - \(key)")
+            debugLog("[OK] KeychainHelper: 更新成功 - \(key)")
             return true
         } else if updateStatus == errSecItemNotFound {
             // 項目不存在，新增
@@ -52,14 +52,14 @@ class KeychainHelper {
 
             let addStatus = SecItemAdd(newItem as CFDictionary, nil)
             if addStatus == errSecSuccess {
-                debugLog("✅ KeychainHelper: 新增成功 - \(key)")
+                debugLog("[OK] KeychainHelper: 新增成功 - \(key)")
                 return true
             } else {
-                debugLog("❌ KeychainHelper: 新增失敗 - \(key), status: \(addStatus)")
+                debugLog("[ERROR] KeychainHelper: 新增失敗 - \(key), status: \(addStatus)")
                 return false
             }
         } else {
-            debugLog("❌ KeychainHelper: 更新失敗 - \(key), status: \(updateStatus)")
+            debugLog("[ERROR] KeychainHelper: 更新失敗 - \(key), status: \(updateStatus)")
             return false
         }
     }
@@ -79,17 +79,17 @@ class KeychainHelper {
 
         if status == errSecSuccess, let data = result as? Data {
             if let value = String(data: data, encoding: .utf8) {
-                debugLog("✅ KeychainHelper: 讀取成功 - \(key)")
+                debugLog("[OK] KeychainHelper: 讀取成功 - \(key)")
                 return value
             } else {
-                debugLog("❌ KeychainHelper: 無法將 Data 轉換為字串 - \(key)")
+                debugLog("[ERROR] KeychainHelper: 無法將 Data 轉換為字串 - \(key)")
                 return nil
             }
         } else if status == errSecItemNotFound {
-            debugLog("⚠️ KeychainHelper: 項目不存在 - \(key)")
+            debugLog("[WARN] KeychainHelper: 項目不存在 - \(key)")
             return nil
         } else {
-            debugLog("❌ KeychainHelper: 讀取失敗 - \(key), status: \(status)")
+            debugLog("[ERROR] KeychainHelper: 讀取失敗 - \(key), status: \(status)")
             return nil
         }
     }
@@ -105,13 +105,13 @@ class KeychainHelper {
         let status = SecItemDelete(query as CFDictionary)
 
         if status == errSecSuccess {
-            debugLog("✅ KeychainHelper: 刪除成功 - \(key)")
+            debugLog("[OK] KeychainHelper: 刪除成功 - \(key)")
             return true
         } else if status == errSecItemNotFound {
-            debugLog("⚠️ KeychainHelper: 項目不存在（刪除時） - \(key)")
+            debugLog("[WARN] KeychainHelper: 項目不存在（刪除時） - \(key)")
             return true // 不存在也算成功
         } else {
-            debugLog("❌ KeychainHelper: 刪除失敗 - \(key), status: \(status)")
+            debugLog("[ERROR] KeychainHelper: 刪除失敗 - \(key), status: \(status)")
             return false
         }
     }
@@ -127,7 +127,7 @@ class KeychainHelper {
             return
         }
 
-        debugLog("🔄 KeychainHelper: 開始遷移...")
+        debugLog("[DEBUG] KeychainHelper: 開始遷移...")
 
         // 嘗試遷移已知的 key（目前只有 openai_api_key）
         let keysToMigrate = ["openai_api_key"]
@@ -141,17 +141,17 @@ class KeychainHelper {
                 
                 // 遷移到 Keychain
                 if save(key: key, value: value) {
-                    debugLog("✅ KeychainHelper: 遷移成功 - \(key)")
+                    debugLog("[OK] KeychainHelper: 遷移成功 - \(key)")
                     // 刪除舊的 UserDefaults 值
                     UserDefaults.standard.removeObject(forKey: legacyKey)
                 } else {
-                    debugLog("❌ KeychainHelper: 遷移失敗 - \(key)")
+                    debugLog("[ERROR] KeychainHelper: 遷移失敗 - \(key)")
                 }
             }
         }
 
         // 標記遷移完成
         UserDefaults.standard.set(true, forKey: migrationKey)
-        debugLog("✅ KeychainHelper: 遷移完成")
+        debugLog("[OK] KeychainHelper: 遷移完成")
     }
 }

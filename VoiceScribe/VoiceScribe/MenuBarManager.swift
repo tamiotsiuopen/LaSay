@@ -68,11 +68,11 @@ final class MenuBarManager: NSObject {
         let statusText: String
         switch appState.status {
         case .idle:
-            statusText = localization.localized(.status) + localization.localized(.idle)
+            statusText = localization.localized(.idle)
         case .recording:
-            statusText = localization.localized(.status) + localization.localized(.recording)
+            statusText = localization.localized(.recording)
         case .processing:
-            statusText = localization.localized(.status) + localization.localized(.processing)
+            statusText = localization.localized(.processing)
         }
         let statusMenuItem = NSMenuItem(title: statusText, action: nil, keyEquivalent: "")
         statusMenuItem.isEnabled = false
@@ -83,7 +83,7 @@ final class MenuBarManager: NSObject {
         // 模式選擇
         let currentMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
         for mode in TranscriptionMode.allCases {
-            let title = localization.localized(.modeLabel) + mode.localizedDisplayName
+            let title = mode.localizedDisplayName
             let item = NSMenuItem(title: title, action: #selector(changeMode(_:)), keyEquivalent: "")
             item.representedObject = mode.rawValue
             item.state = mode == currentMode ? .on : .off

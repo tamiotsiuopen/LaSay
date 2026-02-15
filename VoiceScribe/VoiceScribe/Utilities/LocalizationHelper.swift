@@ -32,7 +32,7 @@ class LocalizationHelper {
         case .openAIAPIKey:
             return language == "zh" ? "OpenAI API Key" : "OpenAI API Key"
         case .apiKeySet:
-            return language == "zh" ? "✅ 已設定 API Key" : "✅ API Key Set"
+            return language == "zh" ? "已設定 API Key" : "API Key Set"
         case .show:
             return language == "zh" ? "顯示" : "Show"
         case .hide:
@@ -72,13 +72,13 @@ class LocalizationHelper {
         case .transcriptionDescription:
             return language == "zh" ? "本地模式使用 whisper.cpp（可離線），雲端模式使用 OpenAI API" : "Local uses whisper.cpp (offline), Cloud uses OpenAI API"
         case .modelDownloaded:
-            return language == "zh" ? "Model: ggml-base (142MB) ✅ 已下載" : "Model: ggml-base (142MB) ✅ Downloaded"
+            return language == "zh" ? "Model: ggml-base (142MB) 已下載" : "Model: ggml-base (142MB) Downloaded"
         case .modelNotDownloaded:
-            return language == "zh" ? "Model: ggml-base ⬇️ 尚未下載（首次使用時下載）" : "Model: ggml-base ⬇️ Not downloaded (will download on first use)"
+            return language == "zh" ? "Model: ggml-base 尚未下載（首次使用時下載）" : "Model: ggml-base Not downloaded (will download on first use)"
         case .cliDownloaded:
-            return language == "zh" ? "Whisper CLI: ✅ 已下載" : "Whisper CLI: ✅ Downloaded"
+            return language == "zh" ? "Whisper CLI: 已下載" : "Whisper CLI: Downloaded"
         case .cliNotDownloaded:
-            return language == "zh" ? "Whisper CLI: ⬇️ 尚未下載（首次使用時下載）" : "Whisper CLI: ⬇️ Not downloaded (will download on first use)"
+            return language == "zh" ? "Whisper CLI: 尚未下載（首次使用時下載）" : "Whisper CLI: Not downloaded (will download on first use)"
 
         // 快捷鍵
         case .globalHotkey:
@@ -136,7 +136,7 @@ class LocalizationHelper {
         case .paste:
             return language == "zh" ? "貼上" : "Paste"
         case .changesSavedAutomatically:
-            return language == "zh" ? "設定會在關閉時自動儲存（API Key 需手動儲存）" : "Settings auto-save on close (API Key requires manual save)"
+            return language == "zh" ? "自動儲存（API Key 除外）" : "Auto-saved (API Key excluded)"
         case .back:
             return language == "zh" ? "返回" : "Back"
         case .next:
@@ -156,17 +156,17 @@ class LocalizationHelper {
         case .processing:
             return language == "zh" ? "處理中..." : "Processing..."
         case .holdFnSpace:
-            return language == "zh" ? "💡 按住 Fn+Space 開始錄音" : "💡 Hold Fn+Space to start recording"
+            return language == "zh" ? "按住 Fn+Space 開始錄音" : "Hold Fn+Space to start recording"
         case .recordingHint:
-            return language == "zh" ? "🎤 錄音中...（放開 Fn+Space 停止）" : "🎤 Recording... (Release Fn+Space to stop)"
+            return language == "zh" ? "錄音中...（放開 Fn+Space 停止）" : "Recording... (Release Fn+Space to stop)"
         case .processingHint:
-            return language == "zh" ? "⏳ 處理中..." : "⏳ Processing..."
+            return language == "zh" ? "處理中..." : "Processing..."
         case .lastTranscription:
             return language == "zh" ? "最後轉錄：" : "Last Transcription: "
         case .needAPIKey:
-            return language == "zh" ? "⚠️ 請先設定 OpenAI API Key" : "⚠️ Please set OpenAI API Key first"
+            return language == "zh" ? "請先設定 OpenAI API Key" : "Please set OpenAI API Key first"
         case .needAccessibility:
-            return language == "zh" ? "⚠️ 需要授予輔助使用權限" : "⚠️ Accessibility permission required"
+            return language == "zh" ? "需要授予輔助使用權限" : "Accessibility permission required"
         case .settingsMenu:
             return language == "zh" ? "設定..." : "Settings..."
         case .about:
@@ -187,7 +187,7 @@ class LocalizationHelper {
             return language == "zh" ? """
             macOS 系統級語音輸入工具
 
-            版本：%@ (Build %@) - 測試版
+            版本：%@ (%@) Beta
 
             功能：
             • Whisper 語音轉錄
@@ -204,7 +204,7 @@ class LocalizationHelper {
             """ : """
             macOS System-wide Voice Input Tool
 
-            Version: %@ (Build %@) - Beta
+            Version: %@ (%@) Beta
 
             Features:
             • Whisper Speech Transcription
@@ -362,13 +362,15 @@ class LocalizationHelper {
         case .offlineCloudModeError:
             return language == "zh" ? "無網路連接。請切換到本地模式或檢查網路連接。" : "No internet connection. Switch to Local mode or check your connection."
         case .networkErrorActionable:
-            return language == "zh" ? "網路錯誤。請檢查網路連接後重試。" : "Network error. Check your internet connection and try again."
+            return language == "zh" ? "網路錯誤：無法連線至 API。檢查網路或切換至本地模式。" : "Network error: Cannot reach API. Check connection or switch to Local mode."
         case .invalidAPIKeyActionable:
-            return language == "zh" ? "API Key 無效。請在設定中檢查您的 API Key。" : "Invalid API key. Check your API key in Settings."
+            return language == "zh" ? "API Key 無效 (401)。前往設定更新 Key。" : "Invalid API key (401). Update in Settings."
         case .processingTimeout:
             return language == "zh" ? "處理逾時。請重試。" : "Processing timeout. Please try again."
         case .transcriptionComplete:
             return language == "zh" ? "轉錄完成" : "Transcription Complete"
+        case .pastedToCursor:
+            return language == "zh" ? "已貼上至游標位置" : "Pasted to Cursor"
         }
     }
 }
@@ -544,4 +546,5 @@ enum LocalizationKey {
     case invalidAPIKeyActionable
     case processingTimeout
     case transcriptionComplete
+    case pastedToCursor
 }
