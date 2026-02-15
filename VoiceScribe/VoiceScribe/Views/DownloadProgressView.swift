@@ -23,6 +23,7 @@ final class DownloadProgressViewModel: ObservableObject {
 
 struct DownloadProgressView: View {
     @ObservedObject var model: DownloadProgressViewModel
+    private let localization = LocalizationHelper.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -34,6 +35,9 @@ struct DownloadProgressView: View {
         }
         .padding(20)
         .frame(width: 320)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(localization.localized(.downloadProgressAccessibility))
+        .accessibilityValue("\(model.displayTitle), \(Int(model.progress * 100)) percent complete")
     }
 }
 

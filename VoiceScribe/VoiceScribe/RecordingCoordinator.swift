@@ -22,6 +22,14 @@ final class RecordingCoordinator {
     private var downloadPanel: NSPanel?
     private var previewPanel: NSPanel?
     private let downloadProgressModel = DownloadProgressViewModel()
+    private var processingTimer: Timer?
+    
+    /// Cancel all ongoing API requests
+    func cancelAllRequests() {
+        whisperService.cancelCurrentRequest()
+        openAIService.cancelCurrentRequest()
+        debugLog("🚫 [RecordingCoordinator] 已取消所有進行中的請求")
+    }
 
     init(
         appState: AppState,
@@ -96,15 +104,17 @@ final class RecordingCoordinator {
     }
 
     private func showNotification(title: String, body: String, isError: Bool = false) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = isError ? .defaultCritical : .default
+        DispatchQueue.main.async {
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = isError ? .defaultCritical : .default
 
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                debugLog("❌ 發送通知失敗：\(error.localizedDescription)")
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    debugLog("❌ 發送通知失敗：\(error.localizedDescription)")
+                }
             }
         }
     }
@@ -148,28 +158,66 @@ final class RecordingCoordinator {
         }
 
         debugLog("📁 錄音檔案：\(audioURL.path)")
+        
+        // Start processing timeout timer (60 seconds)
+        processingTimer?.invalidate()
+        processingTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                debugLog("⏱️ 處理逾時（60秒）")
+                self.showNotification(
+                    title: self.localization.localized(.transcriptionFailed),
+                    body: self.localization.localized(.processingTimeout),
+                    isError: true
+                )
+                self.appState.updateStatus(.idle)
+                self.hotkeyManager.restartMonitoring()
+                self.audioRecorder.deleteRecording(at: audioURL)
+            }
+        }
 
         let selectedMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
         let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
         let languageCode = selectedLanguage.whisperCode
 
         if selectedMode == .cloud {
+            // Check internet connection before proceeding
+            if !NetworkMonitor.shared.isOnline {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.showNotification(
+                        title: self.localization.localized(.noNetworkConnection),
+                        body: self.localization.localized(.offlineCloudModeError),
+                        isError: true
+                    )
+                    self.appState.updateStatus(.idle)
+                    self.hotkeyManager.restartMonitoring()
+                    self.audioRecorder.deleteRecording(at: audioURL)
+                }
+                return
+            }
+            
             guard let apiKey = KeychainHelper.shared.get(key: "openai_api_key"), !apiKey.isEmpty else {
-                NotificationCenter.default.post(name: NSNotification.Name("OpenSettings"), object: nil)
-                showNotification(
-                    title: localization.localized(.apiKeyRequiredTitle),
-                    body: localization.localized(.apiKeyRequiredBody),
-                    isError: true
-                )
-                appState.updateStatus(.idle)
-                hotkeyManager.restartMonitoring()
-                audioRecorder.deleteRecording(at: audioURL)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    NotificationCenter.default.post(name: NSNotification.Name("OpenSettings"), object: nil)
+                    self.showNotification(
+                        title: self.localization.localized(.apiKeyRequiredTitle),
+                        body: self.localization.localized(.apiKeyRequiredBody),
+                        isError: true
+                    )
+                    self.appState.updateStatus(.idle)
+                    self.hotkeyManager.restartMonitoring()
+                    self.audioRecorder.deleteRecording(at: audioURL)
+                }
                 return
             }
         }
 
         let transcriptionHandler: (Result<String, WhisperError>) -> Void = { [weak self] result in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                
                 switch result {
                 case .success(let transcribedText):
                     debugLog("✅ 轉錄成功：\(transcribedText)")
@@ -181,19 +229,21 @@ final class RecordingCoordinator {
                         if selectedMode == .local, !NetworkMonitor.shared.isOnline {
                             debugLog("⚠️ [AI 潤飾] 離線模式，使用基本清理")
                             let cleaned = TextCleaner.basicCleanup(transcribedText)
-                            self?.processFinalText(cleaned)
+                            self.processFinalText(cleaned)
                         } else {
                             guard let apiKey = KeychainHelper.shared.get(key: "openai_api_key"), !apiKey.isEmpty else {
                                 debugLog("⚠️ [AI 潤飾] 未設定 OpenAI API Key，跳過 AI 潤飾")
-                                self?.processFinalText(transcribedText)
+                                self.processFinalText(transcribedText)
                                 return
                             }
 
                             debugLog("🤖 開始 AI 潤飾...")
                             let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
 
-                            self?.openAIService.polishText(transcribedText, customPrompt: customPrompt) { polishResult in
-                                DispatchQueue.main.async {
+                            self.openAIService.polishText(transcribedText, customPrompt: customPrompt) { [weak self] polishResult in
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let self = self else { return }
+                                    
                                     let finalText: String
                                     switch polishResult {
                                     case .success(let polishedText):
@@ -203,30 +253,34 @@ final class RecordingCoordinator {
                                         debugLog("❌ AI 潤飾失敗：\(error.localizedDescription)")
                                         debugLog("⚠️ 使用原始轉錄文字")
 
-                                        self?.showNotification(
-                                            title: self?.localization.localized(.aiPolishFailed) ?? "AI Polishing Failed",
-                                            body: (self?.localization.localized(.usingOriginalText) ?? "Using original text: ") + error.localizedDescription,
+                                        self.showNotification(
+                                            title: self.localization.localized(.aiPolishFailed),
+                                            body: self.localization.localized(.usingOriginalText) + error.localizedDescription,
                                             isError: false
                                         )
 
                                         finalText = transcribedText
                                     }
 
-                                    self?.processFinalText(finalText)
+                                    self.processFinalText(finalText)
                                 }
                             }
                         }
                     } else {
-                        self?.processFinalText(transcribedText)
+                        self.processFinalText(transcribedText)
                     }
 
-                    self?.audioRecorder.deleteRecording(at: audioURL)
+                    self.audioRecorder.deleteRecording(at: audioURL)
 
                 case .failure(let error):
                     debugLog("❌ 轉錄失敗：\(error.localizedDescription)")
 
-                    self?.showNotification(
-                        title: self?.localization.localized(.transcriptionFailed) ?? "Transcription Failed",
+                    // Cancel processing timeout timer
+                    self.processingTimer?.invalidate()
+                    self.processingTimer = nil
+
+                    self.showNotification(
+                        title: self.localization.localized(.transcriptionFailed),
                         body: error.localizedDescription,
                         isError: true
                     )
@@ -234,7 +288,7 @@ final class RecordingCoordinator {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                         self?.hotkeyManager.restartMonitoring()
                     }
-                    self?.appState.updateStatus(.idle)
+                    self.appState.updateStatus(.idle)
                 }
             }
         }
@@ -257,15 +311,19 @@ final class RecordingCoordinator {
     // MARK: - Download Progress
 
     private func handleDownloadProgress(_ progress: LocalWhisperService.DownloadProgress) {
-        let titleKey: LocalizationKey = (progress.kind == .model) ? .downloadingModel : .downloadingBinary
-        downloadProgressModel.title = localization.localized(titleKey)
-        downloadProgressModel.progress = progress.fraction
-        downloadProgressModel.sizeText = formatByteCount(progress.bytesExpected)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            let titleKey: LocalizationKey = (progress.kind == .model) ? .downloadingModel : .downloadingBinary
+            self.downloadProgressModel.title = self.localization.localized(titleKey)
+            self.downloadProgressModel.progress = progress.fraction
+            self.downloadProgressModel.sizeText = self.formatByteCount(progress.bytesExpected)
 
-        showDownloadPanelIfNeeded()
+            self.showDownloadPanelIfNeeded()
 
-        if progress.isCompleted, progress.kind == .model {
-            closeDownloadPanelAfterDelay()
+            if progress.isCompleted, progress.kind == .model {
+                self.closeDownloadPanelAfterDelay()
+            }
         }
     }
 
@@ -303,39 +361,47 @@ final class RecordingCoordinator {
     // MARK: - Text Processing
 
     private func processFinalText(_ text: String) {
-        let correctedText = TechTermsDictionary.apply(to: text)
-        appState.saveTranscription(correctedText)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Cancel processing timeout timer
+            self.processingTimer?.invalidate()
+            self.processingTimer = nil
+            
+            let correctedText = TechTermsDictionary.apply(to: text)
+            self.appState.saveTranscription(correctedText)
 
-        if isSoundFeedbackEnabled() {
-            NSSound(named: "Pop")?.play()
-        }
-
-        let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
-
-        let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "has_launched_before")
-        let shouldAutoPaste = hasLaunchedBefore ? autoPaste : true
-        let shouldRestore = true
-        let previewEnabled = UserDefaults.standard.bool(forKey: "enable_preview_mode")
-
-        let finalize: () -> Void = { [weak self] in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.hotkeyManager.restartMonitoring()
+            if self.isSoundFeedbackEnabled() {
+                NSSound(named: "Pop")?.play()
             }
-            self?.appState.updateStatus(.idle)
-        }
 
-        if previewEnabled {
-            showTranscriptionPreview(text: correctedText, restoreClipboard: shouldRestore, finalize: finalize)
-            return
-        }
+            let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
 
-        if shouldAutoPaste {
-            textInputService.pasteText(correctedText, restoreClipboard: shouldRestore)
-        } else {
-            showTranscriptionResult(correctedText)
-        }
+            let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "has_launched_before")
+            let shouldAutoPaste = hasLaunchedBefore ? autoPaste : true
+            let shouldRestore = true
+            let previewEnabled = UserDefaults.standard.bool(forKey: "enable_preview_mode")
 
-        finalize()
+            let finalize: () -> Void = { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    self?.hotkeyManager.restartMonitoring()
+                }
+                self?.appState.updateStatus(.idle)
+            }
+
+            if previewEnabled {
+                self.showTranscriptionPreview(text: correctedText, restoreClipboard: shouldRestore, finalize: finalize)
+                return
+            }
+
+            if shouldAutoPaste {
+                self.textInputService.pasteText(correctedText, restoreClipboard: shouldRestore)
+            } else {
+                self.showTranscriptionResult(correctedText)
+            }
+
+            finalize()
+        }
     }
 
     private func showTranscriptionPreview(text: String, restoreClipboard: Bool, finalize: @escaping () -> Void) {

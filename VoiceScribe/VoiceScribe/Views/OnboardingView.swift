@@ -30,6 +30,8 @@ struct OnboardingView: View {
                 .font(.footnote)
                 .foregroundColor(.secondary)
                 .buttonStyle(.plain)
+                .accessibilityLabel(localization.localized(.onboardingSkipAccessibility))
+                .accessibilityHint("Skip onboarding and finish setup")
             }
 
             if step == 0 {
@@ -47,6 +49,8 @@ struct OnboardingView: View {
                     Button(localization.localized(.back)) {
                         step -= 1
                     }
+                    .accessibilityLabel(localization.localized(.onboardingBackAccessibility))
+                    .accessibilityHint("Go to previous step")
                 }
 
                 Spacer()
@@ -56,11 +60,15 @@ struct OnboardingView: View {
                         step += 1
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityLabel(localization.localized(.onboardingNextAccessibility))
+                    .accessibilityHint("Continue to next step")
                 } else {
                     Button(localization.localized(.finish)) {
                         onFinish()
                     }
                     .buttonStyle(.borderedProminent)
+                    .accessibilityLabel(localization.localized(.onboardingFinishAccessibility))
+                    .accessibilityHint("Complete onboarding")
                 }
             }
         }
@@ -96,7 +104,11 @@ struct OnboardingView: View {
 
                 HStack(spacing: 12) {
                     languageSelectionButton(title: "🇹🇼 繁體中文", code: "zh")
+                        .accessibilityLabel("繁體中文 Traditional Chinese")
+                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
                     languageSelectionButton(title: "🇺🇸 English", code: "en")
+                        .accessibilityLabel("English")
+                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
                 }
             }
 
@@ -154,6 +166,8 @@ struct OnboardingView: View {
                     }
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel(localization.localized(.onboardingGrantMicrophone))
+                .accessibilityHint("Request microphone permission")
             }
 
             Divider()
@@ -171,11 +185,15 @@ struct OnboardingView: View {
                     NSWorkspace.shared.open(url)
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel(localization.localized(.onboardingOpenAccessibility))
+                .accessibilityHint("Open System Settings to grant accessibility permission")
 
                 Button(localization.localized(.onboardingRecheckAccessibility)) {
                     accessibilityGranted = HotkeyManager.shared.checkAccessibilityPermission()
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel(localization.localized(.onboardingRecheckAccessibility))
+                .accessibilityHint("Check if accessibility permission has been granted")
             }
         }
     }

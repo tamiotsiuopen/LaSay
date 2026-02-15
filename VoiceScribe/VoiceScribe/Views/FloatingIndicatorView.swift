@@ -26,6 +26,9 @@ struct FloatingIndicatorView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.black.opacity(0.75))
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(localization.localized(.floatingIndicatorAccessibility))
+        .accessibilityValue(statusText)
     }
 
     @ViewBuilder

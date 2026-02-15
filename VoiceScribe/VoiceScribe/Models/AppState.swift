@@ -39,6 +39,7 @@ enum AppStatus {
 }
 
 // 應用程式狀態管理器（ObservableObject）
+@MainActor
 class AppState: ObservableObject {
     @Published var status: AppStatus = .idle
     @Published var lastTranscription: String = ""
@@ -50,15 +51,11 @@ class AppState: ObservableObject {
 
     // 更新狀態
     func updateStatus(_ newStatus: AppStatus) {
-        DispatchQueue.main.async {
-            self.status = newStatus
-        }
+        self.status = newStatus
     }
 
     // 儲存最後一次轉錄結果
     func saveTranscription(_ text: String) {
-        DispatchQueue.main.async {
-            self.lastTranscription = text
-        }
+        self.lastTranscription = text
     }
 }

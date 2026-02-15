@@ -305,6 +305,66 @@ class LocalizationHelper {
             return language == "zh" ? "需要 API Key" : "API Key Required"
         case .apiKeyRequiredBody:
             return language == "zh" ? "請在設定中輸入 OpenAI API Key 以使用雲端模式" : "Please set your OpenAI API Key in Settings to use Cloud mode."
+        
+        // Accessibility labels
+        case .settingsTabAccessibility:
+            return language == "zh" ? "設定分頁" : "Settings tab"
+        case .generalTabAccessibility:
+            return language == "zh" ? "一般設定分頁" : "General settings tab"
+        case .transcriptionTabAccessibility:
+            return language == "zh" ? "轉錄設定分頁" : "Transcription settings tab"
+        case .aiPolishTabAccessibility:
+            return language == "zh" ? "AI 潤飾設定分頁" : "AI polish settings tab"
+        case .languageButtonAccessibility:
+            return language == "zh" ? "語言選擇按鈕" : "Language selection button"
+        case .toggleAccessibilityHint:
+            return language == "zh" ? "點擊以切換" : "Tap to toggle"
+        case .autoPasteAccessibility:
+            return language == "zh" ? "自動貼上開關" : "Auto-paste toggle"
+        case .soundFeedbackAccessibility:
+            return language == "zh" ? "音效回饋開關" : "Sound feedback toggle"
+        case .aiPolishAccessibility:
+            return language == "zh" ? "AI 潤飾開關" : "AI polish toggle"
+        case .previewModeAccessibility:
+            return language == "zh" ? "預覽模式開關" : "Preview mode toggle"
+        case .apiKeyShowHideAccessibility:
+            return language == "zh" ? "顯示或隱藏 API Key" : "Show or hide API Key"
+        case .apiKeySaveAccessibility:
+            return language == "zh" ? "儲存 API Key" : "Save API Key"
+        case .settingsCloseAccessibility:
+            return language == "zh" ? "關閉設定視窗" : "Close settings window"
+        case .onboardingNextAccessibility:
+            return language == "zh" ? "前往下一步" : "Go to next step"
+        case .onboardingBackAccessibility:
+            return language == "zh" ? "返回上一步" : "Go back to previous step"
+        case .onboardingFinishAccessibility:
+            return language == "zh" ? "完成設定" : "Complete setup"
+        case .onboardingSkipAccessibility:
+            return language == "zh" ? "跳過設定" : "Skip setup"
+        case .floatingIndicatorAccessibility:
+            return language == "zh" ? "LaSay 狀態指示器" : "LaSay status indicator"
+        case .downloadProgressAccessibility:
+            return language == "zh" ? "下載進度" : "Download progress"
+        case .transcriptionPreviewAccessibility:
+            return language == "zh" ? "轉錄文字預覽" : "Transcription preview"
+        case .pasteButtonAccessibility:
+            return language == "zh" ? "貼上文字" : "Paste text"
+        case .cancelButtonAccessibility:
+            return language == "zh" ? "取消" : "Cancel"
+        case .menuBarStatusAccessibility:
+            return language == "zh" ? "LaSay 語音輸入" : "LaSay voice input"
+        
+        // Error messages
+        case .microphonePermissionDenied:
+            return language == "zh" ? "麥克風權限被拒絕。請前往「系統設定 > 隱私權與安全性 > 麥克風」啟用權限。" : "Microphone access denied. Open System Settings > Privacy > Microphone to enable."
+        case .offlineCloudModeError:
+            return language == "zh" ? "無網路連接。請切換到本地模式或檢查網路連接。" : "No internet connection. Switch to Local mode or check your connection."
+        case .networkErrorActionable:
+            return language == "zh" ? "網路錯誤。請檢查網路連接後重試。" : "Network error. Check your internet connection and try again."
+        case .invalidAPIKeyActionable:
+            return language == "zh" ? "API Key 無效。請在設定中檢查您的 API Key。" : "Invalid API key. Check your API key in Settings."
+        case .processingTimeout:
+            return language == "zh" ? "處理逾時。請重試。" : "Processing timeout. Please try again."
         }
     }
 }
@@ -446,4 +506,36 @@ enum LocalizationKey {
     case transcriptionResultTitle
     case apiKeyRequiredTitle
     case apiKeyRequiredBody
+    
+    // Accessibility labels
+    case settingsTabAccessibility
+    case generalTabAccessibility
+    case transcriptionTabAccessibility
+    case aiPolishTabAccessibility
+    case languageButtonAccessibility
+    case toggleAccessibilityHint
+    case autoPasteAccessibility
+    case soundFeedbackAccessibility
+    case aiPolishAccessibility
+    case previewModeAccessibility
+    case apiKeyShowHideAccessibility
+    case apiKeySaveAccessibility
+    case settingsCloseAccessibility
+    case onboardingNextAccessibility
+    case onboardingBackAccessibility
+    case onboardingFinishAccessibility
+    case onboardingSkipAccessibility
+    case floatingIndicatorAccessibility
+    case downloadProgressAccessibility
+    case transcriptionPreviewAccessibility
+    case pasteButtonAccessibility
+    case cancelButtonAccessibility
+    case menuBarStatusAccessibility
+    
+    // Error messages
+    case microphonePermissionDenied
+    case offlineCloudModeError
+    case networkErrorActionable
+    case invalidAPIKeyActionable
+    case processingTimeout
 }

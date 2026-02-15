@@ -52,18 +52,21 @@ struct SettingsView: View {
                         Text(localization.localized(.generalTab))
                     }
                     .tag(0)
+                    .accessibilityLabel(localization.localized(.generalTabAccessibility))
 
                 transcriptionTab
                     .tabItem {
                         Text(localization.localized(.transcriptionTab))
                     }
                     .tag(1)
+                    .accessibilityLabel(localization.localized(.transcriptionTabAccessibility))
 
                 aiPolishTab
                     .tabItem {
                         Text(localization.localized(.aiPolishTab))
                     }
                     .tag(2)
+                    .accessibilityLabel(localization.localized(.aiPolishTabAccessibility))
             }
 
             Spacer()
@@ -79,6 +82,8 @@ struct SettingsView: View {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
+                .accessibilityLabel(localization.localized(.settingsCloseAccessibility))
+                .accessibilityHint("Close settings window")
             }
         }
         .padding(24)
@@ -99,7 +104,11 @@ struct SettingsView: View {
 
                 HStack(spacing: 12) {
                     languageSelectionButton(title: localization.localized(.languageChineseLabel), code: "zh")
+                        .accessibilityLabel("\(localization.localized(.languageChineseLabel))")
+                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
                     languageSelectionButton(title: localization.localized(.languageEnglishLabel), code: "en")
+                        .accessibilityLabel("\(localization.localized(.languageEnglishLabel))")
+                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
                 }
                 .frame(maxWidth: 420)
 
@@ -141,12 +150,18 @@ struct SettingsView: View {
 
                 Toggle(localization.localized(.autoPaste), isOn: $autoPaste)
                     .toggleStyle(.checkbox)
+                    .accessibilityLabel(localization.localized(.autoPasteAccessibility))
+                    .accessibilityHint(localization.localized(.toggleAccessibilityHint))
+                    .accessibilityValue(autoPaste ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
                     .onChange(of: autoPaste) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "auto_paste")
                     }
 
                 Toggle(localization.localized(.soundFeedback), isOn: $enableSoundFeedback)
                     .toggleStyle(.checkbox)
+                    .accessibilityLabel(localization.localized(.soundFeedbackAccessibility))
+                    .accessibilityHint(localization.localized(.toggleAccessibilityHint))
+                    .accessibilityValue(enableSoundFeedback ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
                     .onChange(of: enableSoundFeedback) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "enable_sound_feedback")
                     }
@@ -154,6 +169,9 @@ struct SettingsView: View {
                 DisclosureGroup(localization.localized(.advanced), isExpanded: $isPasteAdvancedExpanded) {
                     Toggle(localization.localized(.previewBeforePaste), isOn: $enablePreviewMode)
                         .toggleStyle(.checkbox)
+                        .accessibilityLabel(localization.localized(.previewModeAccessibility))
+                        .accessibilityHint(localization.localized(.toggleAccessibilityHint))
+                        .accessibilityValue(enablePreviewMode ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
                         .onChange(of: enablePreviewMode) { newValue in
                             UserDefaults.standard.set(newValue, forKey: "enable_preview_mode")
                         }
@@ -253,6 +271,9 @@ struct SettingsView: View {
 
                 Toggle(localization.localized(.enableAIPolish), isOn: $enableAIPolish)
                     .toggleStyle(.checkbox)
+                    .accessibilityLabel(localization.localized(.aiPolishAccessibility))
+                    .accessibilityHint(localization.localized(.toggleAccessibilityHint))
+                    .accessibilityValue(enableAIPolish ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
                     .onChange(of: enableAIPolish) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
                         NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
@@ -337,11 +358,15 @@ struct SettingsView: View {
                         showAPIKey.toggle()
                     }
                     .font(.caption)
+                    .accessibilityLabel(localization.localized(.apiKeyShowHideAccessibility))
+                    .accessibilityHint(showAPIKey ? localization.localized(.hide) : localization.localized(.show))
 
                     Button(localization.localized(.update)) {
                         showingAPIKeyInput = true
                     }
                     .font(.caption)
+                    .accessibilityLabel(localization.localized(.update))
+                    .accessibilityHint("Update API key")
                 }
                 .frame(maxWidth: 420)
             } else {
@@ -358,6 +383,8 @@ struct SettingsView: View {
                         showAPIKey.toggle()
                     }
                     .font(.caption)
+                    .accessibilityLabel(localization.localized(.apiKeyShowHideAccessibility))
+                    .accessibilityHint(showAPIKey ? localization.localized(.hide) : localization.localized(.show))
 
                     Button(localization.localized(.save)) {
                         if !apiKey.isEmpty {
@@ -371,6 +398,8 @@ struct SettingsView: View {
                     }
                     .font(.caption)
                     .buttonStyle(.borderedProminent)
+                    .accessibilityLabel(localization.localized(.apiKeySaveAccessibility))
+                    .accessibilityHint("Save API key to keychain")
 
                     if hasAPIKey {
                         Button(localization.localized(.cancel)) {
@@ -378,6 +407,8 @@ struct SettingsView: View {
                             loadAPIKey()
                         }
                         .font(.caption)
+                        .accessibilityLabel(localization.localized(.cancelButtonAccessibility))
+                        .accessibilityHint("Cancel editing API key")
                     }
                 }
                 .frame(maxWidth: 420)

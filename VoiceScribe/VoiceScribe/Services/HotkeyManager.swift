@@ -13,6 +13,15 @@ class HotkeyManager {
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var permissionCheckTimer: Timer?
+    
+    // Thread-safe state access
+    private let stateQueue = DispatchQueue(label: "com.lasay.hotkeymanager.state")
+    private var _isHotkeyPressed = false
+    private var isHotkeyPressed: Bool {
+        get { stateQueue.sync { _isHotkeyPressed } }
+        set { stateQueue.sync { _isHotkeyPressed = newValue } }
+    }
 
     // 回調
     var onHotkeyPressed: (() -> Void)?
@@ -22,6 +31,10 @@ class HotkeyManager {
     private var keyCode: CGKeyCode = 49  // Space 鍵
 
     private init() {}
+    
+    deinit {
+        stopMonitoring()
+    }
 
     // MARK: - Accessibility Permission
 
@@ -60,7 +73,7 @@ class HotkeyManager {
     /// 監聽權限變化，授予後自動提示重啟
     private func startPermissionMonitoring() {
         // 每 1 秒檢查一次權限狀態
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self else {
                 timer.invalidate()
                 return
@@ -68,6 +81,7 @@ class HotkeyManager {
 
             if self.checkAccessibilityPermission() {
                 timer.invalidate()  // 停止檢查
+                self.permissionCheckTimer = nil
                 self.showRestartAlert()
             }
         }
@@ -185,6 +199,10 @@ class HotkeyManager {
             self.runLoopSource = nil
             debugLog("✅ [HotkeyManager] 全域快捷鍵監聽已停止")
         }
+        
+        // Invalidate permission check timer
+        permissionCheckTimer?.invalidate()
+        permissionCheckTimer = nil
     }
 
     /// 重新啟動監聽（用於恢復）
@@ -199,8 +217,6 @@ class HotkeyManager {
     }
 
     // MARK: - Event Handling
-
-    private var isHotkeyPressed = false
 
     private func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
         // 處理 flags changed（修飾鍵變化）

@@ -9,6 +9,6 @@ import Foundation
 
 func debugLog(_ message: String) {
     #if DEBUG
-    debugLog(message)
+    print("[LaSay]", message)
     #endif
 }

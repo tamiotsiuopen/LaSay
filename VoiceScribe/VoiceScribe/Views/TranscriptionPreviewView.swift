@@ -24,6 +24,9 @@ struct TranscriptionPreviewView: View {
         VStack(spacing: 12) {
             TextEditor(text: $editableText)
                 .border(Color.secondary.opacity(0.3))
+                .accessibilityLabel(localization.localized(.transcriptionPreviewAccessibility))
+                .accessibilityValue(editableText)
+                .accessibilityHint("Edit transcribed text before pasting")
 
             HStack {
                 Spacer()
@@ -31,11 +34,15 @@ struct TranscriptionPreviewView: View {
                 Button(localization.localized(.cancel)) {
                     onCancel()
                 }
+                .accessibilityLabel(localization.localized(.cancelButtonAccessibility))
+                .accessibilityHint("Cancel without pasting")
 
                 Button(localization.localized(.paste)) {
                     onPaste(editableText)
                 }
                 .keyboardShortcut(.defaultAction)
+                .accessibilityLabel(localization.localized(.pasteButtonAccessibility))
+                .accessibilityHint("Paste edited text to cursor position")
             }
         }
         .padding(16)

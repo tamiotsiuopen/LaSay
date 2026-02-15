@@ -14,15 +14,28 @@ enum OpenAIError: Error {
     case invalidResponse
 
     var localizedDescription: String {
+        let localization = LocalizationHelper.shared
+        
         switch self {
         case .noAPIKey:
-            return "未設定 OpenAI API Key"
+            return localization.localized(.invalidAPIKeyActionable)
         case .networkError(let error):
-            return "網路錯誤：\(error.localizedDescription)"
+            if let urlError = error as? URLError {
+                if urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost {
+                    return localization.localized(.networkErrorActionable)
+                } else if urlError.code == .timedOut {
+                    return localization.localized(.processingTimeout)
+                }
+            }
+            return localization.localized(.networkErrorActionable)
         case .apiError(let message):
-            return "API 錯誤：\(message)"
+            let lowered = message.lowercased()
+            if lowered.contains("api key") || lowered.contains("incorrect api key") || lowered.contains("invalid api key") || lowered.contains("401") || lowered.contains("unauthorized") {
+                return localization.localized(.invalidAPIKeyActionable)
+            }
+            return localization.localized(.apiErrorPrefix) + message
         case .invalidResponse:
-            return "無效的 API 回應"
+            return localization.currentLanguage == "zh" ? "無效的 API 回應" : "Invalid API response"
         }
     }
 }
@@ -32,6 +45,7 @@ class OpenAIService {
 
     private let apiURL = "https://api.openai.com/v1/chat/completions"
     private let keychainHelper = KeychainHelper.shared
+    private var currentTask: URLSessionDataTask?
 
     // 預設 System Prompt
     private let defaultSystemPrompt = """
@@ -51,6 +65,13 @@ class OpenAIService {
 
 
     private init() {}
+    
+    /// Cancel the current polishing request
+    func cancelCurrentRequest() {
+        currentTask?.cancel()
+        currentTask = nil
+        debugLog("🚫 [OpenAIService] 已取消當前請求")
+    }
 
     // MARK: - Polish Text
 
@@ -75,6 +96,7 @@ class OpenAIService {
         // 建立請求
         var request = URLRequest(url: URL(string: apiURL)!)
         request.httpMethod = "POST"
+        request.timeoutInterval = 30  // 30 seconds timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
@@ -111,8 +133,16 @@ class OpenAIService {
         debugLog("📡 [OpenAIService] 發送請求到 OpenAI API...")
 
         // 發送請求
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            // Clear the current task reference
+            self?.currentTask = nil
+            
             if let error = error {
+                // Check if it was cancelled
+                if (error as NSError).code == NSURLErrorCancelled {
+                    debugLog("🚫 [OpenAIService] 請求已被取消")
+                    return
+                }
                 debugLog("❌ [OpenAIService] 網路錯誤：\(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
@@ -160,6 +190,7 @@ class OpenAIService {
             }
         }
 
+        currentTask = task
         task.resume()
     }
 

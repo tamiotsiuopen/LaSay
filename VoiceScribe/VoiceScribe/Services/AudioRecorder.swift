@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFoundation
+import UserNotifications
 
 class AudioRecorder: NSObject {
     private var audioRecorder: AVAudioRecorder?
@@ -40,6 +41,22 @@ class AudioRecorder: NSObject {
         return status == .authorized
     }
 
+    /// 顯示麥克風權限被拒絕的通知
+    private func showMicrophonePermissionDeniedNotification() {
+        let localization = LocalizationHelper.shared
+        let content = UNMutableNotificationContent()
+        content.title = localization.localized(.microphonePermissionTitle)
+        content.body = localization.localized(.microphonePermissionDenied)
+        content.sound = .defaultCritical
+
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                debugLog("❌ 發送麥克風權限通知失敗：\(error.localizedDescription)")
+            }
+        }
+    }
+
     // MARK: - Recording
 
     /// 開始錄音
@@ -47,6 +64,7 @@ class AudioRecorder: NSObject {
         // 檢查權限
         guard checkMicrophonePermission() else {
             debugLog("❌ 沒有麥克風權限")
+            showMicrophonePermissionDeniedNotification()
             return
         }
 
@@ -77,6 +95,14 @@ class AudioRecorder: NSObject {
 
             debugLog("✅ 開始錄音：\(url.path)")
         } catch {
+            // 使用 defer 確保錯誤時清理臨時檔案
+            defer {
+                if FileManager.default.fileExists(atPath: url.path) {
+                    deleteRecording(at: url)
+                }
+                recordingURL = nil
+            }
+            
             debugLog("❌ 錄音失敗：\(error.localizedDescription)")
             onError?(error)
         }
@@ -107,22 +133,46 @@ class AudioRecorder: NSObject {
             debugLog("❌ 刪除錄音檔案失敗：\(error.localizedDescription)")
         }
     }
+    
+    /// 清理當前錄音（如果存在）
+    func cleanupCurrentRecording() {
+        if let url = recordingURL {
+            deleteRecording(at: url)
+            recordingURL = nil
+        }
+    }
 }
 
 // MARK: - AVAudioRecorderDelegate
 
 extension AudioRecorder: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        // 使用 defer 確保在所有路徑都清理 URL 引用（但不刪除檔案，因為可能需要轉錄）
+        defer {
+            // 清理後由呼叫方負責刪除檔案（在轉錄完成後）
+        }
+        
         if flag {
             debugLog("✅ 錄音完成：\(recorder.url.path)")
             onRecordingComplete?(recorder.url)
         } else {
             debugLog("❌ 錄音未成功完成")
+            // 錄音失敗，立即清理檔案
+            deleteRecording(at: recorder.url)
+            recordingURL = nil
             onRecordingComplete?(nil)
         }
     }
 
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+        // 使用 defer 確保錯誤時清理臨時檔案
+        defer {
+            if let url = recordingURL {
+                deleteRecording(at: url)
+                recordingURL = nil
+            }
+        }
+        
         if let error = error {
             debugLog("❌ 錄音編碼錯誤：\(error.localizedDescription)")
             onError?(error)

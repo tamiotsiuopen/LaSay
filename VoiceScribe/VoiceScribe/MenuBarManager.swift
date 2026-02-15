@@ -41,6 +41,7 @@ final class MenuBarManager: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
+            button.setAccessibilityLabel(LocalizationHelper.shared.localized(.menuBarStatusAccessibility))
             updateMenuBarIcon()
         }
 
@@ -162,10 +163,31 @@ final class MenuBarManager: NSObject {
         guard let button = statusItem?.button else { return }
 
         let status = appState.status
+        let localization = LocalizationHelper.shared
         let image = NSImage(systemSymbolName: status.iconName, accessibilityDescription: "LaSay")
         image?.isTemplate = false
 
         button.image = image
+
+        // Update accessibility label and post announcement
+        let statusText: String
+        switch status {
+        case .idle:
+            statusText = localization.localized(.idle)
+        case .recording:
+            statusText = localization.localized(.recording)
+        case .processing:
+            statusText = localization.localized(.processing)
+        }
+        
+        button.setAccessibilityLabel("\(localization.localized(.menuBarStatusAccessibility)) - \(statusText)")
+        
+        // Post accessibility announcement for state changes
+        let announcement = "\(localization.localized(.menuBarStatusAccessibility)) \(statusText)"
+        NSAccessibility.post(element: button, notification: .announcementRequested, userInfo: [
+            .announcement: announcement,
+            .priority: NSAccessibilityPriorityLevel.high.rawValue
+        ])
 
         if let imageView = button.subviews.first as? NSImageView {
             imageView.contentTintColor = status.iconColor

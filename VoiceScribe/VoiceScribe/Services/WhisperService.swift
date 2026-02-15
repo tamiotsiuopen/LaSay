@@ -20,18 +20,22 @@ enum WhisperError: Error {
 
         switch self {
         case .noAPIKey:
-            return localization.localized(.invalidAPIKey)
+            return localization.localized(.invalidAPIKeyActionable)
         case .invalidAudioFile:
             return localization.currentLanguage == "zh" ? "無效的音訊檔案" : "Invalid audio file"
         case .networkError(let error):
-            if let urlError = error as? URLError, urlError.code == .notConnectedToInternet {
-                return localization.localized(.noNetworkConnection)
+            if let urlError = error as? URLError {
+                if urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost {
+                    return localization.localized(.networkErrorActionable)
+                } else if urlError.code == .timedOut {
+                    return localization.localized(.processingTimeout)
+                }
             }
-            return localization.localized(.networkErrorPrefix) + error.localizedDescription
+            return localization.localized(.networkErrorActionable)
         case .apiError(let message):
             let lowered = message.lowercased()
-            if lowered.contains("api key") || lowered.contains("incorrect api key") || lowered.contains("invalid api key") {
-                return localization.localized(.invalidAPIKey)
+            if lowered.contains("api key") || lowered.contains("incorrect api key") || lowered.contains("invalid api key") || lowered.contains("401") || lowered.contains("unauthorized") {
+                return localization.localized(.invalidAPIKeyActionable)
             }
             return localization.localized(.apiErrorPrefix) + message
         case .invalidResponse:
@@ -47,8 +51,16 @@ class WhisperService {
 
     private let apiURL = "https://api.openai.com/v1/audio/transcriptions"
     private let keychainHelper = KeychainHelper.shared
+    private var currentTask: URLSessionDataTask?
 
     private init() {}
+    
+    /// Cancel the current transcription request
+    func cancelCurrentRequest() {
+        currentTask?.cancel()
+        currentTask = nil
+        debugLog("🚫 [WhisperService] 已取消當前請求")
+    }
 
     // MARK: - Transcribe
 
@@ -73,6 +85,7 @@ class WhisperService {
         // 建立 multipart/form-data 請求
         var request = URLRequest(url: URL(string: apiURL)!)
         request.httpMethod = "POST"
+        request.timeoutInterval = 30  // 30 seconds timeout
 
         let boundary = "Boundary-\(UUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -112,8 +125,16 @@ class WhisperService {
         request.httpBody = body
 
         // 發送請求
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            // Clear the current task reference
+            self?.currentTask = nil
+            
             if let error = error {
+                // Check if it was cancelled
+                if (error as NSError).code == NSURLErrorCancelled {
+                    debugLog("🚫 [WhisperService] 請求已被取消")
+                    return
+                }
                 completion(.failure(.networkError(error)))
                 return
             }
@@ -146,6 +167,7 @@ class WhisperService {
             }
         }
 
+        currentTask = task
         task.resume()
     }
 }
