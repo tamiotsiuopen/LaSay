@@ -53,11 +53,8 @@ final class LocalWhisperService {
         progressHandler: DownloadProgressHandler? = nil,
         completion: @escaping (Result<String, WhisperError>) -> Void
     ) {
-        debugLog("[DEBUG] [LocalWhisper] transcribe called, audio: \(audioFileURL.path)")
-        debugLog("[DEBUG] [LocalWhisper] CLI downloaded: \(isCLIDownloaded), Model downloaded: \(isModelDownloaded)")
         
         guard fileManager.fileExists(atPath: audioFileURL.path) else {
-            debugLog("[ERROR] [LocalWhisper] Audio file not found: \(audioFileURL.path)")
             completion(.failure(.invalidAudioFile))
             return
         }
@@ -116,7 +113,6 @@ final class LocalWhisperService {
             return
         }
 
-        debugLog("[DEBUG] [LocalWhisper] Downloading model to: \(modelFileURL.path)")
 
         downloadFile(
             from: modelDownloadURL,
@@ -127,7 +123,6 @@ final class LocalWhisperService {
         ) { result in
             switch result {
             case .success:
-                debugLog("[OK] [LocalWhisper] Model downloaded")
                 completion(.success(self.modelFileURL))
             case .failure:
                 completion(.failure(.modelDownloadFailed))
@@ -157,7 +152,6 @@ final class LocalWhisperService {
         let downloadURL = arch == "arm64" ? binaryDownloadURLArm64 : binaryDownloadURLX86
         let zipURL = fileManager.temporaryDirectory.appendingPathComponent("whisper-cli-\(UUID().uuidString).zip")
 
-        debugLog("[DEBUG] [LocalWhisper] Downloading whisper.cpp CLI (\(arch))")
 
         downloadFile(
             from: downloadURL,
@@ -249,30 +243,22 @@ final class LocalWhisperService {
             try process.run()
             process.waitUntilExit()
             if process.terminationStatus == 0 {
-                debugLog("[OK] [LocalWhisper] Converted to WAV: \(wavURL.path)")
                 return wavURL
             } else {
-                debugLog("[ERROR] [LocalWhisper] afconvert failed with status: \(process.terminationStatus)")
                 return nil
             }
         } catch {
-            debugLog("[ERROR] [LocalWhisper] afconvert error: \(error.localizedDescription)")
             return nil
         }
     }
     
     private func runWhisperCLI(cliURL: URL, modelURL: URL, audioFileURL: URL, language: String?, completion: @escaping (Result<String, WhisperError>) -> Void) {
-        debugLog("[DEBUG] [LocalWhisper] Running CLI: \(cliURL.path)")
-        debugLog("[DEBUG] [LocalWhisper] Model: \(modelURL.path)")
-        debugLog("[DEBUG] [LocalWhisper] Audio: \(audioFileURL.path)")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             // Convert m4a to WAV (whisper-cli requires WAV format)
             guard let self = self else { return }
             let wavURL: URL
             if audioFileURL.pathExtension.lowercased() != "wav" {
-                debugLog("[DEBUG] [LocalWhisper] Converting \(audioFileURL.pathExtension) to WAV...")
                 guard let converted = self.convertToWAV(inputURL: audioFileURL) else {
-                    debugLog("[ERROR] [LocalWhisper] Audio conversion failed")
                     DispatchQueue.main.async {
                         completion(.failure(.invalidAudioFile))
                     }
@@ -304,7 +290,6 @@ final class LocalWhisperService {
             let process = Process()
             process.executableURL = cliURL
             process.arguments = arguments
-            debugLog("[DEBUG] [LocalWhisper] CLI arguments: \(arguments)")
 
             let pipe = Pipe()
             process.standardOutput = pipe
@@ -312,11 +297,8 @@ final class LocalWhisperService {
 
             do {
                 try process.run()
-                debugLog("[DEBUG] [LocalWhisper] CLI process started, pid: \(process.processIdentifier)")
                 process.waitUntilExit()
-                debugLog("[DEBUG] [LocalWhisper] CLI process exited with status: \(process.terminationStatus)")
             } catch {
-                debugLog("[ERROR] [LocalWhisper] CLI process failed to start: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     completion(.failure(.networkError(error)))
                 }
@@ -327,32 +309,26 @@ final class LocalWhisperService {
             let stderrOutput = String(data: stderrData, encoding: .utf8) ?? ""
             
             if process.terminationStatus != 0 {
-                debugLog("[ERROR] [LocalWhisper] CLI error output: \(stderrOutput)")
                 DispatchQueue.main.async {
                     completion(.failure(.apiError(stderrOutput)))
                 }
                 return
             }
             
-            debugLog("[DEBUG] [LocalWhisper] CLI stderr: \(stderrOutput.prefix(500))")
 
             // whisper-cli with -otxt writes to <outputPrefix>.txt
             let outputURL = URL(fileURLWithPath: outputPrefix + ".txt")
-            debugLog("[DEBUG] [LocalWhisper] Expected output file: \(outputURL.path)")
-            debugLog("[DEBUG] [LocalWhisper] Output file exists: \(FileManager.default.fileExists(atPath: outputURL.path))")
             
             // Also check if whisper wrote stdout directly
             if !FileManager.default.fileExists(atPath: outputURL.path) {
                 // Try reading from stdout (some whisper-cli versions print to stdout with -nt)
                 let stdoutText = stderrOutput  // stdout and stderr share the same pipe
-                debugLog("[WARN] [LocalWhisper] Output file not found, checking stdout...")
                 
                 // List files in temp dir with our prefix
                 let prefixDir = URL(fileURLWithPath: outputPrefix).deletingLastPathComponent()
                 let prefixName = URL(fileURLWithPath: outputPrefix).lastPathComponent
                 if let files = try? FileManager.default.contentsOfDirectory(atPath: prefixDir.path) {
                     let matching = files.filter { $0.hasPrefix(prefixName) }
-                    debugLog("[DEBUG] [LocalWhisper] Files with prefix: \(matching)")
                 }
                 
                 DispatchQueue.main.async {
@@ -362,14 +338,12 @@ final class LocalWhisperService {
             }
             
             guard let rawText = try? String(contentsOf: outputURL, encoding: .utf8) else {
-                debugLog("[ERROR] [LocalWhisper] Could not read output file")
                 DispatchQueue.main.async {
                     completion(.failure(.invalidResponse))
                 }
                 return
             }
             
-            debugLog("[DEBUG] [LocalWhisper] Raw output: \(rawText.prefix(200))")
 
             let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
             
@@ -443,7 +417,6 @@ final class LocalWhisperService {
 
         let observation = task.progress.observe(\.fractionCompleted) { progress, _ in
             let percent = Int(progress.fractionCompleted * 100)
-            debugLog("[DEBUG] [LocalWhisper] \(label) download progress: \(percent)%")
             DispatchQueue.main.async {
                 progressHandler?(DownloadProgress(
                     kind: kind,

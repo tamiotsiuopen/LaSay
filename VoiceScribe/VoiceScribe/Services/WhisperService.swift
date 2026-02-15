@@ -59,7 +59,6 @@ class WhisperService {
     func cancelCurrentRequest() {
         currentTask?.cancel()
         currentTask = nil
-        debugLog("[CANCEL] [WhisperService] 已取消當前請求")
     }
 
     // MARK: - Transcribe
@@ -132,7 +131,6 @@ class WhisperService {
             if let error = error {
                 // Check if it was cancelled
                 if (error as NSError).code == NSURLErrorCancelled {
-                    debugLog("[CANCEL] [WhisperService] 請求已被取消")
                     return
                 }
                 completion(.failure(.networkError(error)))

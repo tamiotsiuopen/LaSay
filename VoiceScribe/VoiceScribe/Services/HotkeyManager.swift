@@ -47,7 +47,6 @@ class HotkeyManager {
     func requestAccessibilityPermission() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true]
         let result = AXIsProcessTrustedWithOptions(options)
-        debugLog("[DEBUG] [HotkeyManager] requestAccessibilityPermission 結果：\(result)")
     }
 
     /// 顯示權限引導視窗
@@ -127,29 +126,22 @@ class HotkeyManager {
 
     /// 啟動全域快捷鍵監聽
     func startMonitoring() {
-        debugLog("[DEBUG] [HotkeyManager] 開始設定全域快捷鍵監聽...")
 
         // 檢查權限（使用 prompt 選項強制請求）
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true]
         let hasPermission = AXIsProcessTrustedWithOptions(options)
-        debugLog("[DEBUG] [HotkeyManager] Accessibility 權限狀態：\(hasPermission)")
 
         guard hasPermission else {
-            debugLog("[WARN] [HotkeyManager] 沒有 Accessibility 權限")
-            debugLog("[DEBUG] [HotkeyManager] 系統應該會顯示權限請求對話框")
-            debugLog("[DEBUG] [HotkeyManager] 請在系統設定中允許 LaSay 並重新啟動 app")
             return
         }
 
         // 如果已經在監聽，先停止
         if eventTap != nil {
-            debugLog("[DEBUG] [HotkeyManager] 停止現有監聽...")
             stopMonitoring()
         }
 
         // 創建事件監聽器
         let eventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
-        debugLog("[DEBUG] [HotkeyManager] 嘗試創建事件監聽器（event mask: \(eventMask)）...")
 
         guard let eventTap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -163,31 +155,18 @@ class HotkeyManager {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            debugLog("[ERROR] [HotkeyManager] 無法創建事件監聽器（CGEvent.tapCreate 返回 nil）")
-            debugLog("[ERROR] [HotkeyManager] 這表示 Accessibility 權限未正確授予或未生效")
-            debugLog("[DEBUG] [HotkeyManager] 請嘗試以下步驟：")
-            debugLog("   1. 完全退出 LaSay")
-            debugLog("   2. 系統設定 → 隱私權與安全性 → 輔助使用")
-            debugLog("   3. 移除 LaSay（點擊 - 按鈕）")
-            debugLog("   4. 重新啟動 LaSay，會再次請求權限")
             return
         }
 
-        debugLog("[OK] [HotkeyManager] 事件監聽器創建成功")
         self.eventTap = eventTap
 
         // 創建 run loop source
-        debugLog("[DEBUG] [HotkeyManager] 創建 run loop source...")
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        debugLog("[OK] [HotkeyManager] Run loop source 已添加")
 
         // 啟用事件監聽
         CGEvent.tapEnable(tap: eventTap, enable: true)
-        debugLog("[OK] [HotkeyManager] 事件監聽已啟用")
 
-        debugLog("[OK] 全域快捷鍵監聽已啟動（Fn + Space）")
-        debugLog("[DEBUG] [HotkeyManager] 請按住 Fn + Space 測試")
     }
 
     /// 停止監聽
@@ -197,7 +176,6 @@ class HotkeyManager {
             CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
             self.eventTap = nil
             self.runLoopSource = nil
-            debugLog("[OK] [HotkeyManager] 全域快捷鍵監聽已停止")
         }
         
         // Invalidate permission check timer
@@ -207,7 +185,6 @@ class HotkeyManager {
 
     /// 重新啟動監聽（用於恢復）
     func restartMonitoring() {
-        debugLog("[DEBUG] [HotkeyManager] 重新啟動事件監聽...")
         stopMonitoring()
 
         // 短暫延遲後重新啟動
@@ -236,7 +213,6 @@ class HotkeyManager {
 
         // 優先處理 keyUp：只要是 Space 鍵且之前按下過，就觸發放開（不管 Fn 鍵是否還按著）
         if type == .keyUp && isTargetKey && isHotkeyPressed {
-            debugLog("[OK] [HotkeyManager] 檢測到快捷鍵放開")
             isHotkeyPressed = false
             DispatchQueue.main.async { [weak self] in
                 self?.onHotkeyReleased?()
@@ -247,7 +223,6 @@ class HotkeyManager {
         // 處理 keyDown：檢測到 Space 鍵 + Fn 鍵的組合
         if isTargetKey && hasModifiers {
             if type == .keyDown && !isHotkeyPressed {
-                debugLog("[OK] [HotkeyManager] 檢測到快捷鍵按下")
                 isHotkeyPressed = true
                 DispatchQueue.main.async { [weak self] in
                     self?.onHotkeyPressed?()
