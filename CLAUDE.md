@@ -76,7 +76,7 @@ rm -rf build/
 
 1. **KeychainHelper.swift** - API Key 安全儲存
    - 使用 macOS Keychain 加密儲存 OpenAI API Key
-   - 服務名稱：`com.tamio.VoiceScribe.openai_api_key`
+   - 服務名稱：`com.tamio.LaSay.openai_api_key`
 
 2. **LocalizationHelper.swift** - 多語言支援
    - 支援繁體中文和英文
@@ -128,7 +128,7 @@ rm -rf build/
 - **Terminal 限制**：Terminal 有特殊鍵盤處理，快捷鍵可能無效
 - **權限重置**：每次編譯後可能需要重新授予 Accessibility 權限
 - **API 依賴**：需要網路連線和有效的 OpenAI API Key
-- **Bundle ID**：內部使用 `com.tamio.VoiceScribe` 以維持權限一致性，但顯示名稱為 LaSay
+- **Bundle ID**：`com.tamio.LaSay`
 
 ## API 成本參考
 - **Whisper**：約 $0.001 USD / 次（5-10 秒語音）

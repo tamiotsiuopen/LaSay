@@ -171,5 +171,5 @@ LaSay/
 
 - **當前版本**：1.0.0
 - **App 名稱**：LaSay
-- **Bundle ID**：com.tamio.VoiceScribe（內部識別符，保持不變以維持權限）
+- **Bundle ID**：com.tamio.LaSay
 - **顯示名稱**：LaSay

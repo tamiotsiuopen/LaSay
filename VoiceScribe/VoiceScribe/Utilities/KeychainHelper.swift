@@ -14,7 +14,7 @@ class KeychainHelper {
     private init() {}
 
     // 使用設備唯一的密鑰進行簡單加密
-    private let encryptionKey = "LaSay-APIKey-Storage-v1"
+    private let encryptionKey = "com.tamio.LaSay.openai_api_key"
 
     // MARK: - Save
 
