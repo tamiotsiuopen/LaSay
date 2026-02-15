@@ -102,18 +102,6 @@ final class MenuBarManager: NSObject {
             menu.addItem(item)
         }
 
-        let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
-        if enableAIPolish {
-            let currentTemplate = PolishTemplate(rawValue: UserDefaults.standard.string(forKey: "polish_template") ?? "general") ?? .general
-            for template in PolishTemplate.allCases {
-                let title = localization.localized(.templateLabel) + template.localizedDisplayName
-                let item = NSMenuItem(title: title, action: #selector(changeTemplate(_:)), keyEquivalent: "")
-                item.representedObject = template.rawValue
-                item.state = template == currentTemplate ? .on : .off
-                item.target = self
-                menu.addItem(item)
-            }
-        }
 
         menu.addItem(NSMenuItem.separator())
 
@@ -234,10 +222,4 @@ final class MenuBarManager: NSObject {
         setupMenu()
     }
 
-    @objc private func changeTemplate(_ sender: NSMenuItem) {
-        guard let rawValue = sender.representedObject as? String else { return }
-        UserDefaults.standard.set(rawValue, forKey: "polish_template")
-        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-        setupMenu()
-    }
 }

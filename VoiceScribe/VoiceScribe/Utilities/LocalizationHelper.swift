@@ -79,6 +79,16 @@ class LocalizationHelper {
             return language == "zh" ? "啟用 AI 潤飾（使用 GPT-5-mini）" : "Enable AI Polishing (using GPT-5-mini)"
         case .aiPolishDescription:
             return language == "zh" ? "移除口語贅字、修正文法、優化句子結構" : "Remove filler words, fix grammar, optimize sentence structure"
+        case .currentPromptStatus:
+            return language == "zh" ? "目前使用：%@" : "Current prompt: %@"
+        case .defaultPromptLabel:
+            return language == "zh" ? "預設" : "Default"
+        case .customPromptLabel:
+            return language == "zh" ? "自訂" : "Custom"
+        case .customPromptHint:
+            return language == "zh" ? "你可以在這裡自訂 AI 潤飾的指令" : "You can customize the AI polish instructions here"
+        case .resetToDefault:
+            return language == "zh" ? "重設為預設" : "Reset to Default"
         case .polishTemplate:
             return language == "zh" ? "潤飾模板" : "Template"
         case .polishTemplateHint:
@@ -253,6 +263,11 @@ enum LocalizationKey {
     case aiPolish
     case enableAIPolish
     case aiPolishDescription
+    case currentPromptStatus
+    case defaultPromptLabel
+    case customPromptLabel
+    case customPromptHint
+    case resetToDefault
     case polishTemplate
     case polishTemplateHint
     case customSystemPrompt

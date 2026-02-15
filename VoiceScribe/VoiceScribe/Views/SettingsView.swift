@@ -20,9 +20,12 @@ struct SettingsView: View {
     @State private var customSystemPrompt: String = ""
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
-    @State private var selectedTemplate: PolishTemplate = .general
     @State private var showAPIKey: Bool = false
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
+
+    private var isUsingCustomPrompt: Bool {
+        !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     private let keychainHelper = KeychainHelper.shared
     private let openAIService = OpenAIService.shared
@@ -222,51 +225,41 @@ struct SettingsView: View {
             }
 
             if enableAIPolish {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(localization.localized(.polishTemplate))
-                        Spacer()
-                        Picker("", selection: $selectedTemplate) {
-                            ForEach(PolishTemplate.allCases, id: \.self) { template in
-                                Text(template.localizedDisplayName).tag(template)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .onChange(of: selectedTemplate) { newValue in
-                            UserDefaults.standard.set(newValue.rawValue, forKey: "polish_template")
-                            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-                        }
-                    }
-
-                    Text(localization.localized(.polishTemplateHint))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(format: localization.localized(.currentPromptStatus), isUsingCustomPrompt ? localization.localized(.customPromptLabel) : localization.localized(.defaultPromptLabel)))
                         .font(.caption)
                         .foregroundColor(.secondary)
-                }
 
-                VStack(alignment: .leading, spacing: 6) {
+                    Text(localization.localized(.customPromptHint))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
                     Text(localization.localized(.customSystemPrompt))
                         .font(.subheadline)
 
-                    TextEditor(text: $customSystemPrompt)
-                        .frame(minHeight: 100, maxHeight: 160)
-                        .font(.system(.body, design: .monospaced))
-                        .border(Color.secondary.opacity(0.3))
+                    ZStack(alignment: .topLeading) {
+                        if !isUsingCustomPrompt {
+                            Text(openAIService.getDefaultSystemPrompt())
+                                .foregroundColor(.secondary)
+                                .font(.system(.body, design: .monospaced))
+                                .padding(.top, 8)
+                                .padding(.horizontal, 6)
+                        }
+
+                        TextEditor(text: $customSystemPrompt)
+                            .frame(minHeight: 120, maxHeight: 180)
+                            .font(.system(.body, design: .monospaced))
+                            .border(Color.secondary.opacity(0.3))
+                    }
 
                     HStack {
-                        Button(localization.localized(.loadTemplatePrompt)) {
-                            customSystemPrompt = openAIService.getPrompt(for: selectedTemplate)
-                        }
-                        .font(.caption)
-
-                        Button(localization.localized(.clear)) {
+                        Button(localization.localized(.resetToDefault)) {
                             customSystemPrompt = ""
                         }
                         .font(.caption)
-                    }
 
-                    Text(localization.localized(.emptyForDefault))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        Spacer()
+                    }
                 }
             }
         }
@@ -379,10 +372,6 @@ struct SettingsView: View {
         enableAIPolish = savedAIPolish
         print("🔍 [SettingsView] 設定 enableAIPolish 為: \(enableAIPolish)")
 
-        if let savedTemplate = UserDefaults.standard.string(forKey: "polish_template"),
-           let template = PolishTemplate(rawValue: savedTemplate) {
-            selectedTemplate = template
-        }
 
         if let savedPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt") {
             customSystemPrompt = savedPrompt
@@ -434,7 +423,6 @@ struct SettingsView: View {
 
         // 儲存 AI 潤飾設定
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
-        UserDefaults.standard.set(selectedTemplate.rawValue, forKey: "polish_template")
         UserDefaults.standard.set(customSystemPrompt, forKey: "custom_system_prompt")
 
         // 儲存貼上設定

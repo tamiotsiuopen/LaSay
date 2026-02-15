@@ -172,10 +172,8 @@ final class RecordingCoordinator {
 
                             print("🤖 開始 AI 潤飾...")
                             let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
-                            let template = PolishTemplate(rawValue: UserDefaults.standard.string(forKey: "polish_template") ?? "general") ?? .general
-                            let prompt = self?.openAIService.resolvePrompt(customPrompt: customPrompt, template: template)
 
-                            self?.openAIService.polishText(transcribedText, customPrompt: prompt) { polishResult in
+                            self?.openAIService.polishText(transcribedText, customPrompt: customPrompt) { polishResult in
                                 DispatchQueue.main.async {
                                     let finalText: String
                                     switch polishResult {
