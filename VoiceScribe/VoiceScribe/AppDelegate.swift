@@ -14,7 +14,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var onboardingWindow: NSWindow?
     private var aboutWindow: NSWindow?
-    private var floatingIndicator: FloatingIndicatorController?
     private let localization = LocalizationHelper.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -43,8 +42,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             localization: localization
         )
         recordingCoordinator?.start()
-
-        floatingIndicator = FloatingIndicatorController(appState: AppState.shared)
 
         checkFirstLaunch()
     }

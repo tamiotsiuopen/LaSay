@@ -20,7 +20,6 @@ final class RecordingCoordinator {
     private let localization: LocalizationHelper
 
     private var downloadPanel: NSPanel?
-    private var previewPanel: NSPanel?
     private let downloadProgressModel = DownloadProgressViewModel()
     private var processingTimer: Timer?
     
@@ -377,82 +376,14 @@ final class RecordingCoordinator {
             let correctedText = TechTermsDictionary.apply(to: text)
             self.appState.saveTranscription(correctedText)
 
-            let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
+            // Always paste to cursor
+            self.textInputService.pasteText(correctedText, restoreClipboard: true)
 
-            let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "has_launched_before")
-            let shouldAutoPaste = hasLaunchedBefore ? autoPaste : true
-            let shouldRestore = true
-            let previewEnabled = UserDefaults.standard.bool(forKey: "enable_preview_mode")
-
-            let finalize: () -> Void = { [weak self] in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                    self?.hotkeyManager.restartMonitoring()
-                }
-                self?.appState.updateStatus(.idle)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.hotkeyManager.restartMonitoring()
             }
-
-            if previewEnabled {
-                self.showTranscriptionPreview(text: correctedText, restoreClipboard: shouldRestore, finalize: finalize)
-                return
-            }
-
-            if shouldAutoPaste {
-                self.textInputService.pasteText(correctedText, restoreClipboard: shouldRestore)
-                
-                // Show completion notification with text preview
-                let previewText = correctedText.count > 50 
-                    ? String(correctedText.prefix(50)) + "..." 
-                    : correctedText
-                let notificationTitle = self.localization.localized(.pastedToCursor)
-                self.showNotification(
-                    title: notificationTitle,
-                    body: previewText
-                )
-            } else {
-                self.showTranscriptionResult(correctedText)
-            }
-
-            finalize()
+            self.appState.updateStatus(.idle)
         }
-    }
-
-    private func showTranscriptionPreview(text: String, restoreClipboard: Bool, finalize: @escaping () -> Void) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-
-            self.closePreviewPanel()
-
-            let previewView = TranscriptionPreviewView(
-                text: text,
-                onPaste: { [weak self] editedText in
-                    self?.textInputService.pasteText(editedText, restoreClipboard: restoreClipboard)
-                    self?.closePreviewPanel()
-                    finalize()
-                },
-                onCancel: { [weak self] in
-                    self?.closePreviewPanel()
-                    finalize()
-                }
-            )
-
-            let hostingController = NSHostingController(rootView: previewView)
-            let panel = NSPanel(contentViewController: hostingController)
-            panel.styleMask = [.titled, .closable]
-            panel.title = localization.localized(.transcriptionResultTitle)
-            panel.isFloatingPanel = true
-            panel.level = .floating
-            panel.setContentSize(NSSize(width: 400, height: 200))
-            panel.center()
-            panel.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-
-            self.previewPanel = panel
-        }
-    }
-
-    private func closePreviewPanel() {
-        previewPanel?.close()
-        previewPanel = nil
     }
 
     private func setupAudioRecorderCallbacks() {
@@ -471,14 +402,4 @@ final class RecordingCoordinator {
         }
     }
 
-    // MARK: - Result Display
-
-    private func showTranscriptionResult(_ text: String) {
-        let alert = NSAlert()
-        alert.messageText = localization.localized(.transcriptionResultTitle)
-        alert.informativeText = text
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: localization.localized(.ok))
-        alert.runModal()
-    }
 }

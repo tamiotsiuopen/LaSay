@@ -15,13 +15,11 @@ struct SettingsView: View {
     @State private var showingAPIKeyInput: Bool = false
     @State private var selectedUILanguage: String = "zh"
     @State private var selectedTab: Int = 1
-    @State private var autoPaste: Bool = true
     @State private var enableAIPolish: Bool = false
     @State private var customSystemPrompt: String = ""
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
     @State private var showAPIKey: Bool = false
-    @State private var enablePreviewMode: Bool = false
     @State private var isPasteAdvancedExpanded: Bool = true
     @State private var isAIPolishAdvancedExpanded: Bool = true
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
@@ -146,27 +144,6 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(localization.localized(.pasteSettings))
                     .font(.headline)
-
-                Toggle(localization.localized(.autoPaste), isOn: $autoPaste)
-                    .toggleStyle(.checkbox)
-                    .accessibilityLabel(localization.localized(.autoPasteAccessibility))
-                    .accessibilityHint(localization.localized(.toggleAccessibilityHint))
-                    .accessibilityValue(autoPaste ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
-                    .onChange(of: autoPaste) { newValue in
-                        UserDefaults.standard.set(newValue, forKey: "auto_paste")
-                    }
-
-                DisclosureGroup(localization.localized(.advanced), isExpanded: $isPasteAdvancedExpanded) {
-                    Toggle(localization.localized(.previewBeforePaste), isOn: $enablePreviewMode)
-                        .toggleStyle(.checkbox)
-                        .accessibilityLabel(localization.localized(.previewModeAccessibility))
-                        .accessibilityHint(localization.localized(.toggleAccessibilityHint))
-                        .accessibilityValue(enablePreviewMode ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
-                        .onChange(of: enablePreviewMode) { newValue in
-                            UserDefaults.standard.set(newValue, forKey: "enable_preview_mode")
-                        }
-                        .padding(.top, 4)
-                }
 
                 Text(localization.localized(.pasteDescription))
                     .font(.caption)
@@ -448,19 +425,6 @@ struct SettingsView: View {
             debugLog("[DEBUG] [SettingsView] 載入自訂 prompt: \(savedPrompt.prefix(50))...")
         }
 
-        // 載入貼上設定
-        autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
-        // 如果是第一次運行，預設為 true
-        if !UserDefaults.standard.bool(forKey: "has_launched_before") {
-            autoPaste = true
-        }
-
-        if UserDefaults.standard.object(forKey: "enable_preview_mode") == nil {
-            enablePreviewMode = false
-            UserDefaults.standard.set(false, forKey: "enable_preview_mode")
-        } else {
-            enablePreviewMode = UserDefaults.standard.bool(forKey: "enable_preview_mode")
-        }
     }
 
     func loadAPIKey() {
@@ -496,10 +460,6 @@ struct SettingsView: View {
         // 儲存 AI 潤飾設定
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
         UserDefaults.standard.set(customSystemPrompt, forKey: "custom_system_prompt")
-
-        // 儲存貼上設定
-        UserDefaults.standard.set(autoPaste, forKey: "auto_paste")
-        UserDefaults.standard.set(enablePreviewMode, forKey: "enable_preview_mode")
 
         // 標記已經啟動過
         UserDefaults.standard.set(true, forKey: "has_launched_before")
