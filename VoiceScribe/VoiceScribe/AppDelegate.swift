@@ -161,13 +161,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 .foregroundColor(.secondary)
         }
         .padding(24)
-        .frame(width: 400, height: 350)
+        .frame(width: 400, height: 420)
 
         let hostingController = NSHostingController(rootView: aboutView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = localization.localized(.aboutTitle)
         window.styleMask = [.titled, .closable]
-        window.setContentSize(NSSize(width: 400, height: 350))
+        window.setContentSize(NSSize(width: 400, height: 420))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
