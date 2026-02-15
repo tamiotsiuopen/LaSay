@@ -12,7 +12,7 @@ struct OnboardingView: View {
     let onFinish: () -> Void
 
     @State private var step: Int = 0
-    @State private var selectedMode: TranscriptionMode = .local
+    @State private var selectedMode: TranscriptionMode = .cloud
     @State private var microphoneGranted: Bool = AudioRecorder.shared.checkMicrophonePermission()
     @State private var accessibilityGranted: Bool = HotkeyManager.shared.checkAccessibilityPermission()
     @State private var refreshUI: Bool = false
@@ -108,8 +108,8 @@ struct OnboardingView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
 
             HStack(spacing: 16) {
-                languageSelectionButton(title: "繁體中文\nTraditional Chinese", code: "zh")
-                    .accessibilityLabel("繁體中文 Traditional Chinese")
+                languageSelectionButton(title: "繁體中文", code: "zh")
+                    .accessibilityLabel("繁體中文")
                     .accessibilityHint(localization.localized(.languageButtonAccessibility))
                 languageSelectionButton(title: "English", code: "en")
                     .accessibilityLabel("English")
@@ -135,8 +135,8 @@ struct OnboardingView: View {
                     .font(.headline)
 
                 Picker("", selection: $selectedMode) {
-                    Text(localization.localized(.onboardingLocalMode)).tag(TranscriptionMode.local)
                     Text(localization.localized(.onboardingCloudMode)).tag(TranscriptionMode.cloud)
+                    Text(localization.currentLanguage == "zh" ? "本地（實驗性）" : "Local (Experimental)").tag(TranscriptionMode.local)
                 }
                 .pickerStyle(.segmented)
                 .frame(maxWidth: 380)
@@ -265,7 +265,7 @@ struct OnboardingView: View {
            let mode = TranscriptionMode(rawValue: savedMode) {
             selectedMode = mode
         } else {
-            selectedMode = .local
+            selectedMode = .cloud
         }
     }
 }

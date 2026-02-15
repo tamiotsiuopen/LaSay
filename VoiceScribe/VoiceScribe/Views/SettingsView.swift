@@ -204,6 +204,12 @@ struct SettingsView: View {
 
                 if transcriptionMode == .local {
                     VStack(alignment: .leading, spacing: 4) {
+                        Text(localization.currentLanguage == "zh"
+                             ? "-- 實驗性功能：本地模型對非英語語言（尤其是中文）的準確度明顯低於雲端模式。建議優先使用雲端模式。"
+                             : "-- Experimental: local model accuracy for non-English languages (especially Chinese) is significantly lower than Cloud mode. Cloud mode recommended.")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                        
                         Text(localization.localized(localWhisperService.isModelDownloaded ? .modelDownloaded : .modelNotDownloaded))
                         Text(localization.localized(localWhisperService.isCLIDownloaded ? .cliDownloaded : .cliNotDownloaded))
                     }
