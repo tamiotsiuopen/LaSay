@@ -39,7 +39,7 @@ final class FloatingIndicatorController {
     }
 
     private func showIndicator(for status: AppStatus) {
-        if let existingPanel = panel {
+        if panel != nil {
             // 更新現有面板
             if let hostingController = hostingController {
                 hostingController.rootView = FloatingIndicatorView(status: status)

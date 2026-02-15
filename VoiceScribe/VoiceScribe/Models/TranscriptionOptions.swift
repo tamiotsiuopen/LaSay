@@ -11,15 +11,6 @@ enum TranscriptionMode: String, CaseIterable {
     case cloud
     case local
 
-    var displayName: String {
-        switch self {
-        case .cloud:
-            return "Cloud (OpenAI)"
-        case .local:
-            return "Local (Whisper.cpp)"
-        }
-    }
-
     var localizedDisplayName: String {
         let language = LocalizationHelper.shared.currentLanguage
         switch self {

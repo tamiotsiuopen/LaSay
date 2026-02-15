@@ -12,7 +12,6 @@ struct TextCleaner {
         var result = text.trimmingCharacters(in: .whitespacesAndNewlines)
         result = result.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         result = result.replacingOccurrences(of: "([。！？!?,，])\\1+", with: "$1", options: .regularExpression)
-        result = result.replacingOccurrences(of: "\\b(\\w+)(\\s+\\1\\b)+", with: "$1", options: .regularExpression)
         return result
     }
 }
