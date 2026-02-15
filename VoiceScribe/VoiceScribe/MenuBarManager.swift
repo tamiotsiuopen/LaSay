@@ -61,70 +61,59 @@ final class MenuBarManager: NSObject {
 
     private func setupMenu() {
         let menu = NSMenu()
+        let localization = LocalizationHelper.shared
 
-        // Menu bar 固定使用英文
-        // 狀態顯示（動態更新）
+        // 狀態顯示
         let statusText: String
         switch appState.status {
         case .idle:
-            statusText = "Status: Idle"
+            statusText = localization.localized(.status) + localization.localized(.idle)
         case .recording:
-            statusText = "Status: Recording..."
+            statusText = localization.localized(.status) + localization.localized(.recording)
         case .processing:
-            statusText = "Status: Processing..."
+            statusText = localization.localized(.status) + localization.localized(.processing)
         }
         let statusMenuItem = NSMenuItem(title: statusText, action: nil, keyEquivalent: "")
         statusMenuItem.isEnabled = false
         menu.addItem(statusMenuItem)
 
-        let currentMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
-        let modeItem = NSMenuItem(title: "Mode: \(currentMode.displayName)", action: nil, keyEquivalent: "")
-        modeItem.isEnabled = false
-        menu.addItem(modeItem)
-
-        let currentTemplate = PolishTemplate(rawValue: UserDefaults.standard.string(forKey: "polish_template") ?? "general") ?? .general
-        let templateItem = NSMenuItem(title: "Template: \(currentTemplate.displayName)", action: nil, keyEquivalent: "")
-        templateItem.isEnabled = false
-        menu.addItem(templateItem)
-
-        menu.addItem(NSMenuItem.separator())
-
         // 快捷鍵提示
         let hotkeyHint: String
         if appState.status == .idle {
-            hotkeyHint = "💡 Hold Fn+Space to start recording"
+            hotkeyHint = localization.localized(.holdFnSpace)
         } else if appState.status == .recording {
-            hotkeyHint = "🎤 Recording... (Release Fn+Space to stop)"
+            hotkeyHint = localization.localized(.recordingHint)
         } else {
-            hotkeyHint = "⏳ Processing..."
+            hotkeyHint = localization.localized(.processingHint)
         }
         let hintItem = NSMenuItem(title: hotkeyHint, action: nil, keyEquivalent: "")
         hintItem.isEnabled = false
         menu.addItem(hintItem)
 
-        let modeSwitchItem = NSMenuItem(title: "Switch Mode", action: nil, keyEquivalent: "")
-        let modeMenu = NSMenu()
+        menu.addItem(NSMenuItem.separator())
+
+        let currentMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
         for mode in TranscriptionMode.allCases {
-            let item = NSMenuItem(title: mode.displayName, action: #selector(changeMode(_:)), keyEquivalent: "")
+            let title = localization.localized(.modeLabel) + mode.localizedDisplayName
+            let item = NSMenuItem(title: title, action: #selector(changeMode(_:)), keyEquivalent: "")
             item.representedObject = mode.rawValue
             item.state = mode == currentMode ? .on : .off
             item.target = self
-            modeMenu.addItem(item)
+            menu.addItem(item)
         }
-        modeSwitchItem.submenu = modeMenu
-        menu.addItem(modeSwitchItem)
 
-        let templateSwitchItem = NSMenuItem(title: "Switch Template", action: nil, keyEquivalent: "")
-        let templateMenu = NSMenu()
-        for template in PolishTemplate.allCases {
-            let item = NSMenuItem(title: template.displayName, action: #selector(changeTemplate(_:)), keyEquivalent: "")
-            item.representedObject = template.rawValue
-            item.state = template == currentTemplate ? .on : .off
-            item.target = self
-            templateMenu.addItem(item)
+        let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
+        if enableAIPolish {
+            let currentTemplate = PolishTemplate(rawValue: UserDefaults.standard.string(forKey: "polish_template") ?? "general") ?? .general
+            for template in PolishTemplate.allCases {
+                let title = localization.localized(.templateLabel) + template.localizedDisplayName
+                let item = NSMenuItem(title: title, action: #selector(changeTemplate(_:)), keyEquivalent: "")
+                item.representedObject = template.rawValue
+                item.state = template == currentTemplate ? .on : .off
+                item.target = self
+                menu.addItem(item)
+            }
         }
-        templateSwitchItem.submenu = templateMenu
-        menu.addItem(templateSwitchItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -133,7 +122,7 @@ final class MenuBarManager: NSObject {
             let transcriptionText = appState.lastTranscription.count > 30
                 ? String(appState.lastTranscription.prefix(30)) + "..."
                 : appState.lastTranscription
-            let transcriptionItem = NSMenuItem(title: "Last Transcription: \(transcriptionText)", action: nil, keyEquivalent: "")
+            let transcriptionItem = NSMenuItem(title: localization.localized(.lastTranscription) + transcriptionText, action: nil, keyEquivalent: "")
             transcriptionItem.isEnabled = false
             menu.addItem(transcriptionItem)
             menu.addItem(NSMenuItem.separator())
@@ -142,32 +131,29 @@ final class MenuBarManager: NSObject {
         // API Key 狀態檢查
         let apiKey = KeychainHelper.shared.get(key: "openai_api_key")
         if apiKey == nil || apiKey?.isEmpty == true {
-            let apiKeyItem = NSMenuItem(title: "⚠️ Please set OpenAI API Key first", action: #selector(openSettings), keyEquivalent: "")
+            let apiKeyItem = NSMenuItem(title: localization.localized(.needAPIKey), action: #selector(openSettings), keyEquivalent: "")
             apiKeyItem.target = self
             menu.addItem(apiKeyItem)
-            menu.addItem(NSMenuItem.separator())
         }
 
         // 權限狀態檢查
         if !hotkeyManager.checkAccessibilityPermission() {
-            let permissionItem = NSMenuItem(title: "⚠️ Accessibility permission required", action: #selector(requestAccessibilityPermission), keyEquivalent: "")
+            let permissionItem = NSMenuItem(title: localization.localized(.needAccessibility), action: #selector(requestAccessibilityPermission), keyEquivalent: "")
             permissionItem.target = self
             menu.addItem(permissionItem)
-            menu.addItem(NSMenuItem.separator())
         }
-
-        // Menu bar 選單固定使用英文
-        let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-
-        let aboutItem = NSMenuItem(title: "About LaSay", action: #selector(showAbout), keyEquivalent: "")
-        aboutItem.target = self
-        menu.addItem(aboutItem)
 
         menu.addItem(NSMenuItem.separator())
 
-        let quitItem = NSMenuItem(title: "Quit LaSay", action: #selector(quitApp), keyEquivalent: "q")
+        let settingsItem = NSMenuItem(title: localization.localized(.settingsMenu), action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        let aboutItem = NSMenuItem(title: localization.localized(.about), action: #selector(showAbout), keyEquivalent: "")
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+
+        let quitItem = NSMenuItem(title: localization.localized(.quit), action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
