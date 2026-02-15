@@ -20,7 +20,6 @@ struct SettingsView: View {
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
     @State private var showAPIKey: Bool = false
-    @State private var isPasteAdvancedExpanded: Bool = true
     @State private var isAIPolishAdvancedExpanded: Bool = true
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
 
@@ -139,16 +138,6 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
             }
 
-            Divider()
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.pasteSettings))
-                    .font(.headline)
-
-                Text(localization.localized(.pasteDescription))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
         }
         .padding(.top, 4)
     }
@@ -240,7 +229,7 @@ struct SettingsView: View {
                     .toggleStyle(.checkbox)
                     .accessibilityLabel(localization.localized(.aiPolishAccessibility))
                     .accessibilityHint(localization.localized(.toggleAccessibilityHint))
-                    .accessibilityValue(enableAIPolish ? localization.localized(.languageChineseLabel).contains("中") ? "已開啟" : "On" : localization.localized(.languageChineseLabel).contains("中") ? "已關閉" : "Off")
+                    .accessibilityValue(enableAIPolish ? (localization.currentLanguage == "zh" ? "已開啟" : "On") : (localization.currentLanguage == "zh" ? "已關閉" : "Off"))
                     .onChange(of: enableAIPolish) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
                         NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)

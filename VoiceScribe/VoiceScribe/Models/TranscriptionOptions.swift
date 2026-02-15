@@ -30,9 +30,10 @@ enum TranscriptionLanguage: String, CaseIterable {
     case ko
 
     var displayName: String {
+        let language = LocalizationHelper.shared.currentLanguage
         switch self {
         case .auto:
-            return "Auto"
+            return language == "zh" ? "自動偵測" : "Auto Detect"
         case .zh:
             return "繁體中文"
         case .en:

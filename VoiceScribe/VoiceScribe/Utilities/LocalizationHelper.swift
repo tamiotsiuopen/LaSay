@@ -56,7 +56,7 @@ class LocalizationHelper {
         case .language:
             return language == "zh" ? "語言" : "Language"
         case .languageChineseLabel:
-            return "繁體中文 Traditional Chinese"
+            return "繁體中文"
         case .languageEnglishLabel:
             return "English"
         case .autoDetectLanguage:
