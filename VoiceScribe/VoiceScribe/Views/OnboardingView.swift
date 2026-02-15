@@ -16,6 +16,7 @@ struct OnboardingView: View {
     @State private var microphoneGranted: Bool = AudioRecorder.shared.checkMicrophonePermission()
     @State private var accessibilityGranted: Bool = HotkeyManager.shared.checkAccessibilityPermission()
     @State private var refreshUI: Bool = false
+    @State private var showDownloadConfirm: Bool = false
 
     private let localization = LocalizationHelper.shared
 
@@ -60,6 +61,21 @@ struct OnboardingView: View {
             applyDefaultLanguageIfNeeded()
             loadMode()
         }
+        .alert(
+            localization.currentLanguage == "zh" ? "下載語音模型？" : "Download Voice Model?",
+            isPresented: $showDownloadConfirm
+        ) {
+            Button(localization.currentLanguage == "zh" ? "立即下載 (142MB)" : "Download Now (142MB)") {
+                DispatchQueue.global().async {
+                    LocalWhisperService.shared.predownload()
+                }
+            }
+            Button(localization.currentLanguage == "zh" ? "稍後再說" : "Later", role: .cancel) {}
+        } message: {
+            Text(localization.currentLanguage == "zh"
+                 ? "本地模式需要下載語音辨識模型 (142MB)。要現在下載嗎？"
+                 : "Local mode requires a voice recognition model (142MB). Download now?")
+        }
     }
 
     private var welcomeStep: some View {
@@ -97,10 +113,8 @@ struct OnboardingView: View {
                     UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
 
-                    if newValue == .local {
-                        DispatchQueue.global().async {
-                            LocalWhisperService.shared.predownload()
-                        }
+                    if newValue == .local && !LocalWhisperService.shared.isModelDownloaded {
+                        showDownloadConfirm = true
                     }
                 }
             }
