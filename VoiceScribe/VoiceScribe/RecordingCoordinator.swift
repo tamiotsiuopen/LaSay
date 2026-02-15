@@ -216,7 +216,9 @@ final class RecordingCoordinator {
                 guard let self = self else { return }
                 
                 switch result {
-                case .success(let transcribedText):
+                case .success(let rawText):
+                    // Convert Simplified Chinese → Traditional Chinese
+                    let transcribedText = self.convertToTraditionalChinese(rawText)
                     debugLog("[OK] 轉錄成功：\(transcribedText)")
 
                     let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
@@ -358,6 +360,11 @@ final class RecordingCoordinator {
     }
 
     // MARK: - Text Processing
+    
+    /// Convert Simplified Chinese to Traditional Chinese using ICU transform
+    private func convertToTraditionalChinese(_ text: String) -> String {
+        return text.applyingTransform(StringTransform("Hans-Hant"), reverse: false) ?? text
+    }
 
     private func processFinalText(_ text: String) {
         DispatchQueue.main.async { [weak self] in
