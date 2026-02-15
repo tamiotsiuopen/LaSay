@@ -10,6 +10,21 @@ import Foundation
 final class LocalWhisperService {
     static let shared = LocalWhisperService()
 
+    enum DownloadKind {
+        case model
+        case binary
+    }
+
+    struct DownloadProgress {
+        let kind: DownloadKind
+        let fraction: Double
+        let bytesReceived: Int64
+        let bytesExpected: Int64
+        let isCompleted: Bool
+    }
+
+    typealias DownloadProgressHandler = (DownloadProgress) -> Void
+
     private let fileManager = FileManager.default
     private var progressObservations: [Int: NSKeyValueObservation] = [:]
     private let modelFileName = "ggml-base.bin"
@@ -19,18 +34,23 @@ final class LocalWhisperService {
 
     private init() {}
 
-    func transcribe(audioFileURL: URL, language: String? = nil, completion: @escaping (Result<String, WhisperError>) -> Void) {
+    func transcribe(
+        audioFileURL: URL,
+        language: String? = nil,
+        progressHandler: DownloadProgressHandler? = nil,
+        completion: @escaping (Result<String, WhisperError>) -> Void
+    ) {
         guard fileManager.fileExists(atPath: audioFileURL.path) else {
             completion(.failure(.invalidAudioFile))
             return
         }
 
-        ensureWhisperCLI { [weak self] result in
+        ensureWhisperCLI(progressHandler: progressHandler) { [weak self] result in
             switch result {
             case .failure(let error):
                 completion(.failure(error))
             case .success(let cliURL):
-                self?.ensureModel { modelResult in
+                self?.ensureModel(progressHandler: progressHandler) { modelResult in
                     switch modelResult {
                     case .failure(let error):
                         completion(.failure(error))
@@ -63,7 +83,10 @@ final class LocalWhisperService {
 
     // MARK: - Model Download
 
-    private func ensureModel(completion: @escaping (Result<URL, WhisperError>) -> Void) {
+    private func ensureModel(
+        progressHandler: DownloadProgressHandler?,
+        completion: @escaping (Result<URL, WhisperError>) -> Void
+    ) {
         if fileManager.fileExists(atPath: modelFileURL.path) {
             completion(.success(modelFileURL))
             return
@@ -78,20 +101,29 @@ final class LocalWhisperService {
 
         print("⬇️ [LocalWhisper] Downloading model to: \(modelFileURL.path)")
 
-        downloadFile(from: modelDownloadURL, to: modelFileURL, label: "Model") { result in
+        downloadFile(
+            from: modelDownloadURL,
+            to: modelFileURL,
+            label: "Model",
+            kind: .model,
+            progressHandler: progressHandler
+        ) { result in
             switch result {
             case .success:
                 print("✅ [LocalWhisper] Model downloaded")
                 completion(.success(self.modelFileURL))
-            case .failure(let error):
-                completion(.failure(.networkError(error)))
+            case .failure:
+                completion(.failure(.modelDownloadFailed))
             }
         }
     }
 
     // MARK: - Whisper CLI Download
 
-    private func ensureWhisperCLI(completion: @escaping (Result<URL, WhisperError>) -> Void) {
+    private func ensureWhisperCLI(
+        progressHandler: DownloadProgressHandler?,
+        completion: @escaping (Result<URL, WhisperError>) -> Void
+    ) {
         if let existing = findWhisperCLI() {
             completion(.success(existing))
             return
@@ -110,7 +142,13 @@ final class LocalWhisperService {
 
         print("⬇️ [LocalWhisper] Downloading whisper.cpp CLI (\(arch))")
 
-        downloadFile(from: downloadURL, to: zipURL, label: "Binary") { [weak self] result in
+        downloadFile(
+            from: downloadURL,
+            to: zipURL,
+            label: "Binary",
+            kind: .binary,
+            progressHandler: progressHandler
+        ) { [weak self] result in
             switch result {
             case .failure(let error):
                 completion(.failure(.networkError(error)))
@@ -235,10 +273,17 @@ final class LocalWhisperService {
 
     // MARK: - Download Helper
 
-    private func downloadFile(from url: URL, to destination: URL, label: String, completion: @escaping (Result<URL, Error>) -> Void) {
+    private func downloadFile(
+        from url: URL,
+        to destination: URL,
+        label: String,
+        kind: DownloadKind,
+        progressHandler: DownloadProgressHandler?,
+        completion: @escaping (Result<URL, Error>) -> Void
+    ) {
         let request = URLRequest(url: url)
         var taskId: Int?
-        let task = URLSession.shared.downloadTask(with: request) { [weak self] tempURL, _, error in
+        let task = URLSession.shared.downloadTask(with: request) { [weak self] tempURL, response, error in
             defer {
                 if let taskId = taskId {
                     self?.progressObservations.removeValue(forKey: taskId)
@@ -255,11 +300,28 @@ final class LocalWhisperService {
                 return
             }
 
+            // Get final byte count from response
+            let bytesExpected = response?.expectedContentLength ?? -1
+
             do {
                 if self?.fileManager.fileExists(atPath: destination.path) == true {
                     try self?.fileManager.removeItem(at: destination)
                 }
                 try self?.fileManager.moveItem(at: tempURL, to: destination)
+                
+                // Get actual file size
+                let attrs = try? self?.fileManager.attributesOfItem(atPath: destination.path)
+                let fileSize = (attrs?[.size] as? Int64) ?? bytesExpected
+                
+                DispatchQueue.main.async {
+                    progressHandler?(DownloadProgress(
+                        kind: kind,
+                        fraction: 1.0,
+                        bytesReceived: fileSize,
+                        bytesExpected: fileSize,
+                        isCompleted: true
+                    ))
+                }
                 completion(.success(destination))
             } catch {
                 completion(.failure(error))
@@ -271,6 +333,15 @@ final class LocalWhisperService {
         let observation = task.progress.observe(\.fractionCompleted) { progress, _ in
             let percent = Int(progress.fractionCompleted * 100)
             print("⬇️ [LocalWhisper] \(label) download progress: \(percent)%")
+            DispatchQueue.main.async {
+                progressHandler?(DownloadProgress(
+                    kind: kind,
+                    fraction: progress.fractionCompleted,
+                    bytesReceived: progress.completedUnitCount,
+                    bytesExpected: progress.totalUnitCount,
+                    isCompleted: false
+                ))
+            }
         }
 
         if let taskId = taskId {

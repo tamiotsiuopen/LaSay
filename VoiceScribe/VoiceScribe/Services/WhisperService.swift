@@ -13,19 +13,31 @@ enum WhisperError: Error {
     case networkError(Error)
     case apiError(String)
     case invalidResponse
+    case modelDownloadFailed
 
     var localizedDescription: String {
+        let localization = LocalizationHelper.shared
+
         switch self {
         case .noAPIKey:
-            return "未設定 OpenAI API Key"
+            return localization.localized(.invalidAPIKey)
         case .invalidAudioFile:
-            return "無效的音訊檔案"
+            return localization.currentLanguage == "zh" ? "無效的音訊檔案" : "Invalid audio file"
         case .networkError(let error):
-            return "網路錯誤：\(error.localizedDescription)"
+            if let urlError = error as? URLError, urlError.code == .notConnectedToInternet {
+                return localization.localized(.noNetworkConnection)
+            }
+            return localization.localized(.networkErrorPrefix) + error.localizedDescription
         case .apiError(let message):
-            return "API 錯誤：\(message)"
+            let lowered = message.lowercased()
+            if lowered.contains("api key") || lowered.contains("incorrect api key") || lowered.contains("invalid api key") {
+                return localization.localized(.invalidAPIKey)
+            }
+            return localization.localized(.apiErrorPrefix) + message
         case .invalidResponse:
-            return "無效的 API 回應"
+            return localization.currentLanguage == "zh" ? "無效的 API 回應" : "Invalid API response"
+        case .modelDownloadFailed:
+            return localization.localized(.modelDownloadFailed)
         }
     }
 }

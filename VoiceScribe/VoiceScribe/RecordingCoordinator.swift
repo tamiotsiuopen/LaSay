@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import SwiftUI
 import UserNotifications
 
 final class RecordingCoordinator {
@@ -17,6 +18,9 @@ final class RecordingCoordinator {
     private let textInputService: TextInputService
     private let hotkeyManager: HotkeyManager
     private let localization: LocalizationHelper
+
+    private var downloadPanel: NSPanel?
+    private let downloadProgressModel = DownloadProgressViewModel()
 
     init(
         appState: AppState,
@@ -220,9 +224,62 @@ final class RecordingCoordinator {
 
         switch selectedMode {
         case .local:
-            localWhisperService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
+            localWhisperService.transcribe(
+                audioFileURL: audioURL,
+                language: languageCode,
+                progressHandler: { [weak self] progress in
+                    self?.handleDownloadProgress(progress)
+                },
+                completion: transcriptionHandler
+            )
         case .cloud:
             whisperService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
+        }
+    }
+
+    // MARK: - Download Progress
+
+    private func handleDownloadProgress(_ progress: LocalWhisperService.DownloadProgress) {
+        let titleKey: LocalizationKey = (progress.kind == .model) ? .downloadingModel : .downloadingBinary
+        downloadProgressModel.title = localization.localized(titleKey)
+        downloadProgressModel.progress = progress.fraction
+        downloadProgressModel.sizeText = formatByteCount(progress.bytesExpected)
+
+        showDownloadPanelIfNeeded()
+
+        if progress.isCompleted, progress.kind == .model {
+            closeDownloadPanelAfterDelay()
+        }
+    }
+
+    private func formatByteCount(_ bytes: Int64) -> String {
+        guard bytes > 0 else { return "" }
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
+    }
+
+    private func showDownloadPanelIfNeeded() {
+        guard downloadPanel == nil else { return }
+
+        let hostingController = NSHostingController(rootView: DownloadProgressView(model: downloadProgressModel))
+        let panel = NSPanel(contentViewController: hostingController)
+        panel.styleMask = [.titled, .closable]
+        panel.title = localization.currentLanguage == "zh" ? "下載中" : "Downloading"
+        panel.isFloatingPanel = true
+        panel.level = .floating
+        panel.center()
+        panel.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        downloadPanel = panel
+    }
+
+    private func closeDownloadPanelAfterDelay() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            self?.downloadPanel?.close()
+            self?.downloadPanel = nil
         }
     }
 
