@@ -264,7 +264,7 @@ final class RecordingCoordinator {
         let hostingController = NSHostingController(rootView: DownloadProgressView(model: downloadProgressModel))
         let panel = NSPanel(contentViewController: hostingController)
         panel.styleMask = [.titled, .closable]
-        panel.title = localization.currentLanguage == "zh" ? "下載中" : "Downloading"
+        panel.title = localization.localized(.downloadingTitle)
         panel.isFloatingPanel = true
         panel.level = .floating
         panel.center()
@@ -326,10 +326,10 @@ final class RecordingCoordinator {
 
     private func showTranscriptionResult(_ text: String) {
         let alert = NSAlert()
-        alert.messageText = "轉錄結果"
+        alert.messageText = localization.localized(.transcriptionResultTitle)
         alert.informativeText = text
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "確定")
+        alert.addButton(withTitle: localization.localized(.ok))
         alert.runModal()
     }
 }

@@ -60,8 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let window = NSWindow(contentViewController: hostingController)
         // 視窗標題根據介面語言顯示
-        let windowTitle = localization.currentLanguage == "en" ? "LaSay Settings" : "LaSay 設定"
-        window.title = windowTitle
+        window.title = localization.localized(.settingsWindowTitle)
         window.styleMask = [.titled, .closable]
         let fittingSize = hostingController.view.fittingSize
         window.setContentSize(NSSize(width: 500, height: fittingSize.height))
@@ -89,7 +88,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let hostingController = NSHostingController(rootView: onboardingView)
         let window = NSWindow(contentViewController: hostingController)
-        window.title = localization.currentLanguage == "en" ? "Welcome" : "歡迎使用"
+        window.title = localization.localized(.onboardingWindowTitle)
         window.styleMask = [.titled, .closable]
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -103,50 +102,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
 
         let alert = NSAlert()
-        alert.messageText = "LaSay"
+        alert.messageText = localization.localized(.aboutTitle)
 
-        // 根據介面語言顯示不同內容
-        let isEnglish = localization.currentLanguage == "en"
-
-        if isEnglish {
-            alert.informativeText = """
-            macOS System-wide Voice Input Tool
-
-            Version: \(version) (Build \(build)) - Beta
-
-            Features:
-            • Whisper Speech Transcription
-            • GPT-5-mini AI Text Polishing
-            • Global Hotkey: Fn + Space
-
-            Privacy:
-            • No data collection
-            • All processing via OpenAI API
-            • API Key stored securely locally
-
-            Contact:
-            • Email: tamio.tsiu@gmail.com
-            """
-        } else {
-            alert.informativeText = """
-            macOS 系統級語音輸入工具
-
-            版本：\(version) (Build \(build)) - 測試版
-
-            功能：
-            • Whisper 語音轉錄
-            • GPT-5-mini AI 文字潤飾
-            • 全域快捷鍵：Fn + Space
-
-            隱私：
-            • 不收集任何使用資料
-            • 所有處理透過 OpenAI API
-            • API Key 安全儲存於本機
-
-            聯繫方式：
-            • Email: tamio.tsiu@gmail.com
-            """
-        }
+        let description = String(format: localization.localized(.aboutDescription), version, build)
+        alert.informativeText = description
 
         alert.alertStyle = .informational
         alert.addButton(withTitle: localization.localized(.ok))

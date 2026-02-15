@@ -15,6 +15,7 @@ struct OnboardingView: View {
     @State private var selectedMode: TranscriptionMode = .local
     @State private var microphoneGranted: Bool = AudioRecorder.shared.checkMicrophonePermission()
     @State private var accessibilityGranted: Bool = HotkeyManager.shared.checkAccessibilityPermission()
+    @State private var refreshUI: Bool = false
 
     private let localization = LocalizationHelper.shared
 
@@ -32,7 +33,7 @@ struct OnboardingView: View {
 
             HStack {
                 if step > 0 {
-                    Button(localization.currentLanguage == "zh" ? "返回" : "Back") {
+                    Button(localization.localized(.back)) {
                         step -= 1
                     }
                 }
@@ -40,12 +41,12 @@ struct OnboardingView: View {
                 Spacer()
 
                 if step < 2 {
-                    Button(localization.currentLanguage == "zh" ? "下一步" : "Next") {
+                    Button(localization.localized(.next)) {
                         step += 1
                     }
                     .buttonStyle(.borderedProminent)
                 } else {
-                    Button(localization.currentLanguage == "zh" ? "完成" : "Finish") {
+                    Button(localization.localized(.finish)) {
                         onFinish()
                     }
                     .buttonStyle(.borderedProminent)
@@ -54,29 +55,41 @@ struct OnboardingView: View {
         }
         .padding(28)
         .frame(width: 520, height: 360)
+        .id(refreshUI)
         .onAppear {
+            applyDefaultLanguageIfNeeded()
             loadMode()
         }
     }
 
     private var welcomeStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(localization.currentLanguage == "zh" ? "歡迎使用 LaSay" : "Welcome to LaSay")
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.localized(.onboardingLanguageTitle))
+                    .font(.headline)
+
+                HStack(spacing: 12) {
+                    languageSelectionButton(title: "🇹🇼 繁體中文", code: "zh")
+                    languageSelectionButton(title: "🇺🇸 English", code: "en")
+                }
+            }
+
+            Divider()
+
+            Text(localization.localized(.onboardingWelcomeTitle))
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text(localization.currentLanguage == "zh"
-                 ? "LaSay 是你的系統級語音輸入工具，按住 Fn + Space 就能在任何 app 輸入。"
-                 : "LaSay is a system-wide voice input tool. Hold Fn + Space to dictate anywhere.")
+            Text(localization.localized(.onboardingWelcomeDescription))
                 .foregroundColor(.secondary)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(localization.currentLanguage == "zh" ? "選擇模式" : "Choose a mode")
+                Text(localization.localized(.onboardingChooseMode))
                     .font(.headline)
 
                 Picker("", selection: $selectedMode) {
-                    Text(localization.currentLanguage == "zh" ? "本地（免費）" : "Local (Free)").tag(TranscriptionMode.local)
-                    Text(localization.currentLanguage == "zh" ? "雲端（需要 API Key）" : "Cloud (API Key required)").tag(TranscriptionMode.cloud)
+                    Text(localization.localized(.onboardingLocalMode)).tag(TranscriptionMode.local)
+                    Text(localization.localized(.onboardingCloudMode)).tag(TranscriptionMode.cloud)
                 }
                 .pickerStyle(.segmented)
                 .frame(maxWidth: 380)
@@ -90,24 +103,22 @@ struct OnboardingView: View {
 
     private var permissionsStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(localization.currentLanguage == "zh" ? "權限設定" : "Permissions")
+            Text(localization.localized(.onboardingPermissionsTitle))
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text(localization.currentLanguage == "zh"
-                 ? "LaSay 需要麥克風與輔助使用權限才能正常工作。"
-                 : "LaSay needs microphone and accessibility permissions to work properly.")
+            Text(localization.localized(.onboardingPermissionsDescription))
                 .foregroundColor(.secondary)
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text(localization.currentLanguage == "zh" ? "麥克風" : "Microphone")
+                    Text(localization.localized(.onboardingMicrophone))
                         .font(.headline)
                     Spacer()
                     Text(microphoneGranted ? "✅" : "⚪️")
                 }
 
-                Button(localization.currentLanguage == "zh" ? "授予麥克風權限" : "Grant Microphone Access") {
+                Button(localization.localized(.onboardingGrantMicrophone)) {
                     AudioRecorder.shared.requestMicrophonePermission { granted in
                         microphoneGranted = granted
                     }
@@ -119,19 +130,19 @@ struct OnboardingView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text(localization.currentLanguage == "zh" ? "輔助使用" : "Accessibility")
+                    Text(localization.localized(.onboardingAccessibility))
                         .font(.headline)
                     Spacer()
                     Text(accessibilityGranted ? "✅" : "⚪️")
                 }
 
-                Button(localization.currentLanguage == "zh" ? "打開輔助使用設定" : "Open Accessibility Settings") {
+                Button(localization.localized(.onboardingOpenAccessibility)) {
                     let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
                     NSWorkspace.shared.open(url)
                 }
                 .buttonStyle(.bordered)
 
-                Button(localization.currentLanguage == "zh" ? "我已授權，重新檢查" : "I granted it, recheck") {
+                Button(localization.localized(.onboardingRecheckAccessibility)) {
                     accessibilityGranted = HotkeyManager.shared.checkAccessibilityPermission()
                 }
                 .buttonStyle(.bordered)
@@ -141,20 +152,42 @@ struct OnboardingView: View {
 
     private var tryItStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(localization.currentLanguage == "zh" ? "試試看" : "Try it out")
+            Text(localization.localized(.onboardingTryItTitle))
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text(localization.currentLanguage == "zh"
-                 ? "按住 Fn + Space 試試看！"
-                 : "Hold Fn + Space and give it a try!")
+            Text(localization.localized(.onboardingTryItPrompt))
                 .font(.headline)
 
-            Text(localization.currentLanguage == "zh"
-                 ? "完成後就可以開始使用 LaSay。"
-                 : "You're all set to start using LaSay.")
+            Text(localization.localized(.onboardingTryItDescription))
                 .foregroundColor(.secondary)
         }
+    }
+
+    private func languageSelectionButton(title: String, code: String) -> some View {
+        Button(action: {
+            UserDefaults.standard.set(code, forKey: "ui_language")
+            refreshUI.toggle()
+            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+        }) {
+            Text(title)
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(localization.currentLanguage == code ? Color.accentColor : Color.secondary.opacity(0.15))
+                .foregroundColor(localization.currentLanguage == code ? .white : .primary)
+                .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func applyDefaultLanguageIfNeeded() {
+        guard UserDefaults.standard.string(forKey: "ui_language") == nil else { return }
+        let localeCode = Locale.current.language.languageCode?.identifier ?? Locale.current.languageCode ?? "en"
+        let normalized = localeCode.lowercased()
+        let defaultLanguage = normalized.hasPrefix("zh") ? "zh" : "en"
+        UserDefaults.standard.set(defaultLanguage, forKey: "ui_language")
+        refreshUI.toggle()
     }
 
     private func loadMode() {

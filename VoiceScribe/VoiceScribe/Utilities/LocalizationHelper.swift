@@ -39,6 +39,8 @@ class LocalizationHelper {
             return language == "zh" ? "隱藏" : "Hide"
         case .update:
             return language == "zh" ? "更新" : "Update"
+        case .save:
+            return language == "zh" ? "儲存" : "Save"
         case .cancel:
             return language == "zh" ? "取消" : "Cancel"
         case .enterAPIKey:
@@ -51,6 +53,10 @@ class LocalizationHelper {
             return language == "zh" ? "介面語言" : "Interface Language"
         case .language:
             return language == "zh" ? "語言" : "Language"
+        case .languageChineseLabel:
+            return "繁體中文 (Chinese)"
+        case .languageEnglishLabel:
+            return "English (英文)"
         case .autoDetectLanguage:
             return language == "zh" ? "語音轉錄會自動辨識所有語言" : "Speech transcription automatically detects all languages"
 
@@ -87,20 +93,10 @@ class LocalizationHelper {
             return language == "zh" ? "自訂" : "Custom"
         case .customPromptHint:
             return language == "zh" ? "你可以在這裡自訂 AI 潤飾的指令" : "You can customize the AI polish instructions here"
-        case .resetToDefault:
-            return language == "zh" ? "重設為預設" : "Reset to Default"
-        case .polishTemplate:
-            return language == "zh" ? "潤飾模板" : "Template"
-        case .polishTemplateHint:
-            return language == "zh" ? "選擇預設輸出格式，亦可用自訂 Prompt 覆蓋" : "Choose a default format or override with a custom prompt"
         case .customSystemPrompt:
             return language == "zh" ? "自訂 System Prompt（選填）" : "Custom System Prompt (Optional)"
-        case .loadTemplatePrompt:
-            return language == "zh" ? "載入模板 Prompt" : "Load Template Prompt"
-        case .clear:
-            return language == "zh" ? "清空" : "Clear"
-        case .emptyForDefault:
-            return language == "zh" ? "留空則使用預設 prompt" : "Leave empty to use default prompt"
+        case .resetToDefault:
+            return language == "zh" ? "重設為預設" : "Reset to Default"
 
         // 貼上設定
         case .pasteSettings:
@@ -115,24 +111,22 @@ class LocalizationHelper {
         // 按鈕
         case .close:
             return language == "zh" ? "關閉" : "Close"
-        case .saveAndClose:
-            return language == "zh" ? "儲存並關閉" : "Save and Close"
-        case .settingsSaved:
-            return language == "zh" ? "設定已儲存" : "Settings Saved"
         case .ok:
             return language == "zh" ? "確定" : "OK"
-        case .autoSaveHint:
-            return language == "zh" ? "關閉視窗時會自動儲存設定" : "Settings will be saved automatically when closing"
         case .changesSavedAutomatically:
             return language == "zh" ? "變更會自動儲存" : "Changes are saved automatically"
+        case .back:
+            return language == "zh" ? "返回" : "Back"
+        case .next:
+            return language == "zh" ? "下一步" : "Next"
+        case .finish:
+            return language == "zh" ? "完成" : "Finish"
 
         // Menu Bar
         case .status:
             return language == "zh" ? "狀態：" : "Status: "
         case .modeLabel:
             return language == "zh" ? "模式：" : "Mode: "
-        case .templateLabel:
-            return language == "zh" ? "模板：" : "Template: "
         case .idle:
             return language == "zh" ? "待機" : "Idle"
         case .recording:
@@ -158,6 +152,12 @@ class LocalizationHelper {
         case .quit:
             return language == "zh" ? "結束 LaSay" : "Quit LaSay"
 
+        // 視窗標題
+        case .settingsWindowTitle:
+            return language == "zh" ? "LaSay 設定" : "LaSay Settings"
+        case .onboardingWindowTitle:
+            return language == "zh" ? "歡迎使用" : "Welcome"
+
         // 關於對話框
         case .aboutTitle:
             return language == "zh" ? "LaSay" : "LaSay"
@@ -165,22 +165,76 @@ class LocalizationHelper {
             return language == "zh" ? """
             macOS 系統級語音輸入工具
 
-            版本：%@ (Build %@)
+            版本：%@ (Build %@) - 測試版
 
             功能：
             • Whisper 語音轉錄
             • GPT-5-mini AI 文字潤飾
             • 全域快捷鍵：Fn + Space
+
+            隱私：
+            • 不收集任何使用資料
+            • 所有處理透過 OpenAI API
+            • API Key 安全儲存於本機
+
+            聯繫方式：
+            • Email: tamio.tsiu@gmail.com
             """ : """
             macOS System-wide Voice Input Tool
 
-            Version: %@ (Build %@)
+            Version: %@ (Build %@) - Beta
 
             Features:
             • Whisper Speech Transcription
             • GPT-5-mini AI Text Polishing
             • Global Hotkey: Fn + Space
+
+            Privacy:
+            • No data collection
+            • All processing via OpenAI API
+            • API Key stored securely locally
+
+            Contact:
+            • Email: tamio.tsiu@gmail.com
             """
+
+        // Onboarding
+        case .onboardingLanguageTitle:
+            return language == "zh" ? "選擇語言" : "Select Language"
+        case .onboardingWelcomeTitle:
+            return language == "zh" ? "歡迎使用 LaSay" : "Welcome to LaSay"
+        case .onboardingWelcomeDescription:
+            return language == "zh"
+                ? "LaSay 是你的系統級語音輸入工具，按住 Fn + Space 就能在任何 app 輸入。"
+                : "LaSay is a system-wide voice input tool. Hold Fn + Space to dictate anywhere."
+        case .onboardingChooseMode:
+            return language == "zh" ? "選擇模式" : "Choose a mode"
+        case .onboardingLocalMode:
+            return language == "zh" ? "本地（免費）" : "Local (Free)"
+        case .onboardingCloudMode:
+            return language == "zh" ? "雲端（需要 API Key）" : "Cloud (API Key required)"
+        case .onboardingPermissionsTitle:
+            return language == "zh" ? "權限設定" : "Permissions"
+        case .onboardingPermissionsDescription:
+            return language == "zh"
+                ? "LaSay 需要麥克風與輔助使用權限才能正常工作。"
+                : "LaSay needs microphone and accessibility permissions to work properly."
+        case .onboardingMicrophone:
+            return language == "zh" ? "麥克風" : "Microphone"
+        case .onboardingAccessibility:
+            return language == "zh" ? "輔助使用" : "Accessibility"
+        case .onboardingGrantMicrophone:
+            return language == "zh" ? "授予麥克風權限" : "Grant Microphone Access"
+        case .onboardingOpenAccessibility:
+            return language == "zh" ? "打開輔助使用設定" : "Open Accessibility Settings"
+        case .onboardingRecheckAccessibility:
+            return language == "zh" ? "我已授權，重新檢查" : "I granted it, recheck"
+        case .onboardingTryItTitle:
+            return language == "zh" ? "試試看" : "Try it out"
+        case .onboardingTryItPrompt:
+            return language == "zh" ? "按住 Fn + Space 試試看！" : "Hold Fn + Space and give it a try!"
+        case .onboardingTryItDescription:
+            return language == "zh" ? "完成後就可以開始使用 LaSay。" : "You're all set to start using LaSay."
 
         // 權限對話框
         case .microphonePermissionTitle:
@@ -189,7 +243,6 @@ class LocalizationHelper {
             return language == "zh" ? "LaSay 需要麥克風權限才能錄音。請在系統設定中允許麥克風存取。" : "LaSay needs microphone access to record audio. Please allow microphone access in System Settings."
         case .openSystemSettings:
             return language == "zh" ? "打開系統設定" : "Open System Settings"
-
         case .accessibilityPermissionTitle:
             return language == "zh" ? "需要輔助使用權限" : "Accessibility Permission Required"
         case .accessibilityPermissionMessage:
@@ -224,6 +277,10 @@ class LocalizationHelper {
             return language == "zh" ? "正在下載語音模型" : "Downloading speech model"
         case .downloadingBinary:
             return language == "zh" ? "正在下載轉錄工具" : "Downloading transcription tool"
+        case .downloadingTitle:
+            return language == "zh" ? "下載中" : "Downloading"
+        case .transcriptionResultTitle:
+            return language == "zh" ? "轉錄結果" : "Transcription Result"
         }
     }
 }
@@ -239,6 +296,7 @@ enum LocalizationKey {
     case show
     case hide
     case update
+    case save
     case cancel
     case enterAPIKey
     case apiKeyDescription
@@ -246,6 +304,8 @@ enum LocalizationKey {
     // 介面語言
     case uiLanguage
     case language
+    case languageChineseLabel
+    case languageEnglishLabel
     case autoDetectLanguage
 
     // 語音轉錄
@@ -267,13 +327,8 @@ enum LocalizationKey {
     case defaultPromptLabel
     case customPromptLabel
     case customPromptHint
-    case resetToDefault
-    case polishTemplate
-    case polishTemplateHint
     case customSystemPrompt
-    case loadTemplatePrompt
-    case clear
-    case emptyForDefault
+    case resetToDefault
 
     // 貼上設定
     case pasteSettings
@@ -283,16 +338,15 @@ enum LocalizationKey {
 
     // 按鈕
     case close
-    case saveAndClose
-    case settingsSaved
     case ok
-    case autoSaveHint
     case changesSavedAutomatically
+    case back
+    case next
+    case finish
 
     // Menu Bar
     case status
     case modeLabel
-    case templateLabel
     case idle
     case recording
     case processing
@@ -306,9 +360,31 @@ enum LocalizationKey {
     case about
     case quit
 
+    // 視窗標題
+    case settingsWindowTitle
+    case onboardingWindowTitle
+
     // 關於對話框
     case aboutTitle
     case aboutDescription
+
+    // Onboarding
+    case onboardingLanguageTitle
+    case onboardingWelcomeTitle
+    case onboardingWelcomeDescription
+    case onboardingChooseMode
+    case onboardingLocalMode
+    case onboardingCloudMode
+    case onboardingPermissionsTitle
+    case onboardingPermissionsDescription
+    case onboardingMicrophone
+    case onboardingAccessibility
+    case onboardingGrantMicrophone
+    case onboardingOpenAccessibility
+    case onboardingRecheckAccessibility
+    case onboardingTryItTitle
+    case onboardingTryItPrompt
+    case onboardingTryItDescription
 
     // 權限對話框
     case microphonePermissionTitle
@@ -332,4 +408,6 @@ enum LocalizationKey {
     case apiErrorPrefix
     case downloadingModel
     case downloadingBinary
+    case downloadingTitle
+    case transcriptionResultTitle
 }

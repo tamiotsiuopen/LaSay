@@ -31,10 +31,6 @@ struct SettingsView: View {
     private let openAIService = OpenAIService.shared
     private let localization = LocalizationHelper.shared
 
-    let uiLanguages = [
-        ("zh", "繁體中文"),
-        ("en", "English")
-    ]
 
     var body: some View {
         VStack(spacing: 16) {
@@ -93,18 +89,11 @@ struct SettingsView: View {
                 Text(localization.localized(.uiLanguage))
                     .font(.headline)
 
-                Picker(localization.localized(.language), selection: $selectedUILanguage) {
-                    ForEach(uiLanguages, id: \.0) { code, name in
-                        Text(name).tag(code)
-                    }
+                HStack(spacing: 12) {
+                    languageSelectionButton(title: localization.localized(.languageChineseLabel), code: "zh")
+                    languageSelectionButton(title: localization.localized(.languageEnglishLabel), code: "en")
                 }
-                .pickerStyle(.segmented)
                 .frame(maxWidth: 420)
-                .onChange(of: selectedUILanguage) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "ui_language")
-                    refreshUI.toggle()
-                    NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-                }
 
                 Text(localization.localized(.autoDetectLanguage))
                     .font(.caption)
@@ -157,6 +146,27 @@ struct SettingsView: View {
             }
         }
         .padding(.top, 4)
+    }
+
+
+    private func languageSelectionButton(title: String, code: String) -> some View {
+        Button(action: {
+            selectedUILanguage = code
+            UserDefaults.standard.set(code, forKey: "ui_language")
+            refreshUI.toggle()
+            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+        }) {
+            Text(title)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 8)
+                .foregroundColor(selectedUILanguage == code ? .white : .primary)
+                .background(selectedUILanguage == code ? Color.accentColor : Color.secondary.opacity(0.15))
+                .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
     }
 
     private var transcriptionTab: some View {
@@ -313,7 +323,7 @@ struct SettingsView: View {
                     }
                     .font(.caption)
 
-                    Button(localization.currentLanguage == "zh" ? "儲存" : "Save") {
+                    Button(localization.localized(.save)) {
                         if !apiKey.isEmpty {
                             let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
                             if success {
