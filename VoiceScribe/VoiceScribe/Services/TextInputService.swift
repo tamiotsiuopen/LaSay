@@ -2,7 +2,7 @@
 //  TextInputService.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/1/25.
+//  Created by Tamio Tsiu on 2026/1/25.
 //
 
 import Cocoa
@@ -76,7 +76,7 @@ class TextInputService {
             }
         }
 
-        print("✅ 剪貼簿已還原")
+        debugLog("✅ 剪貼簿已還原")
     }
 
     // MARK: - Keyboard Simulation
@@ -86,7 +86,7 @@ class TextInputService {
         // 創建 V 鍵按下事件（keyCode 9 是 V）
         guard let keyDownEvent = CGEvent(keyboardEventSource: nil, virtualKey: 9, keyDown: true),
               let keyUpEvent = CGEvent(keyboardEventSource: nil, virtualKey: 9, keyDown: false) else {
-            print("❌ 無法創建鍵盤事件")
+            debugLog("❌ 無法創建鍵盤事件")
             return
         }
 
@@ -98,6 +98,6 @@ class TextInputService {
         keyDownEvent.post(tap: .cghidEventTap)
         keyUpEvent.post(tap: .cghidEventTap)
 
-        print("✅ 已模擬 ⌘V")
+        debugLog("✅ 已模擬 ⌘V")
     }
 }

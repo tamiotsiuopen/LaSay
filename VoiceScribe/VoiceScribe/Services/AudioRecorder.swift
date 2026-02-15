@@ -2,7 +2,7 @@
 //  AudioRecorder.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/1/25.
+//  Created by Tamio Tsiu on 2026/1/25.
 //
 
 import Foundation
@@ -46,7 +46,7 @@ class AudioRecorder: NSObject {
     func startRecording() {
         // 檢查權限
         guard checkMicrophonePermission() else {
-            print("❌ 沒有麥克風權限")
+            debugLog("❌ 沒有麥克風權限")
             return
         }
 
@@ -75,9 +75,9 @@ class AudioRecorder: NSObject {
             audioRecorder?.delegate = self
             audioRecorder?.record()
 
-            print("✅ 開始錄音：\(url.path)")
+            debugLog("✅ 開始錄音：\(url.path)")
         } catch {
-            print("❌ 錄音失敗：\(error.localizedDescription)")
+            debugLog("❌ 錄音失敗：\(error.localizedDescription)")
             onError?(error)
         }
     }
@@ -85,12 +85,12 @@ class AudioRecorder: NSObject {
     /// 停止錄音
     func stopRecording() {
         guard let recorder = audioRecorder, recorder.isRecording else {
-            print("⚠️ 沒有正在進行的錄音")
+            debugLog("⚠️ 沒有正在進行的錄音")
             return
         }
 
         recorder.stop()
-        print("✅ 停止錄音")
+        debugLog("✅ 停止錄音")
     }
 
     /// 取得最後一次錄音的 URL
@@ -102,9 +102,9 @@ class AudioRecorder: NSObject {
     func deleteRecording(at url: URL) {
         do {
             try FileManager.default.removeItem(at: url)
-            print("✅ 刪除錄音檔案：\(url.path)")
+            debugLog("✅ 刪除錄音檔案：\(url.path)")
         } catch {
-            print("❌ 刪除錄音檔案失敗：\(error.localizedDescription)")
+            debugLog("❌ 刪除錄音檔案失敗：\(error.localizedDescription)")
         }
     }
 }
@@ -114,17 +114,17 @@ class AudioRecorder: NSObject {
 extension AudioRecorder: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         if flag {
-            print("✅ 錄音完成：\(recorder.url.path)")
+            debugLog("✅ 錄音完成：\(recorder.url.path)")
             onRecordingComplete?(recorder.url)
         } else {
-            print("❌ 錄音未成功完成")
+            debugLog("❌ 錄音未成功完成")
             onRecordingComplete?(nil)
         }
     }
 
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         if let error = error {
-            print("❌ 錄音編碼錯誤：\(error.localizedDescription)")
+            debugLog("❌ 錄音編碼錯誤：\(error.localizedDescription)")
             onError?(error)
         }
     }

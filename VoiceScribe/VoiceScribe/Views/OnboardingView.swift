@@ -2,7 +2,7 @@
 //  OnboardingView.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/2/15.
+//  Created by Tamio Tsiu on 2026/2/15.
 //
 
 import SwiftUI
@@ -22,6 +22,16 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Spacer()
+                Button(localization.currentLanguage == "zh" ? "跳過" : "Skip") {
+                    onFinish()
+                }
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .buttonStyle(.plain)
+            }
+
             if step == 0 {
                 welcomeStep
             } else if step == 1 {

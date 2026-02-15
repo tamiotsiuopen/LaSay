@@ -2,7 +2,7 @@
 //  RecordingCoordinator.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/2/15.
+//  Created by Tamio Tsiu on 2026/2/15.
 //
 
 import Cocoa
@@ -59,9 +59,9 @@ final class RecordingCoordinator {
     private func requestMicrophonePermission() {
         audioRecorder.requestMicrophonePermission { [weak self] granted in
             if granted {
-                print("✅ 麥克風權限已授予")
+                debugLog("✅ 麥克風權限已授予")
             } else {
-                print("❌ 麥克風權限被拒絕")
+                debugLog("❌ 麥克風權限被拒絕")
                 self?.showMicrophonePermissionAlert()
             }
         }
@@ -88,9 +88,9 @@ final class RecordingCoordinator {
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             if granted {
-                print("✅ 通知權限已授予")
+                debugLog("✅ 通知權限已授予")
             } else {
-                print("❌ 通知權限被拒絕")
+                debugLog("❌ 通知權限被拒絕")
             }
         }
     }
@@ -104,7 +104,7 @@ final class RecordingCoordinator {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ 發送通知失敗：\(error.localizedDescription)")
+                debugLog("❌ 發送通知失敗：\(error.localizedDescription)")
             }
         }
     }
@@ -113,12 +113,12 @@ final class RecordingCoordinator {
 
     private func setupGlobalHotkey() {
         hotkeyManager.onHotkeyPressed = { [weak self] in
-            print("⌨️ 全域快捷鍵按下（Fn + Space）")
+            debugLog("⌨️ 全域快捷鍵按下（Fn + Space）")
             self?.startRecording()
         }
 
         hotkeyManager.onHotkeyReleased = { [weak self] in
-            print("⌨️ 全域快捷鍵放開")
+            debugLog("⌨️ 全域快捷鍵放開")
             self?.stopRecording()
         }
 
@@ -128,7 +128,7 @@ final class RecordingCoordinator {
     }
 
     private func startRecording() {
-        print("🎤 開始錄音...")
+        debugLog("🎤 開始錄音...")
         if isSoundFeedbackEnabled() {
             NSSound(named: "Tink")?.play()
         }
@@ -137,17 +137,17 @@ final class RecordingCoordinator {
     }
 
     private func stopRecording() {
-        print("🛑 停止錄音...")
+        debugLog("🛑 停止錄音...")
         audioRecorder.stopRecording()
         appState.updateStatus(.processing)
 
         guard let audioURL = audioRecorder.getLastRecordingURL() else {
-            print("❌ 無法取得錄音檔案")
+            debugLog("❌ 無法取得錄音檔案")
             appState.updateStatus(.idle)
             return
         }
 
-        print("📁 錄音檔案：\(audioURL.path)")
+        debugLog("📁 錄音檔案：\(audioURL.path)")
 
         let selectedMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
         let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
@@ -157,24 +157,24 @@ final class RecordingCoordinator {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let transcribedText):
-                    print("✅ 轉錄成功：\(transcribedText)")
+                    debugLog("✅ 轉錄成功：\(transcribedText)")
 
                     let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
-                    print("🔍 [AI 潤飾] 設定狀態：\(enableAIPolish)")
+                    debugLog("🔍 [AI 潤飾] 設定狀態：\(enableAIPolish)")
 
                     if enableAIPolish {
-                        if selectedMode == .local, !NetworkMonitor.isOnline() {
-                            print("⚠️ [AI 潤飾] 離線模式，使用基本清理")
+                        if selectedMode == .local, !NetworkMonitor.shared.isOnline {
+                            debugLog("⚠️ [AI 潤飾] 離線模式，使用基本清理")
                             let cleaned = TextCleaner.basicCleanup(transcribedText)
                             self?.processFinalText(cleaned)
                         } else {
                             guard let apiKey = KeychainHelper.shared.get(key: "openai_api_key"), !apiKey.isEmpty else {
-                                print("⚠️ [AI 潤飾] 未設定 OpenAI API Key，跳過 AI 潤飾")
+                                debugLog("⚠️ [AI 潤飾] 未設定 OpenAI API Key，跳過 AI 潤飾")
                                 self?.processFinalText(transcribedText)
                                 return
                             }
 
-                            print("🤖 開始 AI 潤飾...")
+                            debugLog("🤖 開始 AI 潤飾...")
                             let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
 
                             self?.openAIService.polishText(transcribedText, customPrompt: customPrompt) { polishResult in
@@ -182,11 +182,11 @@ final class RecordingCoordinator {
                                     let finalText: String
                                     switch polishResult {
                                     case .success(let polishedText):
-                                        print("✅ AI 潤飾成功：\(polishedText)")
+                                        debugLog("✅ AI 潤飾成功：\(polishedText)")
                                         finalText = polishedText
                                     case .failure(let error):
-                                        print("❌ AI 潤飾失敗：\(error.localizedDescription)")
-                                        print("⚠️ 使用原始轉錄文字")
+                                        debugLog("❌ AI 潤飾失敗：\(error.localizedDescription)")
+                                        debugLog("⚠️ 使用原始轉錄文字")
 
                                         self?.showNotification(
                                             title: self?.localization.localized(.aiPolishFailed) ?? "AI Polishing Failed",
@@ -208,7 +208,7 @@ final class RecordingCoordinator {
                     self?.audioRecorder.deleteRecording(at: audioURL)
 
                 case .failure(let error):
-                    print("❌ 轉錄失敗：\(error.localizedDescription)")
+                    debugLog("❌ 轉錄失敗：\(error.localizedDescription)")
 
                     self?.showNotification(
                         title: self?.localization.localized(.transcriptionFailed) ?? "Transcription Failed",
@@ -374,16 +374,16 @@ final class RecordingCoordinator {
     private func setupAudioRecorderCallbacks() {
         audioRecorder.onRecordingComplete = { [weak self] url in
             guard let url = url else {
-                print("❌ 錄音失敗")
+                debugLog("❌ 錄音失敗")
                 self?.appState.updateStatus(.idle)
                 return
             }
 
-            print("✅ 錄音完成：\(url.path)")
+            debugLog("✅ 錄音完成：\(url.path)")
         }
 
         audioRecorder.onError = { error in
-            print("❌ 錄音錯誤：\(error.localizedDescription)")
+            debugLog("❌ 錄音錯誤：\(error.localizedDescription)")
         }
     }
 

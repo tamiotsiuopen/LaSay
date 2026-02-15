@@ -2,7 +2,7 @@
 //  TranscriptionPreviewView.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/2/15.
+//  Created by Tamio Tsiu on 2026/2/15.
 //
 
 import SwiftUI

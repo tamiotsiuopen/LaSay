@@ -2,7 +2,7 @@
 //  OpenAIService.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/1/25.
+//  Created by Tamio Tsiu on 2026/1/25.
 //
 
 import Foundation
@@ -56,13 +56,13 @@ class OpenAIService {
 
     /// 使用 GPT-5-mini 優化文字
     func polishText(_ text: String, customPrompt: String? = nil, completion: @escaping (Result<String, OpenAIError>) -> Void) {
-        print("🔍 [OpenAIService] 開始 AI 潤飾")
-        print("🔍 [OpenAIService] 輸入文字：\(text)")
-        print("🔍 [OpenAIService] 文字長度：\(text.count) 字元")
+        debugLog("🔍 [OpenAIService] 開始 AI 潤飾")
+        debugLog("🔍 [OpenAIService] 輸入文字：\(text)")
+        debugLog("🔍 [OpenAIService] 文字長度：\(text.count) 字元")
 
         // 檢查 API Key
         guard let apiKey = keychainHelper.get(key: "openai_api_key"), !apiKey.isEmpty else {
-            print("❌ [OpenAIService] 沒有 API Key")
+            debugLog("❌ [OpenAIService] 沒有 API Key")
             completion(.failure(.noAPIKey))
             return
         }
@@ -70,7 +70,7 @@ class OpenAIService {
         // 使用自訂 prompt 或預設 prompt
         let trimmedPrompt = customPrompt?.trimmingCharacters(in: .whitespacesAndNewlines)
         let systemPrompt = (trimmedPrompt?.isEmpty == false ? trimmedPrompt : defaultSystemPrompt) ?? defaultSystemPrompt
-        print("🔍 [OpenAIService] 使用的 System Prompt：\(systemPrompt.prefix(100))...")
+        debugLog("🔍 [OpenAIService] 使用的 System Prompt：\(systemPrompt.prefix(100))...")
 
         // 建立請求
         var request = URLRequest(url: URL(string: apiURL)!)
@@ -93,40 +93,40 @@ class OpenAIService {
             ]
         ]
 
-        print("🔍 [OpenAIService] 請求 body 已建立（使用 gpt-5-mini）")
+        debugLog("🔍 [OpenAIService] 請求 body 已建立（使用 gpt-5-mini）")
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
             // Debug: 印出請求內容
             if let jsonString = String(data: request.httpBody!, encoding: .utf8) {
-                print("🔍 [OpenAIService] 請求 JSON：\(jsonString)")
+                debugLog("🔍 [OpenAIService] 請求 JSON：\(jsonString)")
             }
         } catch {
-            print("❌ [OpenAIService] 建立請求 body 失敗：\(error)")
+            debugLog("❌ [OpenAIService] 建立請求 body 失敗：\(error)")
             completion(.failure(.networkError(error)))
             return
         }
 
-        print("📡 [OpenAIService] 發送請求到 OpenAI API...")
+        debugLog("📡 [OpenAIService] 發送請求到 OpenAI API...")
 
         // 發送請求
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ [OpenAIService] 網路錯誤：\(error.localizedDescription)")
+                debugLog("❌ [OpenAIService] 網路錯誤：\(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
             }
 
             guard let data = data else {
-                print("❌ [OpenAIService] 沒有收到資料")
+                debugLog("❌ [OpenAIService] 沒有收到資料")
                 completion(.failure(.invalidResponse))
                 return
             }
 
             // Debug: 印出原始回應
             if let responseString = String(data: data, encoding: .utf8) {
-                print("🔍 [OpenAIService] API 回應：\(responseString.prefix(500))...")
+                debugLog("🔍 [OpenAIService] API 回應：\(responseString.prefix(500))...")
             }
 
             // 解析回應
@@ -135,7 +135,7 @@ class OpenAIService {
                     // 檢查是否有錯誤
                     if let errorObj = json["error"] as? [String: Any],
                        let message = errorObj["message"] as? String {
-                        print("❌ [OpenAIService] API 錯誤：\(message)")
+                        debugLog("❌ [OpenAIService] API 錯誤：\(message)")
                         completion(.failure(.apiError(message)))
                         return
                     }
@@ -146,16 +146,16 @@ class OpenAIService {
                        let message = firstChoice["message"] as? [String: Any],
                        let content = message["content"] as? String {
                         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
-                        print("✅ [OpenAIService] AI 潤飾結果：\(trimmedContent)")
+                        debugLog("✅ [OpenAIService] AI 潤飾結果：\(trimmedContent)")
                         completion(.success(trimmedContent))
                         return
                     }
                 }
 
-                print("❌ [OpenAIService] 無法解析回應")
+                debugLog("❌ [OpenAIService] 無法解析回應")
                 completion(.failure(.invalidResponse))
             } catch {
-                print("❌ [OpenAIService] 解析錯誤：\(error)")
+                debugLog("❌ [OpenAIService] 解析錯誤：\(error)")
                 completion(.failure(.networkError(error)))
             }
         }

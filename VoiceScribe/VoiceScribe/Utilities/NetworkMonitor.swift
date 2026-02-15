@@ -2,32 +2,23 @@
 //  NetworkMonitor.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/2/15.
+//  Created by Tamio Tsiu on 2026/2/15.
 //
 
 import Foundation
 import Network
 
 final class NetworkMonitor {
-    static func isOnline(timeout: TimeInterval = 0.3) -> Bool {
-        let monitor = NWPathMonitor()
-        let queue = DispatchQueue(label: "NetworkMonitor")
-        let semaphore = DispatchSemaphore(value: 0)
-        var isOnline = true
+    static let shared = NetworkMonitor()
 
-        monitor.pathUpdateHandler = { path in
-            isOnline = path.status == .satisfied
-            semaphore.signal()
-            monitor.cancel()
+    private let monitor = NWPathMonitor()
+    private let queue = DispatchQueue(label: "NetworkMonitor")
+    private(set) var isOnline: Bool = true
+
+    private init() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            self?.isOnline = path.status == .satisfied
         }
-
         monitor.start(queue: queue)
-
-        if semaphore.wait(timeout: .now() + timeout) == .timedOut {
-            monitor.cancel()
-            return true
-        }
-
-        return isOnline
     }
 }

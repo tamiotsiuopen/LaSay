@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/1/25.
+//  Created by Tamio Tsiu on 2026/1/25.
 //
 
 import SwiftUI
@@ -384,7 +384,7 @@ struct SettingsView: View {
     // MARK: - Methods
 
     func loadSettings() {
-        print("🔍 [SettingsView] 開始載入設定...")
+        debugLog("🔍 [SettingsView] 開始載入設定...")
 
         loadAPIKey()
 
@@ -406,14 +406,14 @@ struct SettingsView: View {
 
         // 載入 AI 潤飾設定
         let savedAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
-        print("🔍 [SettingsView] UserDefaults 讀取 enable_ai_polish: \(savedAIPolish)")
+        debugLog("🔍 [SettingsView] UserDefaults 讀取 enable_ai_polish: \(savedAIPolish)")
         enableAIPolish = savedAIPolish
-        print("🔍 [SettingsView] 設定 enableAIPolish 為: \(enableAIPolish)")
+        debugLog("🔍 [SettingsView] 設定 enableAIPolish 為: \(enableAIPolish)")
 
 
         if let savedPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt") {
             customSystemPrompt = savedPrompt
-            print("🔍 [SettingsView] 載入自訂 prompt: \(savedPrompt.prefix(50))...")
+            debugLog("🔍 [SettingsView] 載入自訂 prompt: \(savedPrompt.prefix(50))...")
         }
 
         // 載入貼上設定
@@ -489,7 +489,7 @@ struct SettingsView: View {
         // 通知 AppDelegate 刷新 menu
         NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
 
-        print("💾 設定已自動儲存")
+        debugLog("💾 設定已自動儲存")
     }
 }
 

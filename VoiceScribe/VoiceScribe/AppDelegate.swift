@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  VoiceScribe
 //
-//  Created by Claude on 2026/1/25.
+//  Created by Tamio Tsiu on 2026/1/25.
 //
 
 import Cocoa

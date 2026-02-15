@@ -2,7 +2,7 @@
 //  LocalizationHelper.swift
 //  LaSay
 //
-//  Created by Claude on 2026/1/26.
+//  Created by Tamio Tsiu on 2026/1/26.
 //
 
 import Foundation

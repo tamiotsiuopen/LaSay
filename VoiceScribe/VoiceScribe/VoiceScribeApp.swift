@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct VoiceScribeApp: App {
+struct LaSayApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
