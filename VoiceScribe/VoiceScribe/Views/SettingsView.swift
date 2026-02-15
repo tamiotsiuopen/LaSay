@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var showAPIKey: Bool = false
     @State private var isAIPolishAdvancedExpanded: Bool = false
     @State private var refreshUI: Bool = false
+    @State private var showModelDownloadConfirm: Bool = false
 
     private var isUsingCustomPrompt: Bool {
         !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -44,6 +45,11 @@ struct SettingsView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        // MARK: - 介面語言
+                        languageSection
+
+                        Divider()
+
                         // MARK: - 轉錄模式
                         transcriptionSection
 
@@ -62,11 +68,6 @@ struct SettingsView: View {
                         // MARK: - API Key
                         apiKeySection
                             .id("apiKeySection")
-
-                        Divider()
-
-                        // MARK: - 介面語言
-                        languageSection
                     }
                     .padding(.horizontal, 4)
                 }
@@ -125,6 +126,9 @@ struct SettingsView: View {
                 .onChange(of: transcriptionMode) { newValue in
                     UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+                    if newValue == .local && !localWhisperService.isModelDownloaded {
+                        showModelDownloadConfirm = true
+                    }
                 }
             }
 
@@ -151,6 +155,22 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+        }
+        .alert(
+            localization.currentLanguage == "zh" ? "下載語音模型？" : "Download Voice Model?",
+            isPresented: $showModelDownloadConfirm
+        ) {
+            Button(localization.currentLanguage == "zh" ? "立即下載 (1.5GB)" : "Download Now (1.5GB)") {
+                DispatchQueue.global().async {
+                    LocalWhisperService.shared.predownload()
+                }
+            }
+            .keyboardShortcut(.defaultAction)
+            Button(localization.currentLanguage == "zh" ? "稍後再說" : "Later", role: .cancel) {}
+        } message: {
+            Text(localization.currentLanguage == "zh"
+                 ? "本地模式需要下載語音辨識模型 (1.5GB)。下載完成後即可離線使用。"
+                 : "Local mode requires a voice recognition model (1.5GB). Once downloaded, it works fully offline.")
         }
     }
 
