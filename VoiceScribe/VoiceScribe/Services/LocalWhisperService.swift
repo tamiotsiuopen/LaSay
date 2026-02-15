@@ -298,9 +298,8 @@ final class LocalWhisperService {
                 "-nt"
             ]
 
-            if let language = language {
-                arguments.append(contentsOf: ["-l", language])
-            }
+            // whisper-cli defaults to English if no -l flag; pass "auto" for auto-detection
+            arguments.append(contentsOf: ["-l", language ?? "auto"])
 
             let process = Process()
             process.executableURL = cliURL
