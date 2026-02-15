@@ -253,7 +253,7 @@ struct OnboardingView: View {
 
     private func applyDefaultLanguageIfNeeded() {
         guard UserDefaults.standard.string(forKey: "ui_language") == nil else { return }
-        let localeCode = Locale.current.language.languageCode?.identifier ?? Locale.current.languageCode ?? "en"
+        let localeCode = Locale.current.language.languageCode?.identifier ?? Locale.current.language.languageCode?.identifier ?? "en"
         let normalized = localeCode.lowercased()
         let defaultLanguage = normalized.hasPrefix("zh") ? "zh" : "en"
         UserDefaults.standard.set(defaultLanguage, forKey: "ui_language")
