@@ -358,20 +358,26 @@ struct TechTermsDictionary {
         "iam": "IAM",
     ]
 
+    /// Pre-compiled regex patterns (compiled once, reused every call)
+    private static let compiledPatterns: [(NSRegularExpression, String)] = {
+        corrections.compactMap { (wrong, correct) in
+            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: wrong))\\b"
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+                return nil
+            }
+            return (regex, correct)
+        }
+    }()
+
     /// 對文字套用術語修正（word boundary aware）
     static func apply(to text: String) -> String {
         var result = text
-        for (wrong, correct) in corrections {
-            // 使用 word boundary regex 避免部分匹配
-            // 例如不要把 "expression" 裡的 "express" 改掉
-            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: wrong))\\b"
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                result = regex.stringByReplacingMatches(
-                    in: result,
-                    range: NSRange(result.startIndex..., in: result),
-                    withTemplate: correct
-                )
-            }
+        for (regex, correct) in compiledPatterns {
+            result = regex.stringByReplacingMatches(
+                in: result,
+                range: NSRange(result.startIndex..., in: result),
+                withTemplate: correct
+            )
         }
         return result
     }
