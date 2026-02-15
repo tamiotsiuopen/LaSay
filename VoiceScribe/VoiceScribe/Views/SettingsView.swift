@@ -151,9 +151,23 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
 
             if transcriptionMode == .local {
-                Text(localization.localized(localWhisperService.isModelDownloaded ? .nativeEngineReady : .modelNotDownloaded))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                if localWhisperService.isModelDownloaded {
+                    Text(localization.localized(.nativeEngineReady))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    HStack {
+                        Text(localization.localized(.modelNotDownloaded))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Button(localization.currentLanguage == "zh" ? "下載模型 (1.5GB)" : "Download (1.5GB)") {
+                            showModelDownloadConfirm = true
+                        }
+                        .font(.caption)
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
             }
         }
         .alert(
