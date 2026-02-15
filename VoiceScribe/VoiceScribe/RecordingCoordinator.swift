@@ -153,6 +153,21 @@ final class RecordingCoordinator {
         let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
         let languageCode = selectedLanguage.whisperCode
 
+        if selectedMode == .cloud {
+            guard let apiKey = KeychainHelper.shared.get(key: "openai_api_key"), !apiKey.isEmpty else {
+                NotificationCenter.default.post(name: NSNotification.Name("OpenSettings"), object: nil)
+                showNotification(
+                    title: localization.localized(.apiKeyRequiredTitle),
+                    body: localization.localized(.apiKeyRequiredBody),
+                    isError: true
+                )
+                appState.updateStatus(.idle)
+                hotkeyManager.restartMonitoring()
+                audioRecorder.deleteRecording(at: audioURL)
+                return
+            }
+        }
+
         let transcriptionHandler: (Result<String, WhisperError>) -> Void = { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -296,11 +311,10 @@ final class RecordingCoordinator {
         }
 
         let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
-        let restoreClipboard = UserDefaults.standard.bool(forKey: "restore_clipboard")
 
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "has_launched_before")
         let shouldAutoPaste = hasLaunchedBefore ? autoPaste : true
-        let shouldRestore = hasLaunchedBefore ? restoreClipboard : true
+        let shouldRestore = true
         let previewEnabled = UserDefaults.standard.bool(forKey: "enable_preview_mode")
 
         let finalize: () -> Void = { [weak self] in

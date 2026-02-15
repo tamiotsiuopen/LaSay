@@ -29,6 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         menuBarManager?.setup()
 
+        NotificationCenter.default.addObserver(self, selector: #selector(openSettings), name: NSNotification.Name("OpenSettings"), object: nil)
+
         recordingCoordinator = RecordingCoordinator(
             appState: AppState.shared,
             audioRecorder: AudioRecorder.shared,

@@ -107,6 +107,10 @@ class LocalizationHelper {
             return language == "zh" ? "自訂 System Prompt（選填）" : "Custom System Prompt (Optional)"
         case .resetToDefault:
             return language == "zh" ? "重設為預設" : "Reset to Default"
+        case .advanced:
+            return language == "zh" ? "進階設定" : "Advanced"
+        case .aiCleanupDetail:
+            return language == "zh" ? "AI 清理：移除贅字、修正文法、保留技術術語" : "AI cleanup: removes filler words, fixes grammar, preserves technical terms"
 
         // 貼上設定
         case .pasteSettings:
@@ -297,6 +301,10 @@ class LocalizationHelper {
             return language == "zh" ? "下載中" : "Downloading"
         case .transcriptionResultTitle:
             return language == "zh" ? "轉錄結果" : "Transcription Result"
+        case .apiKeyRequiredTitle:
+            return language == "zh" ? "需要 API Key" : "API Key Required"
+        case .apiKeyRequiredBody:
+            return language == "zh" ? "請在設定中輸入 OpenAI API Key 以使用雲端模式" : "Please set your OpenAI API Key in Settings to use Cloud mode."
         }
     }
 }
@@ -350,6 +358,8 @@ enum LocalizationKey {
     case customPromptHint
     case customSystemPrompt
     case resetToDefault
+    case advanced
+    case aiCleanupDetail
 
     // 貼上設定
     case pasteSettings
@@ -434,4 +444,6 @@ enum LocalizationKey {
     case downloadingBinary
     case downloadingTitle
     case transcriptionResultTitle
+    case apiKeyRequiredTitle
+    case apiKeyRequiredBody
 }

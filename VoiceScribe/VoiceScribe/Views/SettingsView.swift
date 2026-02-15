@@ -14,7 +14,7 @@ struct SettingsView: View {
     @State private var hasAPIKey: Bool = false
     @State private var showingAPIKeyInput: Bool = false
     @State private var selectedUILanguage: String = "zh"
-    @State private var restoreClipboard: Bool = true
+    @State private var selectedTab: Int = 1
     @State private var autoPaste: Bool = true
     @State private var enableAIPolish: Bool = false
     @State private var customSystemPrompt: String = ""
@@ -23,6 +23,8 @@ struct SettingsView: View {
     @State private var showAPIKey: Bool = false
     @State private var enableSoundFeedback: Bool = true
     @State private var enablePreviewMode: Bool = false
+    @State private var isPasteAdvancedExpanded: Bool = false
+    @State private var isAIPolishAdvancedExpanded: Bool = false
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
 
     private var isUsingCustomPrompt: Bool {
@@ -44,21 +46,24 @@ struct SettingsView: View {
 
             Divider()
 
-            TabView {
+            TabView(selection: $selectedTab) {
                 generalTab
                     .tabItem {
                         Text(localization.localized(.generalTab))
                     }
+                    .tag(0)
 
                 transcriptionTab
                     .tabItem {
                         Text(localization.localized(.transcriptionTab))
                     }
+                    .tag(1)
 
                 aiPolishTab
                     .tabItem {
                         Text(localization.localized(.aiPolishTab))
                     }
+                    .tag(2)
             }
 
             Spacer()
@@ -140,24 +145,20 @@ struct SettingsView: View {
                         UserDefaults.standard.set(newValue, forKey: "auto_paste")
                     }
 
-                Toggle(localization.localized(.restoreClipboard), isOn: $restoreClipboard)
-                    .toggleStyle(.checkbox)
-                    .disabled(!autoPaste)
-                    .onChange(of: restoreClipboard) { newValue in
-                        UserDefaults.standard.set(newValue, forKey: "restore_clipboard")
-                    }
-
-                Toggle(localization.localized(.previewBeforePaste), isOn: $enablePreviewMode)
-                    .toggleStyle(.checkbox)
-                    .onChange(of: enablePreviewMode) { newValue in
-                        UserDefaults.standard.set(newValue, forKey: "enable_preview_mode")
-                    }
-
                 Toggle(localization.localized(.soundFeedback), isOn: $enableSoundFeedback)
                     .toggleStyle(.checkbox)
                     .onChange(of: enableSoundFeedback) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "enable_sound_feedback")
                     }
+
+                DisclosureGroup(localization.localized(.advanced), isExpanded: $isPasteAdvancedExpanded) {
+                    Toggle(localization.localized(.previewBeforePaste), isOn: $enablePreviewMode)
+                        .toggleStyle(.checkbox)
+                        .onChange(of: enablePreviewMode) { newValue in
+                            UserDefaults.standard.set(newValue, forKey: "enable_preview_mode")
+                        }
+                        .padding(.top, 4)
+                }
 
                 Text(localization.localized(.pasteDescription))
                     .font(.caption)
@@ -263,41 +264,48 @@ struct SettingsView: View {
             }
 
             if enableAIPolish {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(format: localization.localized(.currentPromptStatus), isUsingCustomPrompt ? localization.localized(.customPromptLabel) : localization.localized(.defaultPromptLabel)))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                Text(localization.localized(.aiCleanupDetail))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
-                    Text(localization.localized(.customPromptHint))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                DisclosureGroup(localization.localized(.advanced), isExpanded: $isAIPolishAdvancedExpanded) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(String(format: localization.localized(.currentPromptStatus), isUsingCustomPrompt ? localization.localized(.customPromptLabel) : localization.localized(.defaultPromptLabel)))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
-                    Text(localization.localized(.customSystemPrompt))
-                        .font(.subheadline)
+                        Text(localization.localized(.customPromptHint))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
-                    ZStack(alignment: .topLeading) {
-                        if !isUsingCustomPrompt {
-                            Text(openAIService.getDefaultPromptSummary())
-                                .foregroundColor(.secondary)
+                        Text(localization.localized(.customSystemPrompt))
+                            .font(.subheadline)
+
+                        ZStack(alignment: .topLeading) {
+                            if !isUsingCustomPrompt {
+                                Text(openAIService.getDefaultPromptSummary())
+                                    .foregroundColor(.secondary)
+                                    .font(.system(.body, design: .monospaced))
+                                    .padding(.top, 8)
+                                    .padding(.horizontal, 6)
+                            }
+
+                            TextEditor(text: $customSystemPrompt)
+                                .frame(minHeight: 120, maxHeight: 180)
                                 .font(.system(.body, design: .monospaced))
-                                .padding(.top, 8)
-                                .padding(.horizontal, 6)
+                                .border(Color.secondary.opacity(0.3))
                         }
 
-                        TextEditor(text: $customSystemPrompt)
-                            .frame(minHeight: 120, maxHeight: 180)
-                            .font(.system(.body, design: .monospaced))
-                            .border(Color.secondary.opacity(0.3))
-                    }
+                        HStack {
+                            Button(localization.localized(.resetToDefault)) {
+                                customSystemPrompt = ""
+                            }
+                            .font(.caption)
 
-                    HStack {
-                        Button(localization.localized(.resetToDefault)) {
-                            customSystemPrompt = ""
+                            Spacer()
                         }
-                        .font(.caption)
-
-                        Spacer()
                     }
+                    .padding(.top, 4)
                 }
             }
         }
@@ -423,11 +431,6 @@ struct SettingsView: View {
             autoPaste = true
         }
 
-        restoreClipboard = UserDefaults.standard.bool(forKey: "restore_clipboard")
-        if !UserDefaults.standard.bool(forKey: "has_launched_before") {
-            restoreClipboard = true
-        }
-
         if UserDefaults.standard.object(forKey: "enable_sound_feedback") == nil {
             enableSoundFeedback = true
             UserDefaults.standard.set(true, forKey: "enable_sound_feedback")
@@ -479,7 +482,6 @@ struct SettingsView: View {
 
         // 儲存貼上設定
         UserDefaults.standard.set(autoPaste, forKey: "auto_paste")
-        UserDefaults.standard.set(restoreClipboard, forKey: "restore_clipboard")
         UserDefaults.standard.set(enablePreviewMode, forKey: "enable_preview_mode")
         UserDefaults.standard.set(enableSoundFeedback, forKey: "enable_sound_feedback")
 
