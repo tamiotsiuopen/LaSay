@@ -34,6 +34,19 @@ final class LocalWhisperService {
 
     private init() {}
 
+    var isModelDownloaded: Bool {
+        fileManager.fileExists(atPath: modelFileURL.path)
+    }
+
+    var isCLIDownloaded: Bool {
+        findWhisperCLI() != nil
+    }
+
+    func predownload() {
+        ensureWhisperCLI(progressHandler: nil) { _ in }
+        ensureModel(progressHandler: nil) { _ in }
+    }
+
     func transcribe(
         audioFileURL: URL,
         language: String? = nil,

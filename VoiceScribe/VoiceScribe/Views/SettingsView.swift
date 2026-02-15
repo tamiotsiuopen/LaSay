@@ -21,6 +21,8 @@ struct SettingsView: View {
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
     @State private var showAPIKey: Bool = false
+    @State private var enableSoundFeedback: Bool = true
+    @State private var enablePreviewMode: Bool = false
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
 
     private var isUsingCustomPrompt: Bool {
@@ -29,6 +31,7 @@ struct SettingsView: View {
 
     private let keychainHelper = KeychainHelper.shared
     private let openAIService = OpenAIService.shared
+    private let localWhisperService = LocalWhisperService.shared
     private let localization = LocalizationHelper.shared
 
 
@@ -119,6 +122,10 @@ struct SettingsView: View {
                 Text(localization.localized(.hotkeyDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
+
+                Text(localization.localized(.hotkeyComingSoon))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             Divider()
@@ -138,6 +145,18 @@ struct SettingsView: View {
                     .disabled(!autoPaste)
                     .onChange(of: restoreClipboard) { newValue in
                         UserDefaults.standard.set(newValue, forKey: "restore_clipboard")
+                    }
+
+                Toggle(localization.localized(.previewBeforePaste), isOn: $enablePreviewMode)
+                    .toggleStyle(.checkbox)
+                    .onChange(of: enablePreviewMode) { newValue in
+                        UserDefaults.standard.set(newValue, forKey: "enable_preview_mode")
+                    }
+
+                Toggle(localization.localized(.soundFeedback), isOn: $enableSoundFeedback)
+                    .toggleStyle(.checkbox)
+                    .onChange(of: enableSoundFeedback) { newValue in
+                        UserDefaults.standard.set(newValue, forKey: "enable_sound_feedback")
                     }
 
                 Text(localization.localized(.pasteDescription))
@@ -207,6 +226,15 @@ struct SettingsView: View {
                 Text(localization.localized(.transcriptionDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
+
+                if transcriptionMode == .local {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(localization.localized(localWhisperService.isModelDownloaded ? .modelDownloaded : .modelNotDownloaded))
+                        Text(localization.localized(localWhisperService.isCLIDownloaded ? .cliDownloaded : .cliNotDownloaded))
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
             }
 
             Divider()
@@ -399,6 +427,20 @@ struct SettingsView: View {
         if !UserDefaults.standard.bool(forKey: "has_launched_before") {
             restoreClipboard = true
         }
+
+        if UserDefaults.standard.object(forKey: "enable_sound_feedback") == nil {
+            enableSoundFeedback = true
+            UserDefaults.standard.set(true, forKey: "enable_sound_feedback")
+        } else {
+            enableSoundFeedback = UserDefaults.standard.bool(forKey: "enable_sound_feedback")
+        }
+
+        if UserDefaults.standard.object(forKey: "enable_preview_mode") == nil {
+            enablePreviewMode = false
+            UserDefaults.standard.set(false, forKey: "enable_preview_mode")
+        } else {
+            enablePreviewMode = UserDefaults.standard.bool(forKey: "enable_preview_mode")
+        }
     }
 
     func loadAPIKey() {
@@ -438,6 +480,8 @@ struct SettingsView: View {
         // 儲存貼上設定
         UserDefaults.standard.set(autoPaste, forKey: "auto_paste")
         UserDefaults.standard.set(restoreClipboard, forKey: "restore_clipboard")
+        UserDefaults.standard.set(enablePreviewMode, forKey: "enable_preview_mode")
+        UserDefaults.standard.set(enableSoundFeedback, forKey: "enable_sound_feedback")
 
         // 標記已經啟動過
         UserDefaults.standard.set(true, forKey: "has_launched_before")

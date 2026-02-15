@@ -20,6 +20,7 @@ final class RecordingCoordinator {
     private let localization: LocalizationHelper
 
     private var downloadPanel: NSPanel?
+    private var previewPanel: NSPanel?
     private let downloadProgressModel = DownloadProgressViewModel()
 
     init(
@@ -128,6 +129,9 @@ final class RecordingCoordinator {
 
     private func startRecording() {
         print("🎤 開始錄音...")
+        if isSoundFeedbackEnabled() {
+            NSSound(named: "Tink")?.play()
+        }
         appState.updateStatus(.recording)
         audioRecorder.startRecording()
     }
@@ -287,12 +291,29 @@ final class RecordingCoordinator {
         let correctedText = TechTermsDictionary.apply(to: text)
         appState.saveTranscription(correctedText)
 
+        if isSoundFeedbackEnabled() {
+            NSSound(named: "Pop")?.play()
+        }
+
         let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
         let restoreClipboard = UserDefaults.standard.bool(forKey: "restore_clipboard")
 
         let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "has_launched_before")
         let shouldAutoPaste = hasLaunchedBefore ? autoPaste : true
         let shouldRestore = hasLaunchedBefore ? restoreClipboard : true
+        let previewEnabled = UserDefaults.standard.bool(forKey: "enable_preview_mode")
+
+        let finalize: () -> Void = { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.hotkeyManager.restartMonitoring()
+            }
+            self?.appState.updateStatus(.idle)
+        }
+
+        if previewEnabled {
+            showTranscriptionPreview(text: correctedText, restoreClipboard: shouldRestore, finalize: finalize)
+            return
+        }
 
         if shouldAutoPaste {
             textInputService.pasteText(correctedText, restoreClipboard: shouldRestore)
@@ -300,11 +321,54 @@ final class RecordingCoordinator {
             showTranscriptionResult(correctedText)
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.hotkeyManager.restartMonitoring()
-        }
+        finalize()
+    }
 
-        appState.updateStatus(.idle)
+    private func showTranscriptionPreview(text: String, restoreClipboard: Bool, finalize: @escaping () -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.closePreviewPanel()
+
+            let previewView = TranscriptionPreviewView(
+                text: text,
+                onPaste: { [weak self] editedText in
+                    self?.textInputService.pasteText(editedText, restoreClipboard: restoreClipboard)
+                    self?.closePreviewPanel()
+                    finalize()
+                },
+                onCancel: { [weak self] in
+                    self?.closePreviewPanel()
+                    finalize()
+                }
+            )
+
+            let hostingController = NSHostingController(rootView: previewView)
+            let panel = NSPanel(contentViewController: hostingController)
+            panel.styleMask = [.titled, .closable]
+            panel.title = localization.localized(.transcriptionResultTitle)
+            panel.isFloatingPanel = true
+            panel.level = .floating
+            panel.setContentSize(NSSize(width: 400, height: 200))
+            panel.center()
+            panel.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+
+            self.previewPanel = panel
+        }
+    }
+
+    private func closePreviewPanel() {
+        previewPanel?.close()
+        previewPanel = nil
+    }
+
+    private func isSoundFeedbackEnabled() -> Bool {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: "enable_sound_feedback") == nil {
+            return true
+        }
+        return defaults.bool(forKey: "enable_sound_feedback")
     }
 
     private func setupAudioRecorderCallbacks() {

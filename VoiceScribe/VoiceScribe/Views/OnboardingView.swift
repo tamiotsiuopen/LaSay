@@ -96,6 +96,12 @@ struct OnboardingView: View {
                 .onChange(of: selectedMode) { newValue in
                     UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+
+                    if newValue == .local {
+                        DispatchQueue.global().async {
+                            LocalWhisperService.shared.predownload()
+                        }
+                    }
                 }
             }
         }

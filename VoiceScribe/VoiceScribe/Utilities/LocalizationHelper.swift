@@ -69,6 +69,14 @@ class LocalizationHelper {
             return language == "zh" ? "轉錄語言" : "Language"
         case .transcriptionDescription:
             return language == "zh" ? "本地模式使用 whisper.cpp（可離線），雲端模式使用 OpenAI API" : "Local uses whisper.cpp (offline), Cloud uses OpenAI API"
+        case .modelDownloaded:
+            return language == "zh" ? "Model: ggml-base (142MB) ✅ 已下載" : "Model: ggml-base (142MB) ✅ Downloaded"
+        case .modelNotDownloaded:
+            return language == "zh" ? "Model: ggml-base ⬇️ 尚未下載（首次使用時下載）" : "Model: ggml-base ⬇️ Not downloaded (will download on first use)"
+        case .cliDownloaded:
+            return language == "zh" ? "Whisper CLI: ✅ 已下載" : "Whisper CLI: ✅ Downloaded"
+        case .cliNotDownloaded:
+            return language == "zh" ? "Whisper CLI: ⬇️ 尚未下載（首次使用時下載）" : "Whisper CLI: ⬇️ Not downloaded (will download on first use)"
 
         // 快捷鍵
         case .globalHotkey:
@@ -77,6 +85,8 @@ class LocalizationHelper {
             return language == "zh" ? "當前快捷鍵：" : "Current Hotkey: "
         case .hotkeyDescription:
             return language == "zh" ? "在任何 app 中按住此快捷鍵即可開始錄音" : "Hold this hotkey in any app to start recording"
+        case .hotkeyComingSoon:
+            return language == "zh" ? "自訂快捷鍵將在未來更新中支援" : "Custom hotkey support coming in a future update"
 
         // AI 潤飾
         case .aiPolish:
@@ -105,6 +115,10 @@ class LocalizationHelper {
             return language == "zh" ? "自動貼上轉錄文字" : "Auto-paste transcribed text"
         case .restoreClipboard:
             return language == "zh" ? "貼上後還原剪貼簿" : "Restore clipboard after pasting"
+        case .previewBeforePaste:
+            return language == "zh" ? "貼上前預覽" : "Preview before paste"
+        case .soundFeedback:
+            return language == "zh" ? "音效回饋" : "Sound Feedback"
         case .pasteDescription:
             return language == "zh" ? "轉錄完成後自動將文字貼到當前游標位置" : "Automatically paste text to cursor position after transcription"
 
@@ -113,6 +127,8 @@ class LocalizationHelper {
             return language == "zh" ? "關閉" : "Close"
         case .ok:
             return language == "zh" ? "確定" : "OK"
+        case .paste:
+            return language == "zh" ? "貼上" : "Paste"
         case .changesSavedAutomatically:
             return language == "zh" ? "變更會自動儲存" : "Changes are saved automatically"
         case .back:
@@ -313,11 +329,16 @@ enum LocalizationKey {
     case transcriptionMode
     case transcriptionLanguage
     case transcriptionDescription
+    case modelDownloaded
+    case modelNotDownloaded
+    case cliDownloaded
+    case cliNotDownloaded
 
     // 快捷鍵
     case globalHotkey
     case currentHotkey
     case hotkeyDescription
+    case hotkeyComingSoon
 
     // AI 潤飾
     case aiPolish
@@ -334,11 +355,14 @@ enum LocalizationKey {
     case pasteSettings
     case autoPaste
     case restoreClipboard
+    case previewBeforePaste
+    case soundFeedback
     case pasteDescription
 
     // 按鈕
     case close
     case ok
+    case paste
     case changesSavedAutomatically
     case back
     case next
