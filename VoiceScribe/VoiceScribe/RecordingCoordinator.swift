@@ -284,7 +284,8 @@ final class RecordingCoordinator {
     // MARK: - Text Processing
 
     private func processFinalText(_ text: String) {
-        appState.saveTranscription(text)
+        let correctedText = TechTermsDictionary.apply(to: text)
+        appState.saveTranscription(correctedText)
 
         let autoPaste = UserDefaults.standard.bool(forKey: "auto_paste")
         let restoreClipboard = UserDefaults.standard.bool(forKey: "restore_clipboard")
@@ -294,9 +295,9 @@ final class RecordingCoordinator {
         let shouldRestore = hasLaunchedBefore ? restoreClipboard : true
 
         if shouldAutoPaste {
-            textInputService.pasteText(text, restoreClipboard: shouldRestore)
+            textInputService.pasteText(correctedText, restoreClipboard: shouldRestore)
         } else {
-            showTranscriptionResult(text)
+            showTranscriptionResult(correctedText)
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

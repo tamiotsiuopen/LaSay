@@ -249,7 +249,7 @@ struct SettingsView: View {
 
                     ZStack(alignment: .topLeading) {
                         if !isUsingCustomPrompt {
-                            Text(openAIService.getDefaultSystemPrompt())
+                            Text(openAIService.getDefaultPromptSummary())
                                 .foregroundColor(.secondary)
                                 .font(.system(.body, design: .monospaced))
                                 .padding(.top, 8)

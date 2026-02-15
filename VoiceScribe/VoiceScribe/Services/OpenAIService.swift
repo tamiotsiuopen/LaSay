@@ -35,8 +35,16 @@ class OpenAIService {
 
     // 預設 System Prompt
     private let defaultSystemPrompt = """
-    Remove filler words (um, uh, 唔, 嗯, 那個, 就是), fix grammar, and add proper punctuation. Keep the original meaning and tone. Output in the same language as the input.
+    You are a voice-to-text post-processor for software developers. Rules:
+    1. Remove filler words (um, uh, 唔, 嗯, 那個, 就是, like, you know)
+    2. Fix grammar and add proper punctuation
+    3. Preserve ALL technical terms exactly: framework names (React, FastAPI, Kubernetes), language names (Python, TypeScript), tools (Docker, Git), and code identifiers (camelCase, snake_case, PascalCase)
+    4. Keep mixed-language input as-is — do NOT translate between languages
+    5. Keep the original meaning and tone
+    6. Output in the same language mix as the input
     """
+
+    private let defaultPromptSummary = "Default: remove filler words, fix grammar, preserve technical terms, keep mixed-language input."
 
 
 
@@ -160,6 +168,11 @@ class OpenAIService {
     /// 取得預設 System Prompt
     func getDefaultSystemPrompt() -> String {
         return defaultSystemPrompt
+    }
+
+    /// 取得預設 Prompt 摘要
+    func getDefaultPromptSummary() -> String {
+        return defaultPromptSummary
     }
 
 }
