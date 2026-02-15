@@ -2,6 +2,8 @@
 
 Voice input for developers. Dictate in your native language with English technical terms -- LaSay keeps them intact.
 
+[繁體中文說明](README_ZH.md)
+
 ![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
 ![License](https://img.shields.io/badge/license-proprietary-lightgrey)
