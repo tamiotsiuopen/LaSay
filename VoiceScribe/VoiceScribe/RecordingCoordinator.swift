@@ -282,6 +282,9 @@ final class RecordingCoordinator {
                         body: error.localizedDescription,
                         isError: true
                     )
+                    
+                    // Clean up recording file on failure
+                    self.audioRecorder.deleteRecording(at: audioURL)
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                         self?.hotkeyManager.restartMonitoring()

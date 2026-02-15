@@ -114,20 +114,6 @@ class LocalizationHelper {
         case .aiCleanupDetail:
             return language == "zh" ? "AI 清理：移除贅字、修正文法、保留技術術語" : "AI cleanup: removes filler words, fixes grammar, preserves technical terms"
 
-        // 貼上設定
-        case .pasteSettings:
-            return language == "zh" ? "貼上設定" : "Paste Settings"
-        case .autoPaste:
-            return language == "zh" ? "自動貼上轉錄文字" : "Auto-paste transcribed text"
-        case .restoreClipboard:
-            return language == "zh" ? "貼上後還原剪貼簿" : "Restore clipboard after pasting"
-        case .previewBeforePaste:
-            return language == "zh" ? "貼上前預覽" : "Preview before paste"
-        case .soundFeedback:
-            return language == "zh" ? "音效回饋" : "Sound Feedback"
-        case .pasteDescription:
-            return language == "zh" ? "轉錄完成後自動將文字貼到當前游標位置" : "Automatically paste text to cursor position after transcription"
-
         // 按鈕
         case .close:
             return language == "zh" ? "關閉" : "Close"
@@ -301,8 +287,6 @@ class LocalizationHelper {
             return language == "zh" ? "正在下載轉錄工具" : "Downloading transcription tool"
         case .downloadingTitle:
             return language == "zh" ? "下載中" : "Downloading"
-        case .transcriptionResultTitle:
-            return language == "zh" ? "轉錄結果" : "Transcription Result"
         case .apiKeyRequiredTitle:
             return language == "zh" ? "需要 API Key" : "API Key Required"
         case .apiKeyRequiredBody:
@@ -321,14 +305,8 @@ class LocalizationHelper {
             return language == "zh" ? "語言選擇按鈕" : "Language selection button"
         case .toggleAccessibilityHint:
             return language == "zh" ? "點擊以切換" : "Tap to toggle"
-        case .autoPasteAccessibility:
-            return language == "zh" ? "自動貼上開關" : "Auto-paste toggle"
-        case .soundFeedbackAccessibility:
-            return language == "zh" ? "音效回饋開關" : "Sound feedback toggle"
         case .aiPolishAccessibility:
             return language == "zh" ? "AI 潤飾開關" : "AI polish toggle"
-        case .previewModeAccessibility:
-            return language == "zh" ? "預覽模式開關" : "Preview mode toggle"
         case .apiKeyShowHideAccessibility:
             return language == "zh" ? "顯示或隱藏 API Key" : "Show or hide API Key"
         case .apiKeySaveAccessibility:
@@ -343,8 +321,6 @@ class LocalizationHelper {
             return language == "zh" ? "完成設定" : "Complete setup"
         case .onboardingSkipAccessibility:
             return language == "zh" ? "跳過設定" : "Skip setup"
-        case .floatingIndicatorAccessibility:
-            return language == "zh" ? "LaSay 狀態指示器" : "LaSay status indicator"
         case .downloadProgressAccessibility:
             return language == "zh" ? "下載進度" : "Download progress"
         case .transcriptionPreviewAccessibility:
@@ -428,14 +404,6 @@ enum LocalizationKey {
     case advanced
     case aiCleanupDetail
 
-    // 貼上設定
-    case pasteSettings
-    case autoPaste
-    case restoreClipboard
-    case previewBeforePaste
-    case soundFeedback
-    case pasteDescription
-
     // 按鈕
     case close
     case ok
@@ -510,7 +478,6 @@ enum LocalizationKey {
     case downloadingModel
     case downloadingBinary
     case downloadingTitle
-    case transcriptionResultTitle
     case apiKeyRequiredTitle
     case apiKeyRequiredBody
     
@@ -521,10 +488,7 @@ enum LocalizationKey {
     case aiPolishTabAccessibility
     case languageButtonAccessibility
     case toggleAccessibilityHint
-    case autoPasteAccessibility
-    case soundFeedbackAccessibility
     case aiPolishAccessibility
-    case previewModeAccessibility
     case apiKeyShowHideAccessibility
     case apiKeySaveAccessibility
     case settingsCloseAccessibility
@@ -532,7 +496,6 @@ enum LocalizationKey {
     case onboardingBackAccessibility
     case onboardingFinishAccessibility
     case onboardingSkipAccessibility
-    case floatingIndicatorAccessibility
     case downloadProgressAccessibility
     case transcriptionPreviewAccessibility
     case pasteButtonAccessibility
