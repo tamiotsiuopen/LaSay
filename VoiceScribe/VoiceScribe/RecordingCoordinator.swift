@@ -353,7 +353,12 @@ final class RecordingCoordinator {
             self.processingTimer?.invalidate()
             self.processingTimer = nil
             
-            let correctedText = TechTermsDictionary.apply(to: text)
+            let correctedText: String = {
+                let techCorrected = TechTermsDictionary.apply(to: text)
+                let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
+                let style = PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
+                return PunctuationConverter.convert(techCorrected, to: style)
+            }()
             self.appState.saveTranscription(correctedText)
 
             // Always paste to cursor

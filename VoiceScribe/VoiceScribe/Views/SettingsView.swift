@@ -14,14 +14,14 @@ struct SettingsView: View {
     @State private var hasAPIKey: Bool = false
     @State private var showingAPIKeyInput: Bool = false
     @State private var selectedUILanguage: String = "zh"
-    @State private var selectedTab: Int = 1
     @State private var enableAIPolish: Bool = false
     @State private var customSystemPrompt: String = ""
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
+    @State private var punctuationStyle: PunctuationStyle = .fullWidth
     @State private var showAPIKey: Bool = false
-    @State private var isAIPolishAdvancedExpanded: Bool = true
-    @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
+    @State private var isAIPolishAdvancedExpanded: Bool = false
+    @State private var refreshUI: Bool = false
 
     private var isUsingCustomPrompt: Bool {
         !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -32,7 +32,6 @@ struct SettingsView: View {
     private let localWhisperService = LocalWhisperService.shared
     private let localization = LocalizationHelper.shared
 
-
     var body: some View {
         VStack(spacing: 16) {
             Text(localization.localized(.settings))
@@ -42,27 +41,45 @@ struct SettingsView: View {
 
             Divider()
 
-            TabView(selection: $selectedTab) {
-                generalTab
-                    .tabItem {
-                        Text(localization.localized(.generalTab))
-                    }
-                    .tag(0)
-                    .accessibilityLabel(localization.localized(.generalTabAccessibility))
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // MARK: - 轉錄模式
+                        transcriptionSection
 
-                transcriptionTab
-                    .tabItem {
-                        Text(localization.localized(.transcriptionTab))
-                    }
-                    .tag(1)
-                    .accessibilityLabel(localization.localized(.transcriptionTabAccessibility))
+                        Divider()
 
-                aiPolishTab
-                    .tabItem {
-                        Text(localization.localized(.aiPolishTab))
+                        // MARK: - 標點符號
+                        punctuationSection
+
+                        Divider()
+
+                        // MARK: - AI 潤飾
+                        aiPolishSection
+
+                        Divider()
+
+                        // MARK: - API Key
+                        apiKeySection
+                            .id("apiKeySection")
+
+                        Divider()
+
+                        // MARK: - 介面語言
+                        languageSection
                     }
-                    .tag(2)
-                    .accessibilityLabel(localization.localized(.aiPolishTabAccessibility))
+                    .padding(.horizontal, 4)
+                }
+                .onAppear {
+                    loadSettings()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        if !hasAPIKey && transcriptionMode == .cloud {
+                            withAnimation {
+                                proxy.scrollTo("apiKeySection", anchor: .top)
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer()
@@ -83,168 +100,115 @@ struct SettingsView: View {
             }
         }
         .padding(24)
-        .frame(width: 500)
-        .onAppear {
-            loadSettings()
-        }
+        .frame(minWidth: 500, idealWidth: 500, maxWidth: 500, minHeight: 400, maxHeight: 600)
         .onDisappear {
             saveSettingsWithoutAlert()
         }
     }
 
-    private var generalTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.uiLanguage))
-                    .font(.headline)
+    // MARK: - Transcription Section
 
-                HStack(spacing: 12) {
-                    languageSelectionButton(title: localization.localized(.languageChineseLabel), code: "zh")
-                        .accessibilityLabel("\(localization.localized(.languageChineseLabel))")
-                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
-                    languageSelectionButton(title: localization.localized(.languageEnglishLabel), code: "en")
-                        .accessibilityLabel("\(localization.localized(.languageEnglishLabel))")
-                        .accessibilityHint(localization.localized(.languageButtonAccessibility))
-                }
-                .frame(maxWidth: 420)
-
-                Text(localization.localized(.autoDetectLanguage))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.globalHotkey))
-                    .font(.headline)
-
-                HStack {
-                    Text(localization.localized(.currentHotkey))
-                    Text("Fn + Space")
-                        .font(.system(.body, design: .monospaced))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.secondary.opacity(0.2))
-                        .cornerRadius(4)
-                }
-
-                Text(localization.localized(.hotkeyDescription))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Text(localization.localized(.hotkeyComingSoon))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-        }
-        .padding(.top, 4)
-    }
-
-
-    private func languageSelectionButton(title: String, code: String) -> some View {
-        Button(action: {
-            selectedUILanguage = code
-            UserDefaults.standard.set(code, forKey: "ui_language")
-            refreshUI.toggle()
-            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-        }) {
-            Text(title)
+    private var transcriptionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(localization.localized(.transcriptionSettings))
                 .font(.headline)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 8)
-                .foregroundColor(selectedUILanguage == code ? .white : .primary)
-                .background(selectedUILanguage == code ? Color.accentColor : Color.secondary.opacity(0.15))
-                .cornerRadius(8)
-        }
-        .buttonStyle(.plain)
-    }
 
-    private var transcriptionTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.transcriptionSettings))
-                    .font(.headline)
-
-                HStack {
-                    Text(localization.localized(.transcriptionMode))
-                    Spacer()
-                    Picker("", selection: $transcriptionMode) {
-                        ForEach(TranscriptionMode.allCases, id: \.self) { mode in
-                            Text(mode.localizedDisplayName).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .onChange(of: transcriptionMode) { newValue in
-                        UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
-                        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+            HStack {
+                Text(localization.localized(.transcriptionMode))
+                Spacer()
+                Picker("", selection: $transcriptionMode) {
+                    ForEach(TranscriptionMode.allCases, id: \.self) { mode in
+                        Text(mode.localizedDisplayName).tag(mode)
                     }
                 }
-
-                HStack {
-                    Text(localization.localized(.transcriptionLanguage))
-                    Spacer()
-                    Picker("", selection: $transcriptionLanguage) {
-                        ForEach(TranscriptionLanguage.allCases, id: \.self) { language in
-                            Text(language.displayName).tag(language)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .onChange(of: transcriptionLanguage) { newValue in
-                        UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_language")
-                    }
-                }
-
-                Text(localization.localized(.transcriptionDescription))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                if transcriptionMode == .local {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(localization.currentLanguage == "zh"
-                             ? "-- 實驗性功能：本地模型對非英語語言（尤其是中文）的準確度明顯低於雲端模式。建議優先使用雲端模式。"
-                             : "-- Experimental: local model accuracy for non-English languages (especially Chinese) is significantly lower than Cloud mode. Cloud mode recommended.")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                        
-                        Text(localization.localized(localWhisperService.isModelDownloaded ? .modelDownloaded : .modelNotDownloaded))
-                        Text(localization.localized(localWhisperService.isCLIDownloaded ? .cliDownloaded : .cliNotDownloaded))
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                .pickerStyle(.menu)
+                .onChange(of: transcriptionMode) { newValue in
+                    UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
                 }
             }
 
-            Divider()
-
-            apiKeySection
-        }
-        .padding(.top, 4)
-    }
-
-    private var aiPolishTab: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.aiPolish))
-                    .font(.headline)
-
-                Toggle(localization.localized(.enableAIPolish), isOn: $enableAIPolish)
-                    .toggleStyle(.checkbox)
-                    .accessibilityLabel(localization.localized(.aiPolishAccessibility))
-                    .accessibilityHint(localization.localized(.toggleAccessibilityHint))
-                    .accessibilityValue(enableAIPolish ? (localization.currentLanguage == "zh" ? "已開啟" : "On") : (localization.currentLanguage == "zh" ? "已關閉" : "Off"))
-                    .onChange(of: enableAIPolish) { newValue in
-                        UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
-                        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+            HStack {
+                Text(localization.localized(.transcriptionLanguage))
+                Spacer()
+                Picker("", selection: $transcriptionLanguage) {
+                    ForEach(TranscriptionLanguage.allCases, id: \.self) { language in
+                        Text(language.displayName).tag(language)
                     }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: transcriptionLanguage) { newValue in
+                    UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_language")
+                }
+            }
 
-                Text(localization.localized(.aiPolishDescription))
+            Text(localization.localized(.transcriptionDescription))
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            if transcriptionMode == .local {
+                Text(localization.localized(localWhisperService.isModelDownloaded ? .nativeEngineReady : .modelNotDownloaded))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+        }
+    }
+
+    // MARK: - Punctuation Section
+
+    private var punctuationSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(localization.localized(.punctuationStyle))
+                .font(.headline)
+
+            Picker("", selection: $punctuationStyle) {
+                ForEach(PunctuationStyle.allCases, id: \.self) { style in
+                    Text(style.localizedDisplayName).tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: punctuationStyle) { newValue in
+                UserDefaults.standard.set(newValue.rawValue, forKey: "punctuation_style")
+            }
+
+            Text(punctuationExample)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var punctuationExample: String {
+        let language = localization.currentLanguage
+        switch punctuationStyle {
+        case .fullWidth:
+            return language == "zh" ? "範例：你好，世界。這是測試！" : "Example: 你好，世界。這是測試！"
+        case .halfWidth:
+            return language == "zh" ? "範例：你好,世界.這是測試!" : "Example: 你好,世界.這是測試!"
+        case .spaces:
+            return language == "zh" ? "範例：你好 世界 這是測試" : "Example: 你好 世界 這是測試"
+        }
+    }
+
+    // MARK: - AI Polish Section
+
+    private var aiPolishSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(localization.localized(.aiPolish))
+                .font(.headline)
+
+            Toggle(localization.localized(.enableAIPolish), isOn: $enableAIPolish)
+                .toggleStyle(.checkbox)
+                .accessibilityLabel(localization.localized(.aiPolishAccessibility))
+                .accessibilityHint(localization.localized(.toggleAccessibilityHint))
+                .accessibilityValue(enableAIPolish ? (localization.currentLanguage == "zh" ? "已開啟" : "On") : (localization.currentLanguage == "zh" ? "已關閉" : "Off"))
+                .onChange(of: enableAIPolish) { newValue in
+                    UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+                }
+
+            Text(localization.localized(.aiPolishDescription))
+                .font(.caption)
+                .foregroundColor(.secondary)
 
             if enableAIPolish {
                 Text(localization.localized(.aiCleanupDetail))
@@ -292,8 +256,9 @@ struct SettingsView: View {
                 }
             }
         }
-        .padding(.top, 4)
     }
+
+    // MARK: - API Key Section
 
     private var apiKeySection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -379,24 +344,60 @@ struct SettingsView: View {
             Text(localization.localized(.apiKeyDescription))
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             Link(localization.localized(.getAPIKey), destination: URL(string: "https://platform.openai.com/api-keys")!)
                 .font(.caption)
         }
     }
 
+    // MARK: - Language Section
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(localization.localized(.uiLanguage))
+                .font(.headline)
+
+            HStack(spacing: 12) {
+                languageSelectionButton(title: localization.localized(.languageChineseLabel), code: "zh")
+                    .accessibilityLabel("\(localization.localized(.languageChineseLabel))")
+                    .accessibilityHint(localization.localized(.languageButtonAccessibility))
+                languageSelectionButton(title: localization.localized(.languageEnglishLabel), code: "en")
+                    .accessibilityLabel("\(localization.localized(.languageEnglishLabel))")
+                    .accessibilityHint(localization.localized(.languageButtonAccessibility))
+            }
+            .frame(maxWidth: 420)
+        }
+    }
+
+    private func languageSelectionButton(title: String, code: String) -> some View {
+        Button(action: {
+            selectedUILanguage = code
+            UserDefaults.standard.set(code, forKey: "ui_language")
+            refreshUI.toggle()
+            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+        }) {
+            Text(title)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 8)
+                .foregroundColor(selectedUILanguage == code ? .white : .primary)
+                .background(selectedUILanguage == code ? Color.accentColor : Color.secondary.opacity(0.15))
+                .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Methods
 
     func loadSettings() {
-
         loadAPIKey()
 
-        // 載入介面語言設定
         if let savedUILanguage = UserDefaults.standard.string(forKey: "ui_language") {
             selectedUILanguage = savedUILanguage
         }
 
-        // 載入語音轉錄設定
         if let savedMode = UserDefaults.standard.string(forKey: "transcription_mode"),
            let mode = TranscriptionMode(rawValue: savedMode) {
             transcriptionMode = mode
@@ -407,19 +408,19 @@ struct SettingsView: View {
             transcriptionLanguage = language
         }
 
-        // 載入 AI 潤飾設定
-        let savedAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
-        enableAIPolish = savedAIPolish
+        if let savedPunctuation = UserDefaults.standard.string(forKey: "punctuation_style"),
+           let style = PunctuationStyle(rawValue: savedPunctuation) {
+            punctuationStyle = style
+        }
 
+        enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
 
         if let savedPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt") {
             customSystemPrompt = savedPrompt
         }
-
     }
 
     func loadAPIKey() {
-        // 載入 API Key
         if let savedAPIKey = keychainHelper.get(key: "openai_api_key"), !savedAPIKey.isEmpty {
             apiKey = savedAPIKey
             hasAPIKey = true
@@ -432,7 +433,6 @@ struct SettingsView: View {
     }
 
     func saveSettingsWithoutAlert() {
-        // 儲存 API Key
         if !apiKey.isEmpty {
             let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
             if success {
@@ -441,23 +441,15 @@ struct SettingsView: View {
             }
         }
 
-        // 儲存介面語言設定
         UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
-
-        // 儲存語音轉錄設定
         UserDefaults.standard.set(transcriptionMode.rawValue, forKey: "transcription_mode")
         UserDefaults.standard.set(transcriptionLanguage.rawValue, forKey: "transcription_language")
-
-        // 儲存 AI 潤飾設定
+        UserDefaults.standard.set(punctuationStyle.rawValue, forKey: "punctuation_style")
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
         UserDefaults.standard.set(customSystemPrompt, forKey: "custom_system_prompt")
-
-        // 標記已經啟動過
         UserDefaults.standard.set(true, forKey: "has_launched_before")
 
-        // 通知 AppDelegate 刷新 menu
         NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-
     }
 }
 

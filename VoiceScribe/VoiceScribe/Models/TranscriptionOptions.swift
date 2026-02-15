@@ -17,7 +17,7 @@ enum TranscriptionMode: String, CaseIterable {
         case .cloud:
             return language == "zh" ? "雲端（OpenAI）" : "Cloud (OpenAI)"
         case .local:
-            return language == "zh" ? "本地（實驗性）" : "Local (Experimental)"
+            return language == "zh" ? "本地（離線可用）" : "Local (Offline)"
         }
     }
 }
@@ -51,6 +51,24 @@ enum TranscriptionLanguage: String, CaseIterable {
             return nil
         default:
             return rawValue
+        }
+    }
+}
+
+enum PunctuationStyle: String, CaseIterable {
+    case fullWidth
+    case halfWidth
+    case spaces
+    
+    var localizedDisplayName: String {
+        let language = LocalizationHelper.shared.currentLanguage
+        switch self {
+        case .fullWidth:
+            return language == "zh" ? "全形" : "Full-width"
+        case .halfWidth:
+            return language == "zh" ? "半形" : "Half-width"
+        case .spaces:
+            return language == "zh" ? "空格" : "Spaces"
         }
     }
 }

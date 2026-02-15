@@ -22,10 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             hotkeyManager: HotkeyManager.shared,
             onOpenSettings: { [weak self] in self?.openSettings() },
             onShowAbout: { [weak self] in self?.showAbout() },
-            onQuit: { [weak self] in self?.quitApp() },
-            onRequestAccessibility: { [weak self] in
-                self?.recordingCoordinator?.requestAccessibilityPermission()
-            }
+            onQuit: { [weak self] in self?.quitApp() }
         )
         menuBarManager?.setup()
 

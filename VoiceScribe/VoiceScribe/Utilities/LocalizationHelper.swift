@@ -72,13 +72,15 @@ class LocalizationHelper {
         case .transcriptionDescription:
             return language == "zh" ? "本地模式使用 whisper.cpp（可離線），雲端模式使用 OpenAI API" : "Local uses whisper.cpp (offline), Cloud uses OpenAI API"
         case .modelDownloaded:
-            return language == "zh" ? "Model: ggml-base (142MB) 已下載" : "Model: ggml-base (142MB) Downloaded"
+            return language == "zh" ? "Model: ggml-large-v3-turbo (1.5GB) 已下載" : "Model: ggml-large-v3-turbo (1.5GB) Downloaded"
         case .modelNotDownloaded:
-            return language == "zh" ? "Model: ggml-base 尚未下載（首次使用時下載）" : "Model: ggml-base Not downloaded (will download on first use)"
+            return language == "zh" ? "Model: ggml-large-v3-turbo 尚未下載（首次使用時下載）" : "Model: ggml-large-v3-turbo Not downloaded (will download on first use)"
         case .cliDownloaded:
             return language == "zh" ? "Whisper CLI: 已下載" : "Whisper CLI: Downloaded"
         case .cliNotDownloaded:
             return language == "zh" ? "Whisper CLI: 尚未下載（首次使用時下載）" : "Whisper CLI: Not downloaded (will download on first use)"
+        case .nativeEngineReady:
+            return language == "zh" ? "本地引擎: 已就緒" : "Native Engine: Ready"
 
         // 快捷鍵
         case .globalHotkey:
@@ -173,16 +175,16 @@ class LocalizationHelper {
             return language == "zh" ? """
             macOS 系統級語音輸入工具
 
-            版本：%@ (%@) Beta
+            版本：%@ (%@)
 
             功能：
-            • Whisper 語音轉錄
-            • GPT-5-mini AI 文字潤飾
+            • 雲端 / 本地語音轉錄
+            • AI 文字潤飾
             • 全域快捷鍵：Fn + Space
 
             隱私：
             • 不收集任何使用資料
-            • 所有處理透過 OpenAI API
+            • 本地模式完全離線運作
             • API Key 安全儲存於本機
 
             聯繫方式：
@@ -190,17 +192,17 @@ class LocalizationHelper {
             """ : """
             macOS System-wide Voice Input Tool
 
-            Version: %@ (%@) Beta
+            Version: %@ (%@)
 
             Features:
-            • Whisper Speech Transcription
-            • GPT-5-mini AI Text Polishing
+            • Cloud / Local Speech Transcription
+            • AI Text Polishing
             • Global Hotkey: Fn + Space
 
             Privacy:
             • No data collection
-            • All processing via OpenAI API
-            • API Key stored securely locally
+            • Local mode works fully offline
+            • API Key stored securely on device
 
             Contact:
             • Email: tamio.tsiu@gmail.com
@@ -347,6 +349,12 @@ class LocalizationHelper {
             return language == "zh" ? "轉錄完成" : "Transcription Complete"
         case .pastedToCursor:
             return language == "zh" ? "已貼上至游標位置" : "Pasted to Cursor"
+        
+        // Punctuation
+        case .punctuationStyle:
+            return language == "zh" ? "標點符號" : "Punctuation"
+        case .punctuationDescription:
+            return language == "zh" ? "轉錄結果的標點符號格式" : "Punctuation format for transcription output"
         }
     }
 }
@@ -384,6 +392,7 @@ enum LocalizationKey {
     case modelNotDownloaded
     case cliDownloaded
     case cliNotDownloaded
+    case nativeEngineReady
 
     // 快捷鍵
     case globalHotkey
@@ -510,4 +519,8 @@ enum LocalizationKey {
     case processingTimeout
     case transcriptionComplete
     case pastedToCursor
+    
+    // Punctuation
+    case punctuationStyle
+    case punctuationDescription
 }

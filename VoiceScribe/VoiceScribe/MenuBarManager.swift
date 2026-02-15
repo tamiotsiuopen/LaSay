@@ -15,7 +15,6 @@ final class MenuBarManager: NSObject {
     private let onOpenSettings: () -> Void
     private let onShowAbout: () -> Void
     private let onQuit: () -> Void
-    private let onRequestAccessibility: () -> Void
 
     private var statusItem: NSStatusItem?
     private var cancellables = Set<AnyCancellable>()
@@ -25,15 +24,13 @@ final class MenuBarManager: NSObject {
         hotkeyManager: HotkeyManager,
         onOpenSettings: @escaping () -> Void,
         onShowAbout: @escaping () -> Void,
-        onQuit: @escaping () -> Void,
-        onRequestAccessibility: @escaping () -> Void
+        onQuit: @escaping () -> Void
     ) {
         self.appState = appState
         self.hotkeyManager = hotkeyManager
         self.onOpenSettings = onOpenSettings
         self.onShowAbout = onShowAbout
         self.onQuit = onQuit
-        self.onRequestAccessibility = onRequestAccessibility
         super.init()
     }
 
@@ -77,19 +74,6 @@ final class MenuBarManager: NSObject {
         let statusMenuItem = NSMenuItem(title: statusText, action: nil, keyEquivalent: "")
         statusMenuItem.isEnabled = false
         menu.addItem(statusMenuItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // 模式選擇
-        let currentMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
-        for mode in TranscriptionMode.allCases {
-            let title = mode.localizedDisplayName
-            let item = NSMenuItem(title: title, action: #selector(changeMode(_:)), keyEquivalent: "")
-            item.representedObject = mode.rawValue
-            item.state = mode == currentMode ? .on : .off
-            item.target = self
-            menu.addItem(item)
-        }
 
         menu.addItem(NSMenuItem.separator())
 
@@ -190,17 +174,6 @@ final class MenuBarManager: NSObject {
 
     @objc private func quitApp() {
         onQuit()
-    }
-
-    @objc private func requestAccessibilityPermission() {
-        onRequestAccessibility()
-    }
-
-    @objc private func changeMode(_ sender: NSMenuItem) {
-        guard let rawValue = sender.representedObject as? String else { return }
-        UserDefaults.standard.set(rawValue, forKey: "transcription_mode")
-        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-        setupMenu()
     }
 
 }
