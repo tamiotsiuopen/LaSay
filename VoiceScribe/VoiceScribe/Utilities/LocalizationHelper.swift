@@ -48,6 +48,16 @@ class LocalizationHelper {
         case .autoDetectLanguage:
             return language == "zh" ? "語音轉錄會自動辨識所有語言" : "Speech transcription automatically detects all languages"
 
+        // 語音轉錄
+        case .transcriptionSettings:
+            return language == "zh" ? "語音轉錄" : "Transcription"
+        case .transcriptionMode:
+            return language == "zh" ? "轉錄模式" : "Mode"
+        case .transcriptionLanguage:
+            return language == "zh" ? "轉錄語言" : "Language"
+        case .transcriptionDescription:
+            return language == "zh" ? "本地模式使用 whisper.cpp（可離線），雲端模式使用 OpenAI API" : "Local uses whisper.cpp (offline), Cloud uses OpenAI API"
+
         // 快捷鍵
         case .globalHotkey:
             return language == "zh" ? "全域快捷鍵" : "Global Hotkey"
@@ -63,6 +73,10 @@ class LocalizationHelper {
             return language == "zh" ? "啟用 AI 潤飾（使用 GPT-5-mini）" : "Enable AI Polishing (using GPT-5-mini)"
         case .aiPolishDescription:
             return language == "zh" ? "移除口語贅字、修正文法、優化句子結構" : "Remove filler words, fix grammar, optimize sentence structure"
+        case .polishTemplate:
+            return language == "zh" ? "潤飾模板" : "Template"
+        case .polishTemplateHint:
+            return language == "zh" ? "選擇預設輸出格式，亦可用自訂 Prompt 覆蓋" : "Choose a default format or override with a custom prompt"
         case .customSystemPrompt:
             return language == "zh" ? "自訂 System Prompt（選填）" : "Custom System Prompt (Optional)"
         case .useDefaultPrompt:
@@ -195,6 +209,12 @@ enum LocalizationKey {
     case language
     case autoDetectLanguage
 
+    // 語音轉錄
+    case transcriptionSettings
+    case transcriptionMode
+    case transcriptionLanguage
+    case transcriptionDescription
+
     // 快捷鍵
     case globalHotkey
     case currentHotkey
@@ -204,6 +224,8 @@ enum LocalizationKey {
     case aiPolish
     case enableAIPolish
     case aiPolishDescription
+    case polishTemplate
+    case polishTemplateHint
     case customSystemPrompt
     case useDefaultPrompt
     case clear

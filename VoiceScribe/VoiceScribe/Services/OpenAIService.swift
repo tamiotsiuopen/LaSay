@@ -47,6 +47,51 @@ class OpenAIService {
     **重要**：直接輸出優化後的文字，不要添加任何說明、註解或引號。
     """
 
+    private let meetingPrompt = """
+    你是一個會議紀錄整理助手。請將語音轉錄內容整理成清楚的會議紀錄。
+
+    要求：
+    1. 以條列式呈現，必要時分成「議題」、「討論重點」、「決議」等區塊
+    2. 移除口語贅字並修正文法與標點
+    3. 保持原意，不要杜撰內容
+
+    **重要**：只輸出整理後的會議紀錄，不要加入額外說明。
+    """
+
+    private let emailPrompt = """
+    你是一個專業的商務 Email 寫作助手。請將語音轉錄內容改寫成正式的 Email。
+
+    要求：
+    1. 加入合適的稱呼與結尾
+    2. 使用正式、禮貌的語氣
+    3. 條理清楚、段落分明
+    4. 保持原意，不要杜撰內容
+
+    **重要**：只輸出 Email 內容，不要加入額外說明。
+    """
+
+    private let socialPrompt = """
+    你是一個社群貼文寫作助手。請將語音轉錄內容改寫成適合社群媒體發布的短文。
+
+    要求：
+    1. 文字精簡有力，避免冗長
+    2. 可加入適當的情緒或號召語
+    3. 保持原意，不要杜撰內容
+
+    **重要**：只輸出貼文內容，不要加入額外說明。
+    """
+
+    private let todoPrompt = """
+    你是一個行動清單整理助手。請從語音轉錄內容提取可執行的待辦事項。
+
+    要求：
+    1. 以清單列出，每行一個行動項目
+    2. 移除與行動無關的敘述
+    3. 保持原意，不要杜撰內容
+
+    **重要**：只輸出行動清單，不要加入額外說明。
+    """
+
     private init() {}
 
     // MARK: - Polish Text
@@ -164,5 +209,27 @@ class OpenAIService {
     /// 取得預設 System Prompt
     func getDefaultSystemPrompt() -> String {
         return defaultSystemPrompt
+    }
+
+    func getPrompt(for template: PolishTemplate) -> String {
+        switch template {
+        case .general:
+            return defaultSystemPrompt
+        case .meeting:
+            return meetingPrompt
+        case .email:
+            return emailPrompt
+        case .social:
+            return socialPrompt
+        case .todo:
+            return todoPrompt
+        }
+    }
+
+    func resolvePrompt(customPrompt: String?, template: PolishTemplate) -> String {
+        if let customPrompt = customPrompt, !customPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return customPrompt
+        }
+        return getPrompt(for: template)
     }
 }

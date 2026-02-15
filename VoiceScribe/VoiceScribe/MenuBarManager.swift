@@ -77,6 +77,16 @@ final class MenuBarManager: NSObject {
         statusMenuItem.isEnabled = false
         menu.addItem(statusMenuItem)
 
+        let currentMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
+        let modeItem = NSMenuItem(title: "Mode: \(currentMode.displayName)", action: nil, keyEquivalent: "")
+        modeItem.isEnabled = false
+        menu.addItem(modeItem)
+
+        let currentTemplate = PolishTemplate(rawValue: UserDefaults.standard.string(forKey: "polish_template") ?? "general") ?? .general
+        let templateItem = NSMenuItem(title: "Template: \(currentTemplate.displayName)", action: nil, keyEquivalent: "")
+        templateItem.isEnabled = false
+        menu.addItem(templateItem)
+
         menu.addItem(NSMenuItem.separator())
 
         // 快捷鍵提示
@@ -91,6 +101,30 @@ final class MenuBarManager: NSObject {
         let hintItem = NSMenuItem(title: hotkeyHint, action: nil, keyEquivalent: "")
         hintItem.isEnabled = false
         menu.addItem(hintItem)
+
+        let modeSwitchItem = NSMenuItem(title: "Switch Mode", action: nil, keyEquivalent: "")
+        let modeMenu = NSMenu()
+        for mode in TranscriptionMode.allCases {
+            let item = NSMenuItem(title: mode.displayName, action: #selector(changeMode(_:)), keyEquivalent: "")
+            item.representedObject = mode.rawValue
+            item.state = mode == currentMode ? .on : .off
+            item.target = self
+            modeMenu.addItem(item)
+        }
+        modeSwitchItem.submenu = modeMenu
+        menu.addItem(modeSwitchItem)
+
+        let templateSwitchItem = NSMenuItem(title: "Switch Template", action: nil, keyEquivalent: "")
+        let templateMenu = NSMenu()
+        for template in PolishTemplate.allCases {
+            let item = NSMenuItem(title: template.displayName, action: #selector(changeTemplate(_:)), keyEquivalent: "")
+            item.representedObject = template.rawValue
+            item.state = template == currentTemplate ? .on : .off
+            item.target = self
+            templateMenu.addItem(item)
+        }
+        templateSwitchItem.submenu = templateMenu
+        menu.addItem(templateSwitchItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -205,5 +239,19 @@ final class MenuBarManager: NSObject {
 
     @objc private func requestAccessibilityPermission() {
         onRequestAccessibility()
+    }
+
+    @objc private func changeMode(_ sender: NSMenuItem) {
+        guard let rawValue = sender.representedObject as? String else { return }
+        UserDefaults.standard.set(rawValue, forKey: "transcription_mode")
+        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+        setupMenu()
+    }
+
+    @objc private func changeTemplate(_ sender: NSMenuItem) {
+        guard let rawValue = sender.representedObject as? String else { return }
+        UserDefaults.standard.set(rawValue, forKey: "polish_template")
+        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+        setupMenu()
     }
 }

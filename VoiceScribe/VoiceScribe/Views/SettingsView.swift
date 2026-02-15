@@ -18,6 +18,9 @@ struct SettingsView: View {
     @State private var autoPaste: Bool = true
     @State private var enableAIPolish: Bool = false
     @State private var customSystemPrompt: String = ""
+    @State private var transcriptionMode: TranscriptionMode = .cloud
+    @State private var transcriptionLanguage: TranscriptionLanguage = .auto
+    @State private var selectedTemplate: PolishTemplate = .general
     @State private var showingSaveAlert = false
     @State private var showAPIKey: Bool = false
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
@@ -145,6 +148,47 @@ struct SettingsView: View {
 
             Divider()
 
+            // 語音轉錄設定
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.localized(.transcriptionSettings))
+                    .font(.headline)
+
+                HStack {
+                    Text(localization.localized(.transcriptionMode))
+                    Spacer()
+                    Picker("", selection: $transcriptionMode) {
+                        ForEach(TranscriptionMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: transcriptionMode) { newValue in
+                        UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
+                        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+                    }
+                }
+
+                HStack {
+                    Text(localization.localized(.transcriptionLanguage))
+                    Spacer()
+                    Picker("", selection: $transcriptionLanguage) {
+                        ForEach(TranscriptionLanguage.allCases, id: \.self) { language in
+                            Text(language.displayName).tag(language)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: transcriptionLanguage) { newValue in
+                        UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_language")
+                    }
+                }
+
+                Text(localization.localized(.transcriptionDescription))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Divider()
+
             // 快捷鍵設定
             VStack(alignment: .leading, spacing: 8) {
                 Text(localization.localized(.globalHotkey))
@@ -185,6 +229,28 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
 
                 if enableAIPolish {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(localization.localized(.polishTemplate))
+                            Spacer()
+                            Picker("", selection: $selectedTemplate) {
+                                ForEach(PolishTemplate.allCases, id: \.self) { template in
+                                    Text(template.displayName).tag(template)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .onChange(of: selectedTemplate) { newValue in
+                                UserDefaults.standard.set(newValue.rawValue, forKey: "polish_template")
+                                NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+                            }
+                        }
+
+                        Text(localization.localized(.polishTemplateHint))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 4)
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text(localization.localized(.customSystemPrompt))
                             .font(.subheadline)
@@ -196,7 +262,7 @@ struct SettingsView: View {
 
                         HStack {
                             Button(localization.localized(.useDefaultPrompt)) {
-                                customSystemPrompt = openAIService.getDefaultSystemPrompt()
+                                customSystemPrompt = openAIService.getPrompt(for: selectedTemplate)
                             }
                             .font(.caption)
 
@@ -266,7 +332,7 @@ struct SettingsView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(30)
-        .frame(width: 550, height: enableAIPolish ? 650 : 550)
+        .frame(width: 550, height: enableAIPolish ? 720 : 600)
         .onAppear {
             loadSettings()
         }
@@ -292,11 +358,27 @@ struct SettingsView: View {
             selectedUILanguage = savedUILanguage
         }
 
+        // 載入語音轉錄設定
+        if let savedMode = UserDefaults.standard.string(forKey: "transcription_mode"),
+           let mode = TranscriptionMode(rawValue: savedMode) {
+            transcriptionMode = mode
+        }
+
+        if let savedLanguage = UserDefaults.standard.string(forKey: "transcription_language"),
+           let language = TranscriptionLanguage(rawValue: savedLanguage) {
+            transcriptionLanguage = language
+        }
+
         // 載入 AI 潤飾設定
         let savedAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
         print("🔍 [SettingsView] UserDefaults 讀取 enable_ai_polish: \(savedAIPolish)")
         enableAIPolish = savedAIPolish
         print("🔍 [SettingsView] 設定 enableAIPolish 為: \(enableAIPolish)")
+
+        if let savedTemplate = UserDefaults.standard.string(forKey: "polish_template"),
+           let template = PolishTemplate(rawValue: savedTemplate) {
+            selectedTemplate = template
+        }
 
         if let savedPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt") {
             customSystemPrompt = savedPrompt
@@ -342,8 +424,13 @@ struct SettingsView: View {
         // 儲存介面語言設定
         UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
 
+        // 儲存語音轉錄設定
+        UserDefaults.standard.set(transcriptionMode.rawValue, forKey: "transcription_mode")
+        UserDefaults.standard.set(transcriptionLanguage.rawValue, forKey: "transcription_language")
+
         // 儲存 AI 潤飾設定
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
+        UserDefaults.standard.set(selectedTemplate.rawValue, forKey: "polish_template")
         UserDefaults.standard.set(customSystemPrompt, forKey: "custom_system_prompt")
 
         // 儲存貼上設定
@@ -372,8 +459,13 @@ struct SettingsView: View {
         // 儲存介面語言設定
         UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
 
+        // 儲存語音轉錄設定
+        UserDefaults.standard.set(transcriptionMode.rawValue, forKey: "transcription_mode")
+        UserDefaults.standard.set(transcriptionLanguage.rawValue, forKey: "transcription_language")
+
         // 儲存 AI 潤飾設定
         UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
+        UserDefaults.standard.set(selectedTemplate.rawValue, forKey: "polish_template")
         UserDefaults.standard.set(customSystemPrompt, forKey: "custom_system_prompt")
 
         // 儲存貼上設定

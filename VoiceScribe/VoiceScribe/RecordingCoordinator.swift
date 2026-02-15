@@ -12,6 +12,7 @@ final class RecordingCoordinator {
     private let appState: AppState
     private let audioRecorder: AudioRecorder
     private let whisperService: WhisperService
+    private let localWhisperService: LocalWhisperService
     private let openAIService: OpenAIService
     private let textInputService: TextInputService
     private let hotkeyManager: HotkeyManager
@@ -21,6 +22,7 @@ final class RecordingCoordinator {
         appState: AppState,
         audioRecorder: AudioRecorder,
         whisperService: WhisperService,
+        localWhisperService: LocalWhisperService,
         openAIService: OpenAIService,
         textInputService: TextInputService,
         hotkeyManager: HotkeyManager,
@@ -29,6 +31,7 @@ final class RecordingCoordinator {
         self.appState = appState
         self.audioRecorder = audioRecorder
         self.whisperService = whisperService
+        self.localWhisperService = localWhisperService
         self.openAIService = openAIService
         self.textInputService = textInputService
         self.hotkeyManager = hotkeyManager
@@ -138,7 +141,11 @@ final class RecordingCoordinator {
 
         print("📁 錄音檔案：\(audioURL.path)")
 
-        whisperService.transcribe(audioFileURL: audioURL) { [weak self] result in
+        let selectedMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
+        let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
+        let languageCode = selectedLanguage.whisperCode
+
+        let transcriptionHandler: (Result<String, WhisperError>) -> Void = { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let transcribedText):
@@ -148,36 +155,44 @@ final class RecordingCoordinator {
                     print("🔍 [AI 潤飾] 設定狀態：\(enableAIPolish)")
 
                     if enableAIPolish {
-                        guard let apiKey = KeychainHelper.shared.get(key: "openai_api_key"), !apiKey.isEmpty else {
-                            print("⚠️ [AI 潤飾] 未設定 OpenAI API Key，跳過 AI 潤飾")
-                            self?.processFinalText(transcribedText)
-                            return
-                        }
+                        if selectedMode == .local, !NetworkMonitor.isOnline() {
+                            print("⚠️ [AI 潤飾] 離線模式，使用基本清理")
+                            let cleaned = TextCleaner.basicCleanup(transcribedText)
+                            self?.processFinalText(cleaned)
+                        } else {
+                            guard let apiKey = KeychainHelper.shared.get(key: "openai_api_key"), !apiKey.isEmpty else {
+                                print("⚠️ [AI 潤飾] 未設定 OpenAI API Key，跳過 AI 潤飾")
+                                self?.processFinalText(transcribedText)
+                                return
+                            }
 
-                        print("🤖 開始 AI 潤飾...")
-                        let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
+                            print("🤖 開始 AI 潤飾...")
+                            let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
+                            let template = PolishTemplate(rawValue: UserDefaults.standard.string(forKey: "polish_template") ?? "general") ?? .general
+                            let prompt = self?.openAIService.resolvePrompt(customPrompt: customPrompt, template: template)
 
-                        self?.openAIService.polishText(transcribedText, customPrompt: customPrompt) { polishResult in
-                            DispatchQueue.main.async {
-                                let finalText: String
-                                switch polishResult {
-                                case .success(let polishedText):
-                                    print("✅ AI 潤飾成功：\(polishedText)")
-                                    finalText = polishedText
-                                case .failure(let error):
-                                    print("❌ AI 潤飾失敗：\(error.localizedDescription)")
-                                    print("⚠️ 使用原始轉錄文字")
+                            self?.openAIService.polishText(transcribedText, customPrompt: prompt) { polishResult in
+                                DispatchQueue.main.async {
+                                    let finalText: String
+                                    switch polishResult {
+                                    case .success(let polishedText):
+                                        print("✅ AI 潤飾成功：\(polishedText)")
+                                        finalText = polishedText
+                                    case .failure(let error):
+                                        print("❌ AI 潤飾失敗：\(error.localizedDescription)")
+                                        print("⚠️ 使用原始轉錄文字")
 
-                                    self?.showNotification(
-                                        title: self?.localization.localized(.aiPolishFailed) ?? "AI Polishing Failed",
-                                        body: (self?.localization.localized(.usingOriginalText) ?? "Using original text: ") + error.localizedDescription,
-                                        isError: false
-                                    )
+                                        self?.showNotification(
+                                            title: self?.localization.localized(.aiPolishFailed) ?? "AI Polishing Failed",
+                                            body: (self?.localization.localized(.usingOriginalText) ?? "Using original text: ") + error.localizedDescription,
+                                            isError: false
+                                        )
 
-                                    finalText = transcribedText
+                                        finalText = transcribedText
+                                    }
+
+                                    self?.processFinalText(finalText)
                                 }
-
-                                self?.processFinalText(finalText)
                             }
                         }
                     } else {
@@ -201,6 +216,13 @@ final class RecordingCoordinator {
                     self?.appState.updateStatus(.idle)
                 }
             }
+        }
+
+        switch selectedMode {
+        case .local:
+            localWhisperService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
+        case .cloud:
+            whisperService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
         }
     }
 

@@ -31,6 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             appState: AppState.shared,
             audioRecorder: AudioRecorder.shared,
             whisperService: WhisperService.shared,
+            localWhisperService: LocalWhisperService.shared,
             openAIService: OpenAIService.shared,
             textInputService: TextInputService.shared,
             hotkeyManager: HotkeyManager.shared,
