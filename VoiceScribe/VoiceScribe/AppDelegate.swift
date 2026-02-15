@@ -12,6 +12,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarManager: MenuBarManager?
     private var recordingCoordinator: RecordingCoordinator?
     private var settingsWindow: NSWindow?
+    private var onboardingWindow: NSWindow?
+    private var floatingIndicator: FloatingIndicatorController?
     private let localization = LocalizationHelper.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -39,6 +41,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         recordingCoordinator?.start()
 
+        floatingIndicator = FloatingIndicatorController(appState: AppState.shared)
+
         checkFirstLaunch()
     }
 
@@ -59,6 +63,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let windowTitle = localization.currentLanguage == "en" ? "LaSay Settings" : "LaSay 設定"
         window.title = windowTitle
         window.styleMask = [.titled, .closable]
+        let fittingSize = hostingController.view.fittingSize
+        window.setContentSize(NSSize(width: 500, height: fittingSize.height))
         window.center()
         window.makeKeyAndOrderFront(nil)
 
@@ -66,6 +72,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         settingsWindow = window
+    }
+
+    @objc func openOnboarding() {
+        if let window = onboardingWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let onboardingView = OnboardingView { [weak self] in
+            UserDefaults.standard.set(true, forKey: "has_launched_before")
+            self?.onboardingWindow?.close()
+            self?.onboardingWindow = nil
+        }
+
+        let hostingController = NSHostingController(rootView: onboardingView)
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = localization.currentLanguage == "en" ? "Welcome" : "歡迎使用"
+        window.styleMask = [.titled, .closable]
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        onboardingWindow = window
     }
 
     @objc func showAbout() {
@@ -95,9 +125,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             • API Key stored securely locally
 
             Contact:
-            • Slack: Tamio Tsiu
             • Email: tamio.tsiu@gmail.com
-            • Email: tamio.tsiu@opennet.tw
             """
         } else {
             alert.informativeText = """
@@ -116,9 +144,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             • API Key 安全儲存於本機
 
             聯繫方式：
-            • Slack: Tamio Tsiu
             • Email: tamio.tsiu@gmail.com
-            • Email: tamio.tsiu@opennet.tw
             """
         }
 
@@ -136,9 +162,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func checkFirstLaunch() {
         let hasLaunched = UserDefaults.standard.bool(forKey: "has_launched_before")
         if !hasLaunched {
-            // 延遲 1 秒後自動打開設定
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.openSettings()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                self?.openOnboarding()
             }
         }
     }

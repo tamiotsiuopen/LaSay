@@ -21,7 +21,6 @@ struct SettingsView: View {
     @State private var transcriptionMode: TranscriptionMode = .cloud
     @State private var transcriptionLanguage: TranscriptionLanguage = .auto
     @State private var selectedTemplate: PolishTemplate = .general
-    @State private var showingSaveAlert = false
     @State private var showAPIKey: Bool = false
     @State private var refreshUI: Bool = false  // 用於觸發 UI 刷新
 
@@ -35,95 +34,58 @@ struct SettingsView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 20) {
-            // 標題
+        VStack(spacing: 16) {
             Text(localization.localized(.settings))
                 .font(.title)
                 .fontWeight(.bold)
-                .id(refreshUI)  // 用於強制刷新
+                .id(refreshUI)
 
             Divider()
 
-            // API Key 設定
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.openAIAPIKey))
-                    .font(.headline)
-
-                if hasAPIKey && !showingAPIKeyInput {
-                    HStack {
-                        Text(localization.localized(.apiKeySet))
-                            .foregroundColor(.green)
-
-                        if showAPIKey {
-                            Text(apiKey)
-                                .font(.system(.body, design: .monospaced))
-                                .textSelection(.enabled)
-                        } else {
-                            Text("(\(apiKey.prefix(7))...\(apiKey.suffix(4)))")
-                                .font(.system(.body, design: .monospaced))
-                        }
-
-                        Spacer()
-
-                        Button(localization.localized(showAPIKey ? .hide : .show)) {
-                            showAPIKey.toggle()
-                        }
-                        .font(.caption)
-
-                        Button(localization.localized(.update)) {
-                            showingAPIKeyInput = true
-                        }
-                        .font(.caption)
+            TabView {
+                generalTab
+                    .tabItem {
+                        Text(localization.localized(.generalTab))
                     }
-                    .frame(width: 400)
-                } else {
-                    HStack {
-                        if showAPIKey {
-                            TextField(localization.localized(.enterAPIKey), text: $apiKey)
-                                .textFieldStyle(.roundedBorder)
-                        } else {
-                            SecureField(localization.localized(.enterAPIKey), text: $apiKey)
-                                .textFieldStyle(.roundedBorder)
-                        }
 
-                        Button(localization.localized(showAPIKey ? .hide : .show)) {
-                            showAPIKey.toggle()
-                        }
-                        .font(.caption)
-
-                        // 立即保存按鈕
-                        Button("Save") {
-                            if !apiKey.isEmpty {
-                                let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
-                                if success {
-                                    hasAPIKey = true
-                                    showingAPIKeyInput = false
-                                    print("💾 [SettingsView] API Key 已保存")
-                                    // 刷新 menu
-                                    NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-                                }
-                            }
-                        }
-                        .font(.caption)
-                        .buttonStyle(.borderedProminent)
-
-                        if hasAPIKey {
-                            Button(localization.localized(.cancel)) {
-                                showingAPIKeyInput = false
-                                loadAPIKey()
-                            }
-                            .font(.caption)
-                        }
+                transcriptionTab
+                    .tabItem {
+                        Text(localization.localized(.transcriptionTab))
                     }
-                    .frame(width: 400)
-                }
 
-                Text(localization.localized(.apiKeyDescription))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                aiPolishTab
+                    .tabItem {
+                        Text(localization.localized(.aiPolishTab))
+                    }
             }
 
-            // 介面語言設定
+            Spacer()
+
+            HStack {
+                Text(localization.localized(.changesSavedAutomatically))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(localization.localized(.close)) {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+            }
+        }
+        .padding(24)
+        .frame(width: 500)
+        .onAppear {
+            loadSettings()
+        }
+        .onDisappear {
+            saveSettingsWithoutAlert()
+        }
+    }
+
+    private var generalTab: some View {
+        VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(localization.localized(.uiLanguage))
                     .font(.headline)
@@ -134,11 +96,11 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 400)
+                .frame(maxWidth: 420)
                 .onChange(of: selectedUILanguage) { newValue in
-                    // 儲存語言設定並刷新 UI
                     UserDefaults.standard.set(newValue, forKey: "ui_language")
                     refreshUI.toggle()
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
                 }
 
                 Text(localization.localized(.autoDetectLanguage))
@@ -148,7 +110,54 @@ struct SettingsView: View {
 
             Divider()
 
-            // 語音轉錄設定
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.localized(.globalHotkey))
+                    .font(.headline)
+
+                HStack {
+                    Text(localization.localized(.currentHotkey))
+                    Text("Fn + Space")
+                        .font(.system(.body, design: .monospaced))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.secondary.opacity(0.2))
+                        .cornerRadius(4)
+                }
+
+                Text(localization.localized(.hotkeyDescription))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.localized(.pasteSettings))
+                    .font(.headline)
+
+                Toggle(localization.localized(.autoPaste), isOn: $autoPaste)
+                    .toggleStyle(.checkbox)
+                    .onChange(of: autoPaste) { newValue in
+                        UserDefaults.standard.set(newValue, forKey: "auto_paste")
+                    }
+
+                Toggle(localization.localized(.restoreClipboard), isOn: $restoreClipboard)
+                    .toggleStyle(.checkbox)
+                    .disabled(!autoPaste)
+                    .onChange(of: restoreClipboard) { newValue in
+                        UserDefaults.standard.set(newValue, forKey: "restore_clipboard")
+                    }
+
+                Text(localization.localized(.pasteDescription))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private var transcriptionTab: some View {
+        VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(localization.localized(.transcriptionSettings))
                     .font(.headline)
@@ -158,7 +167,7 @@ struct SettingsView: View {
                     Spacer()
                     Picker("", selection: $transcriptionMode) {
                         ForEach(TranscriptionMode.allCases, id: \.self) { mode in
-                            Text(mode.displayName).tag(mode)
+                            Text(mode.localizedDisplayName).tag(mode)
                         }
                     }
                     .pickerStyle(.menu)
@@ -189,29 +198,13 @@ struct SettingsView: View {
 
             Divider()
 
-            // 快捷鍵設定
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.globalHotkey))
-                    .font(.headline)
+            apiKeySection
+        }
+        .padding(.top, 4)
+    }
 
-                HStack {
-                    Text(localization.localized(.currentHotkey))
-                    Text("Fn + Space")
-                        .font(.system(.body, design: .monospaced))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.secondary.opacity(0.2))
-                        .cornerRadius(4)
-                }
-
-                Text(localization.localized(.hotkeyDescription))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Divider()
-
-            // AI 潤飾設定
+    private var aiPolishTab: some View {
+        VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(localization.localized(.aiPolish))
                     .font(.headline)
@@ -219,130 +212,141 @@ struct SettingsView: View {
                 Toggle(localization.localized(.enableAIPolish), isOn: $enableAIPolish)
                     .toggleStyle(.checkbox)
                     .onChange(of: enableAIPolish) { newValue in
-                        // 立即保存 AI 潤飾設定
                         UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
-                        print("💾 [SettingsView] AI 潤飾設定已保存：\(newValue)")
+                        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
                     }
 
                 Text(localization.localized(.aiPolishDescription))
                     .font(.caption)
                     .foregroundColor(.secondary)
+            }
 
-                if enableAIPolish {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(localization.localized(.polishTemplate))
-                            Spacer()
-                            Picker("", selection: $selectedTemplate) {
-                                ForEach(PolishTemplate.allCases, id: \.self) { template in
-                                    Text(template.displayName).tag(template)
-                                }
+            if enableAIPolish {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(localization.localized(.polishTemplate))
+                        Spacer()
+                        Picker("", selection: $selectedTemplate) {
+                            ForEach(PolishTemplate.allCases, id: \.self) { template in
+                                Text(template.localizedDisplayName).tag(template)
                             }
-                            .pickerStyle(.menu)
-                            .onChange(of: selectedTemplate) { newValue in
-                                UserDefaults.standard.set(newValue.rawValue, forKey: "polish_template")
+                        }
+                        .pickerStyle(.menu)
+                        .onChange(of: selectedTemplate) { newValue in
+                            UserDefaults.standard.set(newValue.rawValue, forKey: "polish_template")
+                            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+                        }
+                    }
+
+                    Text(localization.localized(.polishTemplateHint))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(localization.localized(.customSystemPrompt))
+                        .font(.subheadline)
+
+                    TextEditor(text: $customSystemPrompt)
+                        .frame(minHeight: 100, maxHeight: 160)
+                        .font(.system(.body, design: .monospaced))
+                        .border(Color.secondary.opacity(0.3))
+
+                    HStack {
+                        Button(localization.localized(.loadTemplatePrompt)) {
+                            customSystemPrompt = openAIService.getPrompt(for: selectedTemplate)
+                        }
+                        .font(.caption)
+
+                        Button(localization.localized(.clear)) {
+                            customSystemPrompt = ""
+                        }
+                        .font(.caption)
+                    }
+
+                    Text(localization.localized(.emptyForDefault))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private var apiKeySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(localization.localized(.openAIAPIKey))
+                .font(.headline)
+
+            if hasAPIKey && !showingAPIKeyInput {
+                HStack {
+                    Text(localization.localized(.apiKeySet))
+                        .foregroundColor(.green)
+
+                    if showAPIKey {
+                        Text(apiKey)
+                            .font(.system(.body, design: .monospaced))
+                            .textSelection(.enabled)
+                    } else {
+                        Text("(\(apiKey.prefix(7))...\(apiKey.suffix(4)))")
+                            .font(.system(.body, design: .monospaced))
+                    }
+
+                    Spacer()
+
+                    Button(localization.localized(showAPIKey ? .hide : .show)) {
+                        showAPIKey.toggle()
+                    }
+                    .font(.caption)
+
+                    Button(localization.localized(.update)) {
+                        showingAPIKeyInput = true
+                    }
+                    .font(.caption)
+                }
+                .frame(maxWidth: 420)
+            } else {
+                HStack {
+                    if showAPIKey {
+                        TextField(localization.localized(.enterAPIKey), text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                    } else {
+                        SecureField(localization.localized(.enterAPIKey), text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    Button(localization.localized(showAPIKey ? .hide : .show)) {
+                        showAPIKey.toggle()
+                    }
+                    .font(.caption)
+
+                    Button(localization.currentLanguage == "zh" ? "儲存" : "Save") {
+                        if !apiKey.isEmpty {
+                            let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
+                            if success {
+                                hasAPIKey = true
+                                showingAPIKeyInput = false
                                 NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
                             }
                         }
-
-                        Text(localization.localized(.polishTemplateHint))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
-                    .padding(.top, 4)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(localization.localized(.customSystemPrompt))
-                            .font(.subheadline)
-
-                        TextEditor(text: $customSystemPrompt)
-                            .frame(height: 80)
-                            .font(.system(.body, design: .monospaced))
-                            .border(Color.secondary.opacity(0.3))
-
-                        HStack {
-                            Button(localization.localized(.useDefaultPrompt)) {
-                                customSystemPrompt = openAIService.getPrompt(for: selectedTemplate)
-                            }
-                            .font(.caption)
-
-                            Button(localization.localized(.clear)) {
-                                customSystemPrompt = ""
-                            }
-                            .font(.caption)
-                        }
-
-                        Text(localization.localized(.emptyForDefault))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 4)
-                }
-            }
-
-            Divider()
-
-            // 貼上設定
-            VStack(alignment: .leading, spacing: 8) {
-                Text(localization.localized(.pasteSettings))
-                    .font(.headline)
-
-                Toggle(localization.localized(.autoPaste), isOn: $autoPaste)
-                    .toggleStyle(.checkbox)
-                    .onChange(of: autoPaste) { newValue in
-                        // 立即保存自動貼上設定
-                        UserDefaults.standard.set(newValue, forKey: "auto_paste")
-                        print("💾 [SettingsView] 自動貼上設定已保存：\(newValue)")
-                    }
-
-                Toggle(localization.localized(.restoreClipboard), isOn: $restoreClipboard)
-                    .toggleStyle(.checkbox)
-                    .disabled(!autoPaste)
-                    .onChange(of: restoreClipboard) { newValue in
-                        // 立即保存還原剪貼簿設定
-                        UserDefaults.standard.set(newValue, forKey: "restore_clipboard")
-                        print("💾 [SettingsView] 還原剪貼簿設定已保存：\(newValue)")
-                    }
-
-                Text(localization.localized(.pasteDescription))
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .buttonStyle(.borderedProminent)
+
+                    if hasAPIKey {
+                        Button(localization.localized(.cancel)) {
+                            showingAPIKeyInput = false
+                            loadAPIKey()
+                        }
+                        .font(.caption)
+                    }
+                }
+                .frame(maxWidth: 420)
             }
 
-            Spacer()
-
-            // 按鈕
-            HStack(spacing: 12) {
-                Button(localization.localized(.close)) {
-                    dismiss()
-                }
-                .keyboardShortcut(.cancelAction)
-
-                Button(localization.localized(.saveAndClose)) {
-                    saveSettings()
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
-            }
-
-            // 提示文字
-            Text(localization.localized(.autoSaveHint))
+            Text(localization.localized(.apiKeyDescription))
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(30)
-        .frame(width: 550, height: enableAIPolish ? 720 : 600)
-        .onAppear {
-            loadSettings()
-        }
-        .onDisappear {
-            saveSettingsWithoutAlert()
-        }
-        .alert(localization.localized(.settingsSaved), isPresented: $showingSaveAlert) {
-            Button(localization.localized(.ok)) {
-                dismiss()
-            }
         }
     }
 
@@ -409,41 +413,6 @@ struct SettingsView: View {
             hasAPIKey = false
             showingAPIKeyInput = true
         }
-    }
-
-    func saveSettings() {
-        // 儲存 API Key
-        if !apiKey.isEmpty {
-            let success = keychainHelper.save(key: "openai_api_key", value: apiKey)
-            if success {
-                hasAPIKey = true
-                showingAPIKeyInput = false
-            }
-        }
-
-        // 儲存介面語言設定
-        UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
-
-        // 儲存語音轉錄設定
-        UserDefaults.standard.set(transcriptionMode.rawValue, forKey: "transcription_mode")
-        UserDefaults.standard.set(transcriptionLanguage.rawValue, forKey: "transcription_language")
-
-        // 儲存 AI 潤飾設定
-        UserDefaults.standard.set(enableAIPolish, forKey: "enable_ai_polish")
-        UserDefaults.standard.set(selectedTemplate.rawValue, forKey: "polish_template")
-        UserDefaults.standard.set(customSystemPrompt, forKey: "custom_system_prompt")
-
-        // 儲存貼上設定
-        UserDefaults.standard.set(autoPaste, forKey: "auto_paste")
-        UserDefaults.standard.set(restoreClipboard, forKey: "restore_clipboard")
-
-        // 標記已經啟動過
-        UserDefaults.standard.set(true, forKey: "has_launched_before")
-
-        // 通知 AppDelegate 刷新 menu
-        NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-
-        showingSaveAlert = true
     }
 
     func saveSettingsWithoutAlert() {
