@@ -186,7 +186,7 @@ struct OnboardingView: View {
 
     private func applyDefaultModeIfNeeded() {
         guard UserDefaults.standard.string(forKey: "transcription_mode") == nil else { return }
-        UserDefaults.standard.set("cloud", forKey: "transcription_mode")
+        UserDefaults.standard.set("senseVoice", forKey: "transcription_mode")
     }
 }
 

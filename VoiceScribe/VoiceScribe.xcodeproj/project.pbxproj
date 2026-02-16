@@ -9,6 +9,20 @@
 /* Begin PBXFileReference section */
 		31E4AEDC2F262512002093FB /* VoiceScribe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = VoiceScribe.app; path = LaSay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000001WHISPER000000001 /* libwhisper.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwhisper.a; path = VoiceScribe/Libraries/whisper/libwhisper.a; sourceTree = "<group>"; };
+		BB00000100000001 /* libsherpa-onnx-c-api.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-c-api.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-c-api.a"; sourceTree = "<group>"; };
+		BB00000100000002 /* libsherpa-onnx-core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-core.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-core.a"; sourceTree = "<group>"; };
+		BB00000100000003 /* libonnxruntime.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libonnxruntime.a; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libonnxruntime.a"; sourceTree = "<group>"; };
+		BB00000100000004 /* libkaldi-native-fbank-core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libkaldi-native-fbank-core.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libkaldi-native-fbank-core.a"; sourceTree = "<group>"; };
+		BB00000100000005 /* libssentencepiece_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssentencepiece_core.a; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libssentencepiece_core.a"; sourceTree = "<group>"; };
+		BB00000100000006 /* libkaldi-decoder-core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libkaldi-decoder-core.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libkaldi-decoder-core.a"; sourceTree = "<group>"; };
+		BB00000100000007 /* libsherpa-onnx-fst.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-fst.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-fst.a"; sourceTree = "<group>"; };
+		BB00000100000008 /* libsherpa-onnx-fstfar.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-fstfar.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-fstfar.a"; sourceTree = "<group>"; };
+		BB00000100000009 /* libsherpa-onnx-kaldifst-core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-kaldifst-core.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-kaldifst-core.a"; sourceTree = "<group>"; };
+		BB0000010000000A /* libespeak-ng.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libespeak-ng.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libespeak-ng.a"; sourceTree = "<group>"; };
+		BB0000010000000B /* libpiper_phonemize.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpiper_phonemize.a; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libpiper_phonemize.a"; sourceTree = "<group>"; };
+		BB0000010000000C /* libucd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libucd.a; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libucd.a"; sourceTree = "<group>"; };
+		BB0000010000000D /* libkissfft-float.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libkissfft-float.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libkissfft-float.a"; sourceTree = "<group>"; };
+		BB0000010000000E /* libsherpa-onnx-cxx-api.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-cxx-api.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-cxx-api.a"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -21,6 +35,20 @@
 
 /* Begin PBXBuildFile section */
 		AA000002WHISPER000000001 /* libwhisper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001WHISPER000000001 /* libwhisper.a */; };
+		BB00000200000001 /* libsherpa-onnx-c-api.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000001 /* libsherpa-onnx-c-api.a */; };
+		BB00000200000002 /* libsherpa-onnx-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000002 /* libsherpa-onnx-core.a */; };
+		BB00000200000003 /* libonnxruntime.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000003 /* libonnxruntime.a */; };
+		BB00000200000004 /* libkaldi-native-fbank-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000004 /* libkaldi-native-fbank-core.a */; };
+		BB00000200000005 /* libssentencepiece_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000005 /* libssentencepiece_core.a */; };
+		BB00000200000006 /* libkaldi-decoder-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000006 /* libkaldi-decoder-core.a */; };
+		BB00000200000007 /* libsherpa-onnx-fst.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000007 /* libsherpa-onnx-fst.a */; };
+		BB00000200000008 /* libsherpa-onnx-fstfar.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000008 /* libsherpa-onnx-fstfar.a */; };
+		BB00000200000009 /* libsherpa-onnx-kaldifst-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000009 /* libsherpa-onnx-kaldifst-core.a */; };
+		BB0000020000000A /* libespeak-ng.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB0000010000000A /* libespeak-ng.a */; };
+		BB0000020000000B /* libpiper_phonemize.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB0000010000000B /* libpiper_phonemize.a */; };
+		BB0000020000000C /* libucd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB0000010000000C /* libucd.a */; };
+		BB0000020000000D /* libkissfft-float.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB0000010000000D /* libkissfft-float.a */; };
+		BB0000020000000E /* libsherpa-onnx-cxx-api.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB0000010000000E /* libsherpa-onnx-cxx-api.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,6 +57,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000002WHISPER000000001 /* libwhisper.a in Frameworks */,
+				BB00000200000001 /* libsherpa-onnx-c-api.a in Frameworks */,
+				BB00000200000002 /* libsherpa-onnx-core.a in Frameworks */,
+				BB00000200000003 /* libonnxruntime.a in Frameworks */,
+				BB00000200000004 /* libkaldi-native-fbank-core.a in Frameworks */,
+				BB00000200000005 /* libssentencepiece_core.a in Frameworks */,
+				BB00000200000006 /* libkaldi-decoder-core.a in Frameworks */,
+				BB00000200000007 /* libsherpa-onnx-fst.a in Frameworks */,
+				BB00000200000008 /* libsherpa-onnx-fstfar.a in Frameworks */,
+				BB00000200000009 /* libsherpa-onnx-kaldifst-core.a in Frameworks */,
+				BB0000020000000A /* libespeak-ng.a in Frameworks */,
+				BB0000020000000B /* libpiper_phonemize.a in Frameworks */,
+				BB0000020000000C /* libucd.a in Frameworks */,
+				BB0000020000000D /* libkissfft-float.a in Frameworks */,
+				BB0000020000000E /* libsherpa-onnx-cxx-api.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -48,6 +90,20 @@
 			isa = PBXGroup;
 			children = (
 				AA000001WHISPER000000001 /* libwhisper.a */,
+				BB00000100000001 /* libsherpa-onnx-c-api.a */,
+				BB00000100000002 /* libsherpa-onnx-core.a */,
+				BB00000100000003 /* libonnxruntime.a */,
+				BB00000100000004 /* libkaldi-native-fbank-core.a */,
+				BB00000100000005 /* libssentencepiece_core.a */,
+				BB00000100000006 /* libkaldi-decoder-core.a */,
+				BB00000100000007 /* libsherpa-onnx-fst.a */,
+				BB00000100000008 /* libsherpa-onnx-fstfar.a */,
+				BB00000100000009 /* libsherpa-onnx-kaldifst-core.a */,
+				BB0000010000000A /* libespeak-ng.a */,
+				BB0000010000000B /* libpiper_phonemize.a */,
+				BB0000010000000C /* libucd.a */,
+				BB0000010000000D /* libkissfft-float.a */,
+				BB0000010000000E /* libsherpa-onnx-cxx-api.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -264,8 +320,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/VoiceScribe/Libraries/whisper/include";
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/VoiceScribe/Libraries/whisper";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/VoiceScribe/Libraries/whisper/include",
+					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)/VoiceScribe/Libraries/whisper",
+					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/lib",
+				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
 					"-framework",
@@ -324,8 +386,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/VoiceScribe/Libraries/whisper/include";
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/VoiceScribe/Libraries/whisper";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/VoiceScribe/Libraries/whisper/include",
+					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)/VoiceScribe/Libraries/whisper",
+					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/lib",
+				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
 					"-framework",

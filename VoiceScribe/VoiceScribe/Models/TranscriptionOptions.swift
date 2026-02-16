@@ -9,16 +9,26 @@ import Foundation
 
 enum TranscriptionMode: String, CaseIterable {
     case cloud
-    case local
+    case senseVoice     // recommended local option
+    case whisperLocal   // was "local"
 
     var localizedDisplayName: String {
         let language = LocalizationHelper.shared.currentLanguage
         switch self {
         case .cloud:
             return language == "zh" ? "雲端（OpenAI）" : "Cloud (OpenAI)"
-        case .local:
-            return language == "zh" ? "本地（離線可用）" : "Local (Offline)"
+        case .senseVoice:
+            return language == "zh" ? "SenseVoice（離線 · 234MB）推薦" : "SenseVoice (Offline · 234MB) Recommended"
+        case .whisperLocal:
+            return language == "zh" ? "Whisper（離線 · 1.5GB）英文較強" : "Whisper (Offline · 1.5GB) Better English"
         }
+    }
+
+    /// Load from UserDefaults with backward compatibility for "local" → "whisperLocal"
+    static func fromSaved(_ rawValue: String?) -> TranscriptionMode {
+        guard let raw = rawValue else { return .cloud }
+        if raw == "local" { return .whisperLocal }
+        return TranscriptionMode(rawValue: raw) ?? .cloud
     }
 }
 

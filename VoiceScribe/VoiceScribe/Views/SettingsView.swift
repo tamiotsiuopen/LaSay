@@ -31,6 +31,7 @@ struct SettingsView: View {
     private let keychainHelper = KeychainHelper.shared
     private let openAIService = OpenAIService.shared
     private let localWhisperService = LocalWhisperService.shared
+    private let senseVoiceService = SenseVoiceService.shared
     private let localization = LocalizationHelper.shared
 
     var body: some View {
@@ -126,7 +127,10 @@ struct SettingsView: View {
                 .onChange(of: transcriptionMode) { newValue in
                     UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-                    if newValue == .local && !localWhisperService.isModelDownloaded {
+                    if newValue == .whisperLocal && !localWhisperService.isModelDownloaded {
+                        showModelDownloadConfirm = true
+                    }
+                    if newValue == .senseVoice && !senseVoiceService.isModelDownloaded {
                         showModelDownloadConfirm = true
                     }
                 }
@@ -150,7 +154,7 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            if transcriptionMode == .local {
+            if transcriptionMode == .whisperLocal {
                 if localWhisperService.isModelDownloaded {
                     Text(localization.localized(.nativeEngineReady))
                         .font(.caption)
@@ -169,22 +173,57 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            if transcriptionMode == .senseVoice {
+                if senseVoiceService.isModelDownloaded {
+                    Text(localization.currentLanguage == "zh" ? "✅ SenseVoice 模型已就緒" : "✅ SenseVoice model ready")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    HStack {
+                        Text(localization.currentLanguage == "zh" ? "尚未下載模型" : "Model not downloaded")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Button(localization.currentLanguage == "zh" ? "下載模型 (234MB)" : "Download (234MB)") {
+                            showModelDownloadConfirm = true
+                        }
+                        .font(.caption)
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+            }
         }
         .alert(
             localization.currentLanguage == "zh" ? "下載語音模型？" : "Download Voice Model?",
             isPresented: $showModelDownloadConfirm
         ) {
-            Button(localization.currentLanguage == "zh" ? "立即下載 (1.5GB)" : "Download Now (1.5GB)") {
-                DispatchQueue.global().async {
-                    LocalWhisperService.shared.predownload()
+            if transcriptionMode == .senseVoice {
+                Button(localization.currentLanguage == "zh" ? "立即下載 (234MB)" : "Download Now (234MB)") {
+                    DispatchQueue.global().async {
+                        SenseVoiceService.shared.predownload()
+                    }
                 }
+                .keyboardShortcut(.defaultAction)
+            } else {
+                Button(localization.currentLanguage == "zh" ? "立即下載 (1.5GB)" : "Download Now (1.5GB)") {
+                    DispatchQueue.global().async {
+                        LocalWhisperService.shared.predownload()
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
             }
-            .keyboardShortcut(.defaultAction)
             Button(localization.currentLanguage == "zh" ? "稍後再說" : "Later", role: .cancel) {}
         } message: {
-            Text(localization.currentLanguage == "zh"
-                 ? "本地模式需要下載語音辨識模型 (1.5GB)。下載完成後即可離線使用。"
-                 : "Local mode requires a voice recognition model (1.5GB). Once downloaded, it works fully offline.")
+            if transcriptionMode == .senseVoice {
+                Text(localization.currentLanguage == "zh"
+                     ? "SenseVoice 模式需要下載語音辨識模型 (234MB)。下載完成後即可離線使用。"
+                     : "SenseVoice mode requires a voice recognition model (234MB). Once downloaded, it works fully offline.")
+            } else {
+                Text(localization.currentLanguage == "zh"
+                     ? "Whisper 模式需要下載語音辨識模型 (1.5GB)。下載完成後即可離線使用。"
+                     : "Whisper mode requires a voice recognition model (1.5GB). Once downloaded, it works fully offline.")
+            }
         }
     }
 
@@ -432,10 +471,7 @@ struct SettingsView: View {
             selectedUILanguage = savedUILanguage
         }
 
-        if let savedMode = UserDefaults.standard.string(forKey: "transcription_mode"),
-           let mode = TranscriptionMode(rawValue: savedMode) {
-            transcriptionMode = mode
-        }
+        transcriptionMode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
 
         if let savedLanguage = UserDefaults.standard.string(forKey: "transcription_language"),
            let language = TranscriptionLanguage(rawValue: savedLanguage) {

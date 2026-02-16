@@ -14,6 +14,7 @@ final class RecordingCoordinator {
     private let audioRecorder: AudioRecorder
     private let whisperService: WhisperService
     private let localWhisperService: LocalWhisperService
+    private let senseVoiceService: SenseVoiceService
     private let openAIService: OpenAIService
     private let textInputService: TextInputService
     private let hotkeyManager: HotkeyManager
@@ -34,6 +35,7 @@ final class RecordingCoordinator {
         audioRecorder: AudioRecorder,
         whisperService: WhisperService,
         localWhisperService: LocalWhisperService,
+        senseVoiceService: SenseVoiceService,
         openAIService: OpenAIService,
         textInputService: TextInputService,
         hotkeyManager: HotkeyManager,
@@ -43,6 +45,7 @@ final class RecordingCoordinator {
         self.audioRecorder = audioRecorder
         self.whisperService = whisperService
         self.localWhisperService = localWhisperService
+        self.senseVoiceService = senseVoiceService
         self.openAIService = openAIService
         self.textInputService = textInputService
         self.hotkeyManager = hotkeyManager
@@ -159,7 +162,7 @@ final class RecordingCoordinator {
             }
         }
 
-        let selectedMode = TranscriptionMode(rawValue: UserDefaults.standard.string(forKey: "transcription_mode") ?? "cloud") ?? .cloud
+        let selectedMode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
         let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
         let languageCode = selectedLanguage.whisperCode
 
@@ -209,7 +212,7 @@ final class RecordingCoordinator {
                     let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
 
                     if enableAIPolish {
-                        if selectedMode == .local, !NetworkMonitor.shared.isOnline {
+                        if (selectedMode == .whisperLocal || selectedMode == .senseVoice), !NetworkMonitor.shared.isOnline {
                             let cleaned = TextCleaner.basicCleanup(transcribedText)
                             self.processFinalText(cleaned)
                         } else {
@@ -274,12 +277,21 @@ final class RecordingCoordinator {
 
         
         switch selectedMode {
-        case .local:
+        case .whisperLocal:
             localWhisperService.transcribe(
                 audioFileURL: audioURL,
                 language: languageCode,
                 progressHandler: { [weak self] progress in
                     self?.handleDownloadProgress(progress)
+                },
+                completion: transcriptionHandler
+            )
+        case .senseVoice:
+            senseVoiceService.transcribe(
+                audioFileURL: audioURL,
+                language: languageCode,
+                progressHandler: { [weak self] progress in
+                    self?.handleSenseVoiceDownloadProgress(progress)
                 },
                 completion: transcriptionHandler
             )
@@ -289,6 +301,22 @@ final class RecordingCoordinator {
     }
 
     // MARK: - Download Progress
+
+    private func handleSenseVoiceDownloadProgress(_ progress: SenseVoiceService.DownloadProgress) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            self.downloadProgressModel.title = self.localization.currentLanguage == "zh" ? "正在下載 SenseVoice 模型…" : "Downloading SenseVoice model…"
+            self.downloadProgressModel.progress = progress.fraction
+            self.downloadProgressModel.sizeText = self.formatByteCount(progress.bytesExpected)
+
+            self.showDownloadPanelIfNeeded()
+
+            if progress.isCompleted {
+                self.closeDownloadPanelAfterDelay()
+            }
+        }
+    }
 
     private func handleDownloadProgress(_ progress: LocalWhisperService.DownloadProgress) {
         DispatchQueue.main.async { [weak self] in
