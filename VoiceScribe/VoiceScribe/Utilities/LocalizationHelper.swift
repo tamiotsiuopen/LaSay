@@ -131,44 +131,8 @@ class LocalizationHelper {
         // 關於對話框
         case .aboutTitle:
             return language == "zh" ? "LaSay" : "LaSay"
-            macOS 系統級語音輸入工具
-
-            版本：%@ (%@)
-
-            功能：
-            • 雲端 / 本地語音轉錄
-            • AI 文字潤飾
-            • 全域快捷鍵：Fn + Space
-
-            隱私：
-            • 不收集任何使用資料
-            • 本地模式完全離線運作
-            • API Key 安全儲存於本機
-
-            聯繫方式：
-            • Email: tamio.tsiu@gmail.com
-            """ : """
-            macOS System-wide Voice Input Tool
-
-            Version: %@ (%@)
-
-            Features:
-            • Cloud / Local Speech Transcription
-            • AI Text Polishing
-            • Global Hotkey: Fn + Space
-
-            Privacy:
-            • No data collection
-            • Local mode works fully offline
-            • API Key stored securely on device
-
-            Contact:
-            • Email: tamio.tsiu@gmail.com
-            """
 
         // Onboarding
-                ? "LaSay 是你的系統級語音輸入工具，按住 Fn + Space 就能在任何 app 輸入。"
-                : "LaSay is a system-wide voice input tool. Hold Fn + Space to dictate anywhere."
         case .onboardingPermissionsTitle:
             return language == "zh" ? "權限設定" : "Permissions"
         case .onboardingPermissionsDescription:
