@@ -20,9 +20,10 @@ final class SenseVoiceService {
 
     // MARK: - Paths
 
-    /// Model files are bundled in app Resources/SenseVoiceModel/
+    /// Model files are bundled in app Resources/
+    /// Xcode copies them directly to Resources root (no subfolder).
     private var bundledModelDir: String? {
-        Bundle.main.resourcePath.map { ($0 as NSString).appendingPathComponent("SenseVoiceModel") }
+        Bundle.main.resourcePath
     }
 
     // MARK: - Public
