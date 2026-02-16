@@ -180,9 +180,9 @@ struct SettingsView: View {
 
     private var punctuationExample: String {
         switch punctuationStyle {
-        case .fullWidth: return "範例：你好，世界。這是測試！"
-        case .halfWidth: return "範例：你好,世界.這是測試!"
-        case .spaces: return "範例：你好 世界 這是測試"
+        case .fullWidth: return "範例：Hello，World。This is a test！"
+        case .halfWidth: return "範例：Hello,World.This is a test!"
+        case .spaces: return "範例：Hello World This is a test"
         }
     }
 
