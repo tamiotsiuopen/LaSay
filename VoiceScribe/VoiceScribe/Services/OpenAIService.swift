@@ -112,8 +112,7 @@ class OpenAIService {
             "messages": [
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": text]
-            ],
-            "temperature": 0.3
+            ]
         ]
 
 
