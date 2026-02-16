@@ -60,8 +60,7 @@ enum AudioConverter {
             return inputBuffer
         }
 
-        if let error = error {
-            // AudioConverter error: \(error)
+        if error != nil {
             return nil
         }
 
