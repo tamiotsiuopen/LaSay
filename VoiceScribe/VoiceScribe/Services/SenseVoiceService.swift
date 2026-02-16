@@ -66,6 +66,20 @@ final class SenseVoiceService {
         ensureModel(progressHandler: nil) { _ in }
     }
 
+    /// Download model with progress reporting. Completion called on main thread.
+    func downloadModel(progressHandler: @escaping DownloadProgressHandler, completion: @escaping (Bool) -> Void) {
+        ensureModel(progressHandler: progressHandler) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    completion(true)
+                case .failure:
+                    completion(false)
+                }
+            }
+        }
+    }
+
     /// Pre-load model into memory (call when user switches to SenseVoice mode).
     /// Completion is called on main thread.
     func preloadModel(progressHandler: DownloadProgressHandler? = nil, completion: ((Bool) -> Void)? = nil) {

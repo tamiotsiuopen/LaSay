@@ -25,6 +25,9 @@ struct SettingsView: View {
     @State private var showModelDownloadConfirm: Bool = false
     @State private var showDeleteAPIKeyConfirm: Bool = false
     @State private var isLoadingModel: Bool = false
+    @State private var isDownloadingModel: Bool = false
+    @State private var downloadProgress: Double = 0
+    @State private var downloadSizeText: String = ""
 
     private var isUsingCustomPrompt: Bool {
         !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -131,7 +134,7 @@ struct SettingsView: View {
                     if newValue == .senseVoice {
                         if !senseVoiceService.isModelDownloaded {
                             showModelDownloadConfirm = true
-                        } else {
+                        } else if !senseVoiceService.isModelLoaded {
                             isLoadingModel = true
                             senseVoiceService.preloadModel(completion: { _ in isLoadingModel = false })
                         }
@@ -158,7 +161,23 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
 
             if transcriptionMode == .senseVoice {
-                if isLoadingModel {
+                if isDownloadingModel {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(localization.currentLanguage == "zh"
+                                 ? "正在下載模型\(downloadSizeText.isEmpty ? "" : " (\(downloadSizeText))")…"
+                                 : "Downloading model\(downloadSizeText.isEmpty ? "" : " (\(downloadSizeText))")…")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(Int(downloadProgress * 100))%")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        ProgressView(value: downloadProgress)
+                            .progressViewStyle(.linear)
+                    }
+                } else if isLoadingModel {
                     HStack(spacing: 6) {
                         ProgressView()
                             .controlSize(.small)
@@ -190,9 +209,7 @@ struct SettingsView: View {
             isPresented: $showModelDownloadConfirm
         ) {
             Button(localization.currentLanguage == "zh" ? "立即下載 (234MB)" : "Download Now (234MB)") {
-                DispatchQueue.global().async {
-                    SenseVoiceService.shared.predownload()
-                }
+                startModelDownload()
             }
             .keyboardShortcut(.defaultAction)
             Button(localization.currentLanguage == "zh" ? "稍後再說" : "Later", role: .cancel) {}
@@ -464,6 +481,36 @@ struct SettingsView: View {
     }
 
     // MARK: - Methods
+
+    private func startModelDownload() {
+        isDownloadingModel = true
+        downloadProgress = 0
+        downloadSizeText = ""
+
+        senseVoiceService.downloadModel(
+            progressHandler: { progress in
+                DispatchQueue.main.async {
+                    self.downloadProgress = progress.fraction
+                    if progress.bytesExpected > 0 {
+                        let formatter = ByteCountFormatter()
+                        formatter.allowedUnits = [.useMB]
+                        formatter.countStyle = .file
+                        self.downloadSizeText = formatter.string(fromByteCount: progress.bytesExpected)
+                    }
+                }
+            },
+            completion: { success in
+                self.isDownloadingModel = false
+                if success {
+                    // Auto-preload after download
+                    self.isLoadingModel = true
+                    self.senseVoiceService.preloadModel(completion: { _ in
+                        self.isLoadingModel = false
+                    })
+                }
+            }
+        )
+    }
 
     func loadSettings() {
         loadAPIKey()
