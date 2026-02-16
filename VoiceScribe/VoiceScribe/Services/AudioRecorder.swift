@@ -75,10 +75,10 @@ class AudioRecorder: NSObject {
 
         guard let url = recordingURL else { return }
 
-        // 設定錄音參數（Whisper 相容格式）
+        // 設定錄音參數（16kHz 單聲道，語音辨識標準格式）
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 16000,  // Whisper 推薦 16kHz
+            AVSampleRateKey: 16000,
             AVNumberOfChannelsKey: 1,  // 單聲道
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]

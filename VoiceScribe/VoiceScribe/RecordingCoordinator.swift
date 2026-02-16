@@ -12,8 +12,7 @@ import UserNotifications
 final class RecordingCoordinator {
     private let appState: AppState
     private let audioRecorder: AudioRecorder
-    private let whisperService: WhisperService
-    private let localWhisperService: LocalWhisperService
+    private let cloudService: WhisperService
     private let senseVoiceService: SenseVoiceService
     private let openAIService: OpenAIService
     private let textInputService: TextInputService
@@ -26,15 +25,14 @@ final class RecordingCoordinator {
     
     /// Cancel all ongoing API requests
     func cancelAllRequests() {
-        whisperService.cancelCurrentRequest()
+        cloudService.cancelCurrentRequest()
         openAIService.cancelCurrentRequest()
     }
 
     init(
         appState: AppState,
         audioRecorder: AudioRecorder,
-        whisperService: WhisperService,
-        localWhisperService: LocalWhisperService,
+        cloudService: WhisperService,
         senseVoiceService: SenseVoiceService,
         openAIService: OpenAIService,
         textInputService: TextInputService,
@@ -43,8 +41,7 @@ final class RecordingCoordinator {
     ) {
         self.appState = appState
         self.audioRecorder = audioRecorder
-        self.whisperService = whisperService
-        self.localWhisperService = localWhisperService
+        self.cloudService = cloudService
         self.senseVoiceService = senseVoiceService
         self.openAIService = openAIService
         self.textInputService = textInputService
@@ -137,7 +134,6 @@ final class RecordingCoordinator {
             return
         }
 
-        
         // Start processing timeout timer (60 seconds)
         processingTimer?.invalidate()
         processingTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { [weak self] _ in
@@ -156,7 +152,7 @@ final class RecordingCoordinator {
 
         let selectedMode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
         let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
-        let languageCode = selectedLanguage.whisperCode
+        let languageCode = selectedLanguage.languageCode
 
         if selectedMode == .cloud {
             // Check internet connection before proceeding
@@ -198,16 +194,14 @@ final class RecordingCoordinator {
                 
                 switch result {
                 case .success(let rawText):
-                    // Convert Simplified Chinese → Traditional Chinese
                     let transcribedText = self.convertToTraditionalChinese(rawText)
-
                     let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
 
                     // Delete recording immediately — text is already in memory
                     self.audioRecorder.deleteRecording(at: audioURL)
 
                     if enableAIPolish {
-                        if (selectedMode == .whisperLocal || selectedMode == .senseVoice), !NetworkMonitor.shared.isOnline {
+                        if selectedMode == .senseVoice, !NetworkMonitor.shared.isOnline {
                             let cleaned = TextCleaner.basicCleanup(transcribedText)
                             self.processFinalText(cleaned)
                         } else {
@@ -227,13 +221,11 @@ final class RecordingCoordinator {
                                     case .success(let polishedText):
                                         finalText = polishedText
                                     case .failure(let error):
-
                                         self.showNotification(
                                             title: self.localization.localized(.aiPolishFailed),
                                             body: self.localization.localized(.usingOriginalText) + error.localizedDescription,
                                             isError: false
                                         )
-
                                         finalText = transcribedText
                                     }
 
@@ -246,8 +238,6 @@ final class RecordingCoordinator {
                     }
 
                 case .failure(let error):
-
-                    // Cancel processing timeout timer
                     self.processingTimer?.invalidate()
                     self.processingTimer = nil
 
@@ -257,7 +247,6 @@ final class RecordingCoordinator {
                         isError: true
                     )
                     
-                    // Clean up recording file on failure
                     self.audioRecorder.deleteRecording(at: audioURL)
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -268,17 +257,7 @@ final class RecordingCoordinator {
             }
         }
 
-        
         switch selectedMode {
-        case .whisperLocal:
-            localWhisperService.transcribe(
-                audioFileURL: audioURL,
-                language: languageCode,
-                progressHandler: { [weak self] progress in
-                    self?.handleDownloadProgress(progress)
-                },
-                completion: transcriptionHandler
-            )
         case .senseVoice:
             senseVoiceService.transcribe(
                 audioFileURL: audioURL,
@@ -289,7 +268,7 @@ final class RecordingCoordinator {
                 completion: transcriptionHandler
             )
         case .cloud:
-            whisperService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
+            cloudService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
         }
     }
 
@@ -306,23 +285,6 @@ final class RecordingCoordinator {
             self.showDownloadPanelIfNeeded()
 
             if progress.isCompleted {
-                self.closeDownloadPanelAfterDelay()
-            }
-        }
-    }
-
-    private func handleDownloadProgress(_ progress: LocalWhisperService.DownloadProgress) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            let titleKey: LocalizationKey = (progress.kind == .model) ? .downloadingModel : .downloadingBinary
-            self.downloadProgressModel.title = self.localization.localized(titleKey)
-            self.downloadProgressModel.progress = progress.fraction
-            self.downloadProgressModel.sizeText = self.formatByteCount(progress.bytesExpected)
-
-            self.showDownloadPanelIfNeeded()
-
-            if progress.isCompleted, progress.kind == .model {
                 self.closeDownloadPanelAfterDelay()
             }
         }
@@ -361,7 +323,6 @@ final class RecordingCoordinator {
 
     // MARK: - Text Processing
     
-    /// Convert Simplified Chinese to Traditional Chinese using ICU transform
     private func convertToTraditionalChinese(_ text: String) -> String {
         return text.applyingTransform(StringTransform("Hans-Hant"), reverse: false) ?? text
     }
@@ -370,7 +331,6 @@ final class RecordingCoordinator {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
-            // Cancel processing timeout timer
             self.processingTimer?.invalidate()
             self.processingTimer = nil
             
@@ -382,7 +342,6 @@ final class RecordingCoordinator {
             }()
             self.appState.saveTranscription(correctedText)
 
-            // Always paste to cursor
             self.textInputService.pasteText(correctedText, restoreClipboard: true)
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -398,7 +357,6 @@ final class RecordingCoordinator {
                 self?.appState.updateStatus(.idle)
                 return
             }
-
         }
 
         audioRecorder.onError = { _ in }

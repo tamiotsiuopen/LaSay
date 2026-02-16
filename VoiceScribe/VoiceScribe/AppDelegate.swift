@@ -31,8 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         recordingCoordinator = RecordingCoordinator(
             appState: AppState.shared,
             audioRecorder: AudioRecorder.shared,
-            whisperService: WhisperService.shared,
-            localWhisperService: LocalWhisperService.shared,
+            cloudService: WhisperService.shared,
             senseVoiceService: SenseVoiceService.shared,
             openAIService: OpenAIService.shared,
             textInputService: TextInputService.shared,
@@ -139,12 +138,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     .font(.headline)
                 
                 if localization.currentLanguage == "zh" {
-                    Text("• 本地 + 雲端語音辨識")
+                    Text("• SenseVoice 離線辨識 + 雲端 OpenAI")
                     Text("• AI 文字清理（保留技術術語）")
                     Text("• 全域快捷鍵：Fn + Space")
                     Text("• 任何 app 都能用，包括 Terminal 和 IDE")
                 } else {
-                    Text("• Local + Cloud speech recognition")
+                    Text("• SenseVoice offline + Cloud OpenAI")
                     Text("• AI text cleanup (preserves technical terms)")
                     Text("• Global Hotkey: Fn + Space")
                     Text("• Works in any app, including Terminal and IDE")
@@ -184,17 +183,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func preloadLocalModelIfNeeded() {
         let mode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
-        switch mode {
-        case .whisperLocal:
-            if LocalWhisperService.shared.isModelDownloaded {
-                LocalWhisperService.shared.preloadModel()
-            }
-        case .senseVoice:
-            if SenseVoiceService.shared.isModelDownloaded {
-                SenseVoiceService.shared.preloadModel()
-            }
-        case .cloud:
-            break
+        if mode == .senseVoice, SenseVoiceService.shared.isModelDownloaded {
+            SenseVoiceService.shared.preloadModel()
         }
     }
 

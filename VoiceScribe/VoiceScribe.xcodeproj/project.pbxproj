@@ -8,7 +8,6 @@
 
 /* Begin PBXFileReference section */
 		31E4AEDC2F262512002093FB /* VoiceScribe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = VoiceScribe.app; path = LaSay.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA000001WHISPER000000001 /* libwhisper.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwhisper.a; path = VoiceScribe/Libraries/whisper/libwhisper.a; sourceTree = "<group>"; };
 		BB00000100000001 /* libsherpa-onnx-c-api.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-c-api.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-c-api.a"; sourceTree = "<group>"; };
 		BB00000100000002 /* libsherpa-onnx-core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libsherpa-onnx-core.a"; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libsherpa-onnx-core.a"; sourceTree = "<group>"; };
 		BB00000100000003 /* libonnxruntime.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libonnxruntime.a; path = "VoiceScribe/Libraries/sherpa-onnx/lib/libonnxruntime.a"; sourceTree = "<group>"; };
@@ -34,7 +33,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXBuildFile section */
-		AA000002WHISPER000000001 /* libwhisper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001WHISPER000000001 /* libwhisper.a */; };
 		BB00000200000001 /* libsherpa-onnx-c-api.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000001 /* libsherpa-onnx-c-api.a */; };
 		BB00000200000002 /* libsherpa-onnx-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000002 /* libsherpa-onnx-core.a */; };
 		BB00000200000003 /* libonnxruntime.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB00000100000003 /* libonnxruntime.a */; };
@@ -56,7 +54,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000002WHISPER000000001 /* libwhisper.a in Frameworks */,
 				BB00000200000001 /* libsherpa-onnx-c-api.a in Frameworks */,
 				BB00000200000002 /* libsherpa-onnx-core.a in Frameworks */,
 				BB00000200000003 /* libonnxruntime.a in Frameworks */,
@@ -81,15 +78,12 @@
 			isa = PBXGroup;
 			children = (
 				31E4AEDE2F262512002093FB /* VoiceScribe */,
-				AA000003WHISPER000000001 /* Frameworks */,
 				31E4AEDD2F262512002093FB /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		AA000003WHISPER000000001 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				AA000001WHISPER000000001 /* libwhisper.a */,
 				BB00000100000001 /* libsherpa-onnx-c-api.a */,
 				BB00000100000002 /* libsherpa-onnx-core.a */,
 				BB00000100000003 /* libonnxruntime.a */,
@@ -321,20 +315,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/VoiceScribe/Libraries/whisper/include",
 					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/include",
 				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
 					"-Wl,-no_warn_duplicate_libraries",
-					"-framework",
-					Metal,
-					"-framework",
-					Foundation,
-					"-framework",
-					Accelerate,
-					"-framework",
-					MetalKit,
 				);
 				SWIFT_OBJC_BRIDGING_HEADER = "VoiceScribe/WhisperBridge-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -384,20 +369,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/VoiceScribe/Libraries/whisper/include",
 					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/include",
 				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
 					"-Wl,-no_warn_duplicate_libraries",
-					"-framework",
-					Metal,
-					"-framework",
-					Foundation,
-					"-framework",
-					Accelerate,
-					"-framework",
-					MetalKit,
 				);
 				SWIFT_OBJC_BRIDGING_HEADER = "VoiceScribe/WhisperBridge-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;

@@ -46,7 +46,7 @@ class LocalizationHelper {
         case .enterAPIKey:
             return language == "zh" ? "請輸入 API Key (sk-...)" : "Enter API Key (sk-...)"
         case .apiKeyDescription:
-            return language == "zh" ? "用於 Whisper 語音轉錄與 AI 文字潤飾" : "Used for Whisper transcription and AI text polishing"
+            return language == "zh" ? "用於雲端語音轉錄與 AI 文字潤飾" : "Used for cloud transcription and AI text polishing"
         case .getAPIKey:
             return language == "zh" ? "取得 API Key → platform.openai.com" : "Get API Key → platform.openai.com"
 
@@ -70,17 +70,17 @@ class LocalizationHelper {
         case .transcriptionLanguage:
             return language == "zh" ? "轉錄語言" : "Language"
         case .transcriptionDescription:
-            return language == "zh" ? "本地模式使用 whisper.cpp（可離線），雲端模式使用 OpenAI API" : "Local uses whisper.cpp (offline), Cloud uses OpenAI API"
+            return language == "zh" ? "SenseVoice 離線辨識，雲端使用 OpenAI API" : "SenseVoice works offline, Cloud uses OpenAI API"
         case .modelDownloaded:
-            return language == "zh" ? "Model: ggml-large-v3-turbo (1.5GB) 已下載" : "Model: ggml-large-v3-turbo (1.5GB) Downloaded"
+            return language == "zh" ? "✅ SenseVoice 模型已就緒" : "✅ SenseVoice model ready"
         case .modelNotDownloaded:
-            return language == "zh" ? "Model: ggml-large-v3-turbo 尚未下載（首次使用時下載）" : "Model: ggml-large-v3-turbo Not downloaded (will download on first use)"
+            return language == "zh" ? "尚未下載模型" : "Model not downloaded"
         case .cliDownloaded:
-            return language == "zh" ? "Whisper CLI: 已下載" : "Whisper CLI: Downloaded"
+            return language == "zh" ? "已就緒" : "Ready"
         case .cliNotDownloaded:
-            return language == "zh" ? "Whisper CLI: 尚未下載（首次使用時下載）" : "Whisper CLI: Not downloaded (will download on first use)"
+            return language == "zh" ? "尚未下載" : "Not downloaded"
         case .nativeEngineReady:
-            return language == "zh" ? "本地引擎: 已就緒" : "Native Engine: Ready"
+            return language == "zh" ? "✅ SenseVoice 模型已就緒" : "✅ SenseVoice model ready"
 
         // 快捷鍵
         case .globalHotkey:

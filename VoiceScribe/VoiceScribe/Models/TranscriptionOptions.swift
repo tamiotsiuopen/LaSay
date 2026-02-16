@@ -9,8 +9,7 @@ import Foundation
 
 enum TranscriptionMode: String, CaseIterable {
     case cloud
-    case senseVoice     // recommended local option
-    case whisperLocal   // was "local"
+    case senseVoice
 
     var localizedDisplayName: String {
         let language = LocalizationHelper.shared.currentLanguage
@@ -19,16 +18,15 @@ enum TranscriptionMode: String, CaseIterable {
             return language == "zh" ? "雲端（OpenAI）" : "Cloud (OpenAI)"
         case .senseVoice:
             return language == "zh" ? "SenseVoice（離線 · 234MB）推薦" : "SenseVoice (Offline · 234MB) Recommended"
-        case .whisperLocal:
-            return language == "zh" ? "Whisper（離線 · 1.5GB）英文較強" : "Whisper (Offline · 1.5GB) Better English"
         }
     }
 
-    /// Load from UserDefaults with backward compatibility for "local" → "whisperLocal"
+    /// Load from UserDefaults with backward compatibility
     static func fromSaved(_ rawValue: String?) -> TranscriptionMode {
-        guard let raw = rawValue else { return .cloud }
-        if raw == "local" { return .whisperLocal }
-        return TranscriptionMode(rawValue: raw) ?? .cloud
+        guard let raw = rawValue else { return .senseVoice }
+        // Migrate old values to senseVoice
+        if raw == "local" || raw == "whisperLocal" { return .senseVoice }
+        return TranscriptionMode(rawValue: raw) ?? .senseVoice
     }
 }
 
@@ -55,7 +53,7 @@ enum TranscriptionLanguage: String, CaseIterable {
         }
     }
 
-    var whisperCode: String? {
+    var languageCode: String? {
         switch self {
         case .auto:
             return nil
