@@ -24,6 +24,7 @@ struct SettingsView: View {
     @State private var refreshUI: Bool = false
     @State private var showModelDownloadConfirm: Bool = false
     @State private var showDeleteAPIKeyConfirm: Bool = false
+    @State private var isLoadingModel: Bool = false
 
     private var isUsingCustomPrompt: Bool {
         !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -128,11 +129,21 @@ struct SettingsView: View {
                 .onChange(of: transcriptionMode) { newValue in
                     UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-                    if newValue == .whisperLocal && !localWhisperService.isModelDownloaded {
-                        showModelDownloadConfirm = true
+                    if newValue == .whisperLocal {
+                        if !localWhisperService.isModelDownloaded {
+                            showModelDownloadConfirm = true
+                        } else {
+                            isLoadingModel = true
+                            localWhisperService.preloadModel { _ in isLoadingModel = false }
+                        }
                     }
-                    if newValue == .senseVoice && !senseVoiceService.isModelDownloaded {
-                        showModelDownloadConfirm = true
+                    if newValue == .senseVoice {
+                        if !senseVoiceService.isModelDownloaded {
+                            showModelDownloadConfirm = true
+                        } else {
+                            isLoadingModel = true
+                            senseVoiceService.preloadModel { _ in isLoadingModel = false }
+                        }
                     }
                 }
             }
@@ -156,7 +167,15 @@ struct SettingsView: View {
                 .foregroundColor(.secondary)
 
             if transcriptionMode == .whisperLocal {
-                if localWhisperService.isModelDownloaded {
+                if isLoadingModel {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(localization.currentLanguage == "zh" ? "模型載入中…" : "Loading model…")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } else if localWhisperService.isModelDownloaded {
                     Text(localization.localized(.nativeEngineReady))
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -176,7 +195,15 @@ struct SettingsView: View {
             }
 
             if transcriptionMode == .senseVoice {
-                if senseVoiceService.isModelDownloaded {
+                if isLoadingModel {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(localization.currentLanguage == "zh" ? "模型載入中…" : "Loading model…")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } else if senseVoiceService.isModelDownloaded {
                     Text(localization.currentLanguage == "zh" ? "✅ SenseVoice 模型已就緒" : "✅ SenseVoice model ready")
                         .font(.caption)
                         .foregroundColor(.secondary)

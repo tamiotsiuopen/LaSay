@@ -30,6 +30,8 @@ final class LocalWhisperService {
     private let modelDownloadURL = URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin")!
 
     private var whisperWrapper: WhisperCppWrapper?
+    private(set) var isModelLoaded: Bool = false
+    private var isLoadingModel: Bool = false
 
     private init() {}
 
@@ -39,6 +41,38 @@ final class LocalWhisperService {
 
     func predownload() {
         ensureModel(progressHandler: nil) { _ in }
+    }
+
+    /// Pre-load model into memory (call when user switches to local mode).
+    /// Completion is called on main thread.
+    func preloadModel(progressHandler: DownloadProgressHandler? = nil, completion: ((Bool) -> Void)? = nil) {
+        guard !isModelLoaded, !isLoadingModel else {
+            completion?(isModelLoaded)
+            return
+        }
+        isLoadingModel = true
+        ensureModel(progressHandler: progressHandler) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let modelURL):
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if self.whisperWrapper == nil {
+                        self.whisperWrapper = WhisperCppWrapper(modelPath: modelURL.path)
+                    }
+                    let loaded = self.whisperWrapper != nil
+                    DispatchQueue.main.async {
+                        self.isModelLoaded = loaded
+                        self.isLoadingModel = false
+                        completion?(loaded)
+                    }
+                }
+            case .failure:
+                DispatchQueue.main.async {
+                    self.isLoadingModel = false
+                    completion?(false)
+                }
+            }
+        }
     }
 
     func transcribe(

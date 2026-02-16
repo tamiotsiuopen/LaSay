@@ -27,6 +27,8 @@ final class SenseVoiceService {
     private let tokensURL = URL(string: "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/main/tokens.txt")!
 
     private var wrapper: SenseVoiceCppWrapper?
+    private(set) var isModelLoaded: Bool = false
+    private var isLoadingModel: Bool = false
 
     private init() {}
 
@@ -62,6 +64,38 @@ final class SenseVoiceService {
 
     func predownload() {
         ensureModel(progressHandler: nil) { _ in }
+    }
+
+    /// Pre-load model into memory (call when user switches to SenseVoice mode).
+    /// Completion is called on main thread.
+    func preloadModel(progressHandler: DownloadProgressHandler? = nil, completion: ((Bool) -> Void)? = nil) {
+        guard !isModelLoaded, !isLoadingModel else {
+            completion?(isModelLoaded)
+            return
+        }
+        isLoadingModel = true
+        ensureModel(progressHandler: progressHandler) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let modelDir):
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if self.wrapper == nil {
+                        self.wrapper = SenseVoiceCppWrapper(modelDir: modelDir)
+                    }
+                    let loaded = self.wrapper != nil
+                    DispatchQueue.main.async {
+                        self.isModelLoaded = loaded
+                        self.isLoadingModel = false
+                        completion?(loaded)
+                    }
+                }
+            case .failure:
+                DispatchQueue.main.async {
+                    self.isLoadingModel = false
+                    completion?(false)
+                }
+            }
+        }
     }
 
     func transcribe(

@@ -41,6 +41,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         recordingCoordinator?.start()
 
+        // Pre-load local model on launch if user has a local mode selected
+        preloadLocalModelIfNeeded()
+
         checkFirstLaunch()
     }
 
@@ -175,6 +178,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Model Pre-loading
+
+    private func preloadLocalModelIfNeeded() {
+        let mode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
+        switch mode {
+        case .whisperLocal:
+            if LocalWhisperService.shared.isModelDownloaded {
+                LocalWhisperService.shared.preloadModel()
+            }
+        case .senseVoice:
+            if SenseVoiceService.shared.isModelDownloaded {
+                SenseVoiceService.shared.preloadModel()
+            }
+        case .cloud:
+            break
+        }
     }
 
     // MARK: - First Launch
