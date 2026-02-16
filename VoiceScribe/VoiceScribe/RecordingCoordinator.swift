@@ -108,10 +108,7 @@ final class RecordingCoordinator {
             content.sound = isError ? .defaultCritical : .default
 
             let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-            UNUserNotificationCenter.current().add(request) { error in
-                if let error = error {
-                }
-            }
+            UNUserNotificationCenter.current().add(request) { _ in }
         }
     }
 
@@ -401,7 +398,7 @@ final class RecordingCoordinator {
 
     private func setupAudioRecorderCallbacks() {
         audioRecorder.onRecordingComplete = { [weak self] url in
-            guard let url = url else {
+            guard let _ = url else {
                 self?.appState.updateStatus(.idle)
                 return
             }
