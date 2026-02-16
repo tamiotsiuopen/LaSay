@@ -134,7 +134,7 @@ struct SettingsView: View {
                             showModelDownloadConfirm = true
                         } else {
                             isLoadingModel = true
-                            localWhisperService.preloadModel { _ in isLoadingModel = false }
+                            localWhisperService.preloadModel(completion: { _ in isLoadingModel = false })
                         }
                     }
                     if newValue == .senseVoice {
@@ -142,7 +142,7 @@ struct SettingsView: View {
                             showModelDownloadConfirm = true
                         } else {
                             isLoadingModel = true
-                            senseVoiceService.preloadModel { _ in isLoadingModel = false }
+                            senseVoiceService.preloadModel(completion: { _ in isLoadingModel = false })
                         }
                     }
                 }

@@ -324,20 +324,8 @@
 					"$(SRCROOT)/VoiceScribe/Libraries/whisper/include",
 					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/include",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SRCROOT)/VoiceScribe/Libraries/whisper",
-					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/lib",
-				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
-					"-framework",
-					Metal,
-					"-framework",
-					Foundation,
-					"-framework",
-					Accelerate,
-					"-framework",
-					MetalKit,
 				);
 				SWIFT_OBJC_BRIDGING_HEADER = "VoiceScribe/WhisperBridge-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -390,20 +378,8 @@
 					"$(SRCROOT)/VoiceScribe/Libraries/whisper/include",
 					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/include",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(SRCROOT)/VoiceScribe/Libraries/whisper",
-					"$(SRCROOT)/VoiceScribe/Libraries/sherpa-onnx/lib",
-				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
-					"-framework",
-					Metal,
-					"-framework",
-					Foundation,
-					"-framework",
-					Accelerate,
-					"-framework",
-					MetalKit,
 				);
 				SWIFT_OBJC_BRIDGING_HEADER = "VoiceScribe/WhisperBridge-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
