@@ -13,7 +13,6 @@ struct SettingsView: View {
     @State private var apiKey: String = ""
     @State private var hasAPIKey: Bool = false
     @State private var showingAPIKeyInput: Bool = false
-    @State private var selectedUILanguage: String = "zh"
     @State private var enableAIPolish: Bool = false
     @State private var customSystemPrompt: String = ""
     @State private var transcriptionMode: TranscriptionMode = .cloud
@@ -21,7 +20,6 @@ struct SettingsView: View {
     @State private var punctuationStyle: PunctuationStyle = .fullWidth
     @State private var showAPIKey: Bool = false
     @State private var isAIPolishAdvancedExpanded: Bool = false
-    @State private var refreshUI: Bool = false
     @State private var showDeleteAPIKeyConfirm: Bool = false
     @State private var isLoadingModel: Bool = false
 
@@ -39,18 +37,12 @@ struct SettingsView: View {
             Text(localization.localized(.settings))
                 .font(.title)
                 .fontWeight(.bold)
-                .id(refreshUI)
 
             Divider()
 
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        // MARK: - 介面語言
-                        languageSection
-
-                        Divider()
-
                         // MARK: - 轉錄模式
                         transcriptionSection
 
@@ -98,7 +90,6 @@ struct SettingsView: View {
                 }
                 .keyboardShortcut(.cancelAction)
                 .accessibilityLabel(localization.localized(.settingsCloseAccessibility))
-                .accessibilityHint("Close settings window")
             }
         }
         .padding(24)
@@ -156,7 +147,7 @@ struct SettingsView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .controlSize(.small)
-                    Text(localization.currentLanguage == "zh" ? "模型載入中…" : "Loading model…")
+                    Text("模型載入中…")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -188,14 +179,10 @@ struct SettingsView: View {
     }
 
     private var punctuationExample: String {
-        let language = localization.currentLanguage
         switch punctuationStyle {
-        case .fullWidth:
-            return language == "zh" ? "範例：你好，世界。這是測試！" : "Example: 你好，世界。這是測試！"
-        case .halfWidth:
-            return language == "zh" ? "範例：你好,世界.這是測試!" : "Example: 你好,世界.這是測試!"
-        case .spaces:
-            return language == "zh" ? "範例：你好 世界 這是測試" : "Example: 你好 世界 這是測試"
+        case .fullWidth: return "範例：你好，世界。這是測試！"
+        case .halfWidth: return "範例：你好,世界.這是測試!"
+        case .spaces: return "範例：你好 世界 這是測試"
         }
     }
 
@@ -210,7 +197,7 @@ struct SettingsView: View {
                 .toggleStyle(.checkbox)
                 .accessibilityLabel(localization.localized(.aiPolishAccessibility))
                 .accessibilityHint(localization.localized(.toggleAccessibilityHint))
-                .accessibilityValue(enableAIPolish ? (localization.currentLanguage == "zh" ? "已開啟" : "On") : (localization.currentLanguage == "zh" ? "已關閉" : "Off"))
+                .accessibilityValue(enableAIPolish ? "已開啟" : "已關閉")
                 .onChange(of: enableAIPolish) { newValue in
                     UserDefaults.standard.set(newValue, forKey: "enable_ai_polish")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
@@ -296,21 +283,18 @@ struct SettingsView: View {
                     }
                     .font(.caption)
                     .accessibilityLabel(localization.localized(.apiKeyShowHideAccessibility))
-                    .accessibilityHint(showAPIKey ? localization.localized(.hide) : localization.localized(.show))
 
                     Button(localization.localized(.update)) {
                         showingAPIKeyInput = true
                     }
                     .font(.caption)
-                    .accessibilityLabel(localization.localized(.update))
-                    .accessibilityHint("Update API key")
 
-                    Button(localization.currentLanguage == "zh" ? "刪除" : "Delete") {
+                    Button("刪除") {
                         showDeleteAPIKeyConfirm = true
                     }
                     .font(.caption)
                     .foregroundColor(.red)
-                    .accessibilityLabel("Delete API key")
+                    .accessibilityLabel("刪除 API Key")
                 }
                 .frame(maxWidth: 420)
             } else {
@@ -328,7 +312,6 @@ struct SettingsView: View {
                     }
                     .font(.caption)
                     .accessibilityLabel(localization.localized(.apiKeyShowHideAccessibility))
-                    .accessibilityHint(showAPIKey ? localization.localized(.hide) : localization.localized(.show))
 
                     Button(localization.localized(.save)) {
                         if !apiKey.isEmpty {
@@ -343,7 +326,6 @@ struct SettingsView: View {
                     .font(.caption)
                     .buttonStyle(.borderedProminent)
                     .accessibilityLabel(localization.localized(.apiKeySaveAccessibility))
-                    .accessibilityHint("Save API key to keychain")
 
                     if hasAPIKey {
                         Button(localization.localized(.cancel)) {
@@ -352,7 +334,6 @@ struct SettingsView: View {
                         }
                         .font(.caption)
                         .accessibilityLabel(localization.localized(.cancelButtonAccessibility))
-                        .accessibilityHint("Cancel editing API key")
                     }
                 }
                 .frame(maxWidth: 420)
@@ -366,10 +347,10 @@ struct SettingsView: View {
                 .font(.caption)
         }
         .alert(
-            localization.currentLanguage == "zh" ? "確定刪除 API Key？" : "Delete API Key?",
+            "確定刪除 API Key？",
             isPresented: $showDeleteAPIKeyConfirm
         ) {
-            Button(localization.currentLanguage == "zh" ? "刪除" : "Delete", role: .destructive) {
+            Button("刪除", role: .destructive) {
                 _ = keychainHelper.delete(key: "openai_api_key")
                 apiKey = ""
                 hasAPIKey = false
@@ -377,61 +358,16 @@ struct SettingsView: View {
                 showAPIKey = false
                 NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
             }
-            Button(localization.currentLanguage == "zh" ? "取消" : "Cancel", role: .cancel) {}
+            Button("取消", role: .cancel) {}
         } message: {
-            Text(localization.currentLanguage == "zh"
-                 ? "刪除後，雲端模式和 AI 潤飾將無法使用，直到重新輸入 API Key。"
-                 : "Cloud mode and AI polish will be unavailable until you enter a new API key.")
+            Text("刪除後，雲端模式和 AI 潤飾將無法使用，直到重新輸入 API Key。")
         }
-    }
-
-    // MARK: - Language Section
-
-    private var languageSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(localization.localized(.uiLanguage))
-                .font(.headline)
-
-            HStack(spacing: 12) {
-                languageSelectionButton(title: localization.localized(.languageChineseLabel), code: "zh")
-                    .accessibilityLabel("\(localization.localized(.languageChineseLabel))")
-                    .accessibilityHint(localization.localized(.languageButtonAccessibility))
-                languageSelectionButton(title: localization.localized(.languageEnglishLabel), code: "en")
-                    .accessibilityLabel("\(localization.localized(.languageEnglishLabel))")
-                    .accessibilityHint(localization.localized(.languageButtonAccessibility))
-            }
-            .frame(maxWidth: 420)
-        }
-    }
-
-    private func languageSelectionButton(title: String, code: String) -> some View {
-        Button(action: {
-            selectedUILanguage = code
-            UserDefaults.standard.set(code, forKey: "ui_language")
-            refreshUI.toggle()
-            NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-        }) {
-            Text(title)
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 8)
-                .foregroundColor(selectedUILanguage == code ? .white : .primary)
-                .background(selectedUILanguage == code ? Color.accentColor : Color.secondary.opacity(0.15))
-                .cornerRadius(8)
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Methods
 
     func loadSettings() {
         loadAPIKey()
-
-        if let savedUILanguage = UserDefaults.standard.string(forKey: "ui_language") {
-            selectedUILanguage = savedUILanguage
-        }
 
         transcriptionMode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
 
@@ -473,7 +409,6 @@ struct SettingsView: View {
             }
         }
 
-        UserDefaults.standard.set(selectedUILanguage, forKey: "ui_language")
         UserDefaults.standard.set(transcriptionMode.rawValue, forKey: "transcription_mode")
         UserDefaults.standard.set(transcriptionLanguage.rawValue, forKey: "transcription_language")
         UserDefaults.standard.set(punctuationStyle.rawValue, forKey: "punctuation_style")

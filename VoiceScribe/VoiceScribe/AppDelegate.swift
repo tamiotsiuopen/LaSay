@@ -119,44 +119,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text(localization.currentLanguage == "zh" 
-                 ? "版本 \(version) (Build \(build))"
-                 : "Version \(version) (Build \(build))")
+            Text("版本 \(version) (Build \(build))")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             
-            Text(localization.currentLanguage == "zh"
-                 ? "給開發者的語音輸入工具"
-                 : "Voice Input for Developers")
+            Text("給開發者的語音輸入工具")
                 .font(.headline)
                 .padding(.top, 4)
             
             Divider()
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(localization.currentLanguage == "zh" ? "功能：" : "Features:")
+                Text("功能：")
                     .font(.headline)
                 
-                if localization.currentLanguage == "zh" {
-                    Text("• SenseVoice 離線辨識 + 雲端 OpenAI")
-                    Text("• AI 文字清理（保留技術術語）")
-                    Text("• 全域快捷鍵：Fn + Space")
-                    Text("• 任何 app 都能用，包括 Terminal 和 IDE")
-                } else {
-                    Text("• SenseVoice offline + Cloud OpenAI")
-                    Text("• AI text cleanup (preserves technical terms)")
-                    Text("• Global Hotkey: Fn + Space")
-                    Text("• Works in any app, including Terminal and IDE")
-                }
+                Text("• SenseVoice 離線辨識 + 雲端 OpenAI")
+                Text("• AI 文字清理（保留技術術語）")
+                Text("• 全域快捷鍵：Fn + Space")
+                Text("• 任何 app 都能用，包括 Terminal 和 IDE")
             }
             .font(.caption)
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
             
-            Text(localization.currentLanguage == "zh"
-                 ? "聯繫：tamio.tsiu@gmail.com"
-                 : "Contact: tamio.tsiu@gmail.com")
+            Text("聯繫：tamio.tsiu@gmail.com")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

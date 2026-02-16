@@ -70,7 +70,6 @@ struct OnboardingView: View {
         .frame(width: 460, height: 300)
         .id(refreshUI)
         .onAppear {
-            applyDefaultLanguageIfNeeded()
             applyDefaultModeIfNeeded()
         }
     }
@@ -85,18 +84,14 @@ struct OnboardingView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(.green)
 
-            Text(localization.currentLanguage == "zh" ? "權限設定完成！" : "Permissions granted!")
+            Text("權限設定完成！")
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text(localization.currentLanguage == "zh"
-                 ? "即將自動重新啟動 LaSay（\(countdown) 秒）…"
-                 : "Restarting LaSay in \(countdown) seconds…")
+            Text("即將自動重新啟動 LaSay（\(countdown) 秒）…")
                 .foregroundColor(.secondary)
 
-            Text(localization.currentLanguage == "zh"
-                 ? "重啟後即可使用 Fn + Space 語音輸入"
-                 : "After restart, use Fn + Space for voice input")
+            Text("重啟後即可使用 Fn + Space 語音輸入")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
@@ -266,15 +261,6 @@ struct OnboardingView: View {
     }
 
     // MARK: - Defaults
-
-    private func applyDefaultLanguageIfNeeded() {
-        guard UserDefaults.standard.string(forKey: "ui_language") == nil else { return }
-        let localeCode = Locale.current.language.languageCode?.identifier ?? "en"
-        let normalized = localeCode.lowercased()
-        let defaultLanguage = normalized.hasPrefix("zh") ? "zh" : "en"
-        UserDefaults.standard.set(defaultLanguage, forKey: "ui_language")
-        refreshUI.toggle()
-    }
 
     private func applyDefaultModeIfNeeded() {
         guard UserDefaults.standard.string(forKey: "transcription_mode") == nil else { return }

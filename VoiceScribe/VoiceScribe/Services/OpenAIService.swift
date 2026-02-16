@@ -35,7 +35,7 @@ enum OpenAIError: Error {
             }
             return localization.localized(.apiErrorPrefix) + message
         case .invalidResponse:
-            return localization.currentLanguage == "zh" ? "無效的 API 回應" : "Invalid API response"
+            return "無效的 API 回應"
         }
     }
 }

@@ -22,7 +22,7 @@ enum WhisperError: Error {
         case .noAPIKey:
             return localization.localized(.invalidAPIKeyActionable)
         case .invalidAudioFile:
-            return localization.currentLanguage == "zh" ? "無效的音訊檔案" : "Invalid audio file"
+            return "無效的音訊檔案"
         case .networkError(let error):
             if let urlError = error as? URLError {
                 if urlError.code == .notConnectedToInternet || urlError.code == .networkConnectionLost {
@@ -39,7 +39,7 @@ enum WhisperError: Error {
             }
             return localization.localized(.apiErrorPrefix) + message
         case .invalidResponse:
-            return localization.currentLanguage == "zh" ? "無效的 API 回應" : "Invalid API response"
+            return "無效的 API 回應"
         case .modelDownloadFailed:
             return localization.localized(.modelDownloadFailed)
         }
