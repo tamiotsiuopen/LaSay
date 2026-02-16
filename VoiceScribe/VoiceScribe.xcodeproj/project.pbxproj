@@ -326,6 +326,15 @@
 				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
+					"-Wl,-no_warn_duplicate_libraries",
+					"-framework",
+					Metal,
+					"-framework",
+					Foundation,
+					"-framework",
+					Accelerate,
+					"-framework",
+					MetalKit,
 				);
 				SWIFT_OBJC_BRIDGING_HEADER = "VoiceScribe/WhisperBridge-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -380,6 +389,15 @@
 				);
 				OTHER_LDFLAGS = (
 					"-lstdc++",
+					"-Wl,-no_warn_duplicate_libraries",
+					"-framework",
+					Metal,
+					"-framework",
+					Foundation,
+					"-framework",
+					Accelerate,
+					"-framework",
+					MetalKit,
 				);
 				SWIFT_OBJC_BRIDGING_HEADER = "VoiceScribe/WhisperBridge-Bridging-Header.h";
 				COMBINE_HIDPI_IMAGES = YES;
