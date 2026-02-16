@@ -193,7 +193,8 @@ final class RecordingCoordinator {
                 switch result {
                 case .success(let rawText):
                     let transcribedText = self.convertToTraditionalChinese(rawText)
-                    let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
+                    // Cloud mode: always enable AI Polish (user already has API key)
+                    let enableAIPolish = (selectedMode == .cloud) ? true : UserDefaults.standard.bool(forKey: "enable_ai_polish")
 
                     // Delete recording immediately — text is already in memory
                     self.audioRecorder.deleteRecording(at: audioURL)
@@ -209,8 +210,10 @@ final class RecordingCoordinator {
                             }
 
                             let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
+                            let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
+                            let puncStyle = PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
 
-                            self.openAIService.polishText(transcribedText, customPrompt: customPrompt) { [weak self] polishResult in
+                            self.openAIService.polishText(transcribedText, customPrompt: customPrompt, punctuationStyle: puncStyle) { [weak self] polishResult in
                                 DispatchQueue.main.async { [weak self] in
                                     guard let self = self else { return }
                                     

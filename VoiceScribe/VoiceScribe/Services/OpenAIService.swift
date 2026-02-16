@@ -75,7 +75,7 @@ class OpenAIService {
     // MARK: - Polish Text
 
     /// 使用 GPT-5-mini 優化文字
-    func polishText(_ text: String, customPrompt: String? = nil, completion: @escaping (Result<String, OpenAIError>) -> Void) {
+    func polishText(_ text: String, customPrompt: String? = nil, punctuationStyle: PunctuationStyle = .fullWidth, completion: @escaping (Result<String, OpenAIError>) -> Void) {
 
         // 檢查 API Key
         guard let apiKey = keychainHelper.get(key: "openai_api_key"), !apiKey.isEmpty else {
@@ -85,7 +85,19 @@ class OpenAIService {
 
         // 使用自訂 prompt 或預設 prompt
         let trimmedPrompt = customPrompt?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let systemPrompt = (trimmedPrompt?.isEmpty == false ? trimmedPrompt : defaultSystemPrompt) ?? defaultSystemPrompt
+        let basePrompt = (trimmedPrompt?.isEmpty == false ? trimmedPrompt : defaultSystemPrompt) ?? defaultSystemPrompt
+        
+        // 加入標點符號風格指令
+        let punctuationInstruction: String
+        switch punctuationStyle {
+        case .fullWidth:
+            punctuationInstruction = "\n7. Use full-width punctuation for Chinese text (，。！？：；「」（）、)"
+        case .halfWidth:
+            punctuationInstruction = "\n7. Use half-width punctuation for Chinese text (,.!?:;\"())"
+        case .spaces:
+            punctuationInstruction = "\n7. Use spaces instead of punctuation between Chinese clauses"
+        }
+        let systemPrompt = basePrompt + punctuationInstruction
 
         // 建立請求
         var request = URLRequest(url: URL(string: apiURL)!)
