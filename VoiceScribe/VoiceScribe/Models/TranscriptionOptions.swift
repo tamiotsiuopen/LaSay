@@ -17,7 +17,7 @@ enum TranscriptionMode: String, CaseIterable {
         case .cloud:
             return language == "zh" ? "雲端（OpenAI）" : "Cloud (OpenAI)"
         case .senseVoice:
-            return language == "zh" ? "SenseVoice（離線 · 234MB）推薦" : "SenseVoice (Offline · 234MB) Recommended"
+            return language == "zh" ? "SenseVoice（離線可用）推薦" : "SenseVoice (Offline) Recommended"
         }
     }
 

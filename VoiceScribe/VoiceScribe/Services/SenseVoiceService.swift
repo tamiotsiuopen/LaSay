@@ -24,13 +24,6 @@ final class SenseVoiceService {
         Bundle.main.resourcePath.map { ($0 as NSString).appendingPathComponent("SenseVoiceModel") }
     }
 
-    var isModelDownloaded: Bool {
-        guard let dir = bundledModelDir else { return false }
-        let modelPath = (dir as NSString).appendingPathComponent("model.int8.onnx")
-        let tokensPath = (dir as NSString).appendingPathComponent("tokens.txt")
-        return fileManager.fileExists(atPath: modelPath) && fileManager.fileExists(atPath: tokensPath)
-    }
-
     // MARK: - Public
 
     /// Pre-load model into memory (call on app launch).
