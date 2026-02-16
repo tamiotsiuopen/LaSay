@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import AVFoundation
 
 final class SenseVoiceCppWrapper {
     private var recognizer: OpaquePointer? // SherpaOnnxOfflineRecognizer

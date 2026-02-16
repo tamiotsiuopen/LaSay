@@ -61,7 +61,7 @@ enum AudioConverter {
         }
 
         if let error = error {
-            print("AudioConverter error: \(error)")
+            // AudioConverter error: \(error)
             return nil
         }
 

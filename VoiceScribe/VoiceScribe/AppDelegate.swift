@@ -40,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         recordingCoordinator?.start()
 
-        // Pre-load local model on launch if user has a local mode selected
+        // Pre-load SenseVoice model on launch
         preloadLocalModelIfNeeded()
 
         checkFirstLaunch()
