@@ -105,15 +105,16 @@ class HotkeyManager {
         }
     }
 
-    /// 重啟 app
+    /// 重啟 app (sandbox-safe using NSWorkspace)
     private func restartApp() {
-        let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
-        let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
-        let task = Process()
-        task.launchPath = "/usr/bin/open"
-        task.arguments = [path]
-        task.launch()
-        exit(0)
+        guard let bundleURL = Bundle.main.bundleURL as URL? else { return }
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: bundleURL, configuration: config) { _, _ in
+            DispatchQueue.main.async {
+                NSApp.terminate(nil)
+            }
+        }
     }
 
     /// 打開系統設定的輔助使用頁面

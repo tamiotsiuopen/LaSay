@@ -67,8 +67,7 @@ final class RecordingCoordinator {
 
     private func requestMicrophonePermission() {
         audioRecorder.requestMicrophonePermission { [weak self] granted in
-            if granted {
-            } else {
+            if !granted {
                 self?.showMicrophonePermissionAlert()
             }
         }
@@ -93,11 +92,7 @@ final class RecordingCoordinator {
     // MARK: - Notification Permission
 
     private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
-            if granted {
-            } else {
-            }
-        }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
     private func showNotification(title: String, body: String, isError: Bool = false) {
@@ -208,6 +203,9 @@ final class RecordingCoordinator {
 
                     let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
 
+                    // Delete recording immediately — text is already in memory
+                    self.audioRecorder.deleteRecording(at: audioURL)
+
                     if enableAIPolish {
                         if (selectedMode == .whisperLocal || selectedMode == .senseVoice), !NetworkMonitor.shared.isOnline {
                             let cleaned = TextCleaner.basicCleanup(transcribedText)
@@ -246,8 +244,6 @@ final class RecordingCoordinator {
                     } else {
                         self.processFinalText(transcribedText)
                     }
-
-                    self.audioRecorder.deleteRecording(at: audioURL)
 
                 case .failure(let error):
 
@@ -405,8 +401,7 @@ final class RecordingCoordinator {
 
         }
 
-        audioRecorder.onError = { error in
-        }
+        audioRecorder.onError = { _ in }
     }
 
 }

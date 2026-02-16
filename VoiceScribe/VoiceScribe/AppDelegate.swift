@@ -118,8 +118,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 .fontWeight(.bold)
             
             Text(localization.currentLanguage == "zh" 
-                 ? "版本 \(version) (Build \(build)) - 測試版"
-                 : "Version \(version) (Build \(build)) - Beta")
+                 ? "版本 \(version) (Build \(build))"
+                 : "Version \(version) (Build \(build))")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             
