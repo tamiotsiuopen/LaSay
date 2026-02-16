@@ -35,7 +35,7 @@ class LocalizationHelper {
 
         // AI 潤飾
         case .aiPolish: return "AI 文字潤飾"
-        case .enableAIPolish: return "啟用 AI 潤飾（使用 GPT-5-mini）"
+        case .enableAIPolish: return "啟用 AI 潤飾（使用 GPT-4.1-mini）"
         case .aiPolishDescription: return "移除口語贅字、修正文法、優化句子結構"
         case .currentPromptStatus: return "目前使用：%@"
         case .defaultPromptLabel: return "預設"

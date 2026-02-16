@@ -108,17 +108,12 @@ class OpenAIService {
 
         // 建立請求 body（使用 GPT-5-mini 的參數）
         let requestBody: [String: Any] = [
-            "model": "gpt-5-mini",
+            "model": "gpt-4.1-mini",
             "messages": [
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": text]
             ],
-            "reasoning": [
-                "effort": "low"  // 使用 low reasoning effort 來平衡速度和品質
-            ],
-            "text": [
-                "verbosity": "low"  // 使用 low verbosity 來產生簡潔的回應
-            ]
+            "temperature": 0.3
         ]
 
 
