@@ -114,29 +114,7 @@ final class LocalWhisperService {
     // MARK: - Transcription
 
     private func convertToWAV(inputURL: URL) -> URL? {
-        let wavURL = inputURL.deletingPathExtension().appendingPathExtension("wav")
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/afconvert")
-        process.arguments = [
-            inputURL.path,
-            wavURL.path,
-            "-d", "LEI16",
-            "-f", "WAVE",
-            "-r", "16000",
-            "-c", "1"
-        ]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus == 0 {
-                return wavURL
-            } else {
-                return nil
-            }
-        } catch {
-            return nil
-        }
+        AudioConverter.convertToWAV(inputURL: inputURL)
     }
 
     private func runTranscription(

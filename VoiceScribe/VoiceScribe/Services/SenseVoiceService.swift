@@ -22,9 +22,9 @@ final class SenseVoiceService {
     private let fileManager = FileManager.default
     private var progressObservation: NSKeyValueObservation?
 
-    // Model is ~228MB int8 + tokens
-    private let modelArchiveURL = URL(string: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17.tar.bz2")!
-    private let modelDirName = "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17"
+    // Model files downloaded individually (sandbox-safe, no tar/Process needed)
+    private let modelOnnxURL = URL(string: "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/main/model.int8.onnx")!
+    private let tokensURL = URL(string: "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/main/tokens.txt")!
 
     private var wrapper: SenseVoiceCppWrapper?
 
@@ -103,25 +103,24 @@ final class SenseVoiceService {
             return
         }
 
-        // Download tar.bz2, extract model.int8.onnx and tokens.txt
-        let tempArchive = modelsDirectory.appendingPathComponent("sensevoice-temp.tar.bz2")
-        downloadFile(from: modelArchiveURL, to: tempArchive, progressHandler: progressHandler) { [weak self] dlResult in
+        // Download model.int8.onnx first (large file, ~228MB), then tokens.txt
+        downloadFile(from: modelOnnxURL, to: modelOnnxPath, progressHandler: progressHandler) { [weak self] onnxResult in
             guard let self = self else { return }
-            switch dlResult {
+            switch onnxResult {
             case .failure:
                 completion(.failure(.modelDownloadFailed))
             case .success:
-                // Extract needed files using tar
-                DispatchQueue.global(qos: .userInitiated).async {
-                    let success = self.extractModelFiles(archive: tempArchive)
-                    try? self.fileManager.removeItem(at: tempArchive)
-
-                    DispatchQueue.main.async {
-                        if success && self.isModelDownloaded {
+                // Download tokens.txt (small file)
+                self.downloadFile(from: self.tokensURL, to: self.tokensPath, progressHandler: nil) { tokensResult in
+                    switch tokensResult {
+                    case .failure:
+                        // Clean up partial download
+                        try? self.fileManager.removeItem(at: self.modelOnnxPath)
+                        completion(.failure(.modelDownloadFailed))
+                    case .success:
+                        DispatchQueue.main.async {
                             progressHandler?(DownloadProgress(fraction: 1.0, bytesReceived: 0, bytesExpected: 0, isCompleted: true))
                             completion(.success(self.senseVoiceModelDir.path))
-                        } else {
-                            completion(.failure(.modelDownloadFailed))
                         }
                     }
                 }
@@ -129,49 +128,10 @@ final class SenseVoiceService {
         }
     }
 
-    private func extractModelFiles(archive: URL) -> Bool {
-        // Extract model.int8.onnx and tokens.txt from the tar.bz2
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
-        process.arguments = [
-            "xjf", archive.path,
-            "-C", senseVoiceModelDir.path,
-            "--strip-components=1",
-            "\(modelDirName)/model.int8.onnx",
-            "\(modelDirName)/tokens.txt"
-        ]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0
-        } catch {
-            return false
-        }
-    }
-
     // MARK: - Transcription
 
     private func convertToWAV(inputURL: URL) -> URL? {
-        let wavURL = inputURL.deletingPathExtension().appendingPathExtension("wav")
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/afconvert")
-        process.arguments = [
-            inputURL.path,
-            wavURL.path,
-            "-d", "LEI16",
-            "-f", "WAVE",
-            "-r", "16000",
-            "-c", "1"
-        ]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0 ? wavURL : nil
-        } catch {
-            return nil
-        }
+        AudioConverter.convertToWAV(inputURL: inputURL)
     }
 
     private func runTranscription(
