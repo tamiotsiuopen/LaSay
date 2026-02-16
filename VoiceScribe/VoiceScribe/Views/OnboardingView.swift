@@ -19,7 +19,6 @@ struct OnboardingView: View {
     @State private var permissionTimer: Timer? = nil
     @State private var restartCountdown: Int? = nil
     @State private var restartTimer: Timer? = nil
-    @State private var wasAccessibilityGranted: Bool = HotkeyManager.shared.checkAccessibilityPermission()
 
     private let localization = LocalizationHelper.shared
 
@@ -177,22 +176,23 @@ struct OnboardingView: View {
     // MARK: - Permission Polling
 
     private func startPermissionPolling() {
-        wasAccessibilityGranted = HotkeyManager.shared.checkAccessibilityPermission()
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             DispatchQueue.main.async {
-                microphoneGranted = AudioRecorder.shared.checkMicrophonePermission()
+                let newMic = AudioRecorder.shared.checkMicrophonePermission()
                 let newAccessibility = HotkeyManager.shared.checkAccessibilityPermission()
 
-                // Detect accessibility just granted → trigger auto-restart
-                if !wasAccessibilityGranted && newAccessibility && microphoneGranted {
-                    accessibilityGranted = true
+                // Detect both permissions granted (either just now or already)
+                let bothGrantedNow = newMic && newAccessibility
+                let bothGrantedBefore = microphoneGranted && accessibilityGranted
+
+                microphoneGranted = newMic
+                accessibilityGranted = newAccessibility
+
+                // Trigger restart when both become granted (transition from not-both to both)
+                if bothGrantedNow && !bothGrantedBefore {
                     stopPermissionPolling()
                     startRestartCountdown()
-                    return
                 }
-
-                wasAccessibilityGranted = newAccessibility
-                accessibilityGranted = newAccessibility
             }
         }
     }
