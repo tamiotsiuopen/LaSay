@@ -281,7 +281,9 @@ final class RecordingCoordinator {
             self.processingTimer = nil
             
             let correctedText: String = {
-                let techCorrected = TechTermsDictionary.apply(to: text)
+                // TechTermsDictionary only for offline mode — AI Polish handles this contextually
+                let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
+                let techCorrected = enableAIPolish ? text : TechTermsDictionary.apply(to: text)
                 let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
                 let style = PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
                 return PunctuationConverter.convert(techCorrected, to: style)
