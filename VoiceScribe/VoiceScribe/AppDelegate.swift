@@ -183,8 +183,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func preloadLocalModelIfNeeded() {
         let mode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
-        if mode == .senseVoice, SenseVoiceService.shared.isModelDownloaded {
+        guard mode == .senseVoice else { return }
+
+        if SenseVoiceService.shared.isModelDownloaded {
+            // Model exists — just load into memory
             SenseVoiceService.shared.preloadModel()
+        } else {
+            // Model not yet downloaded — auto-download in background, then preload
+            SenseVoiceService.shared.downloadModel(
+                progressHandler: { _ in },
+                completion: { success in
+                    if success {
+                        SenseVoiceService.shared.preloadModel()
+                    }
+                }
+            )
         }
     }
 
