@@ -11,6 +11,7 @@ final class SenseVoiceService {
     static let shared = SenseVoiceService()
 
     private let fileManager = FileManager.default
+    private let modelQueue = DispatchQueue(label: "com.lasay.sensevoice.model")
     private var wrapper: SenseVoiceCppWrapper?
     private(set) var isModelLoaded: Bool = false
     private var isLoadingModel: Bool = false
@@ -38,7 +39,7 @@ final class SenseVoiceService {
         }
 
         isLoadingModel = true
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        modelQueue.async { [weak self] in
             guard let self = self else { return }
             if self.wrapper == nil {
                 self.wrapper = SenseVoiceCppWrapper(modelDir: modelDir)
@@ -78,7 +79,7 @@ final class SenseVoiceService {
         language: String?,
         completion: @escaping (Result<String, WhisperError>) -> Void
     ) {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        modelQueue.async { [weak self] in
             guard let self = self else { return }
 
             // Convert to WAV if needed

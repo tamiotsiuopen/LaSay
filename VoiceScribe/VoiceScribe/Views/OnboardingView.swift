@@ -18,6 +18,7 @@ struct OnboardingView: View {
     @State private var isPulsing: Bool = false
     @State private var permissionTimer: Timer? = nil
     @State private var restartCountdown: Int? = nil
+    @State private var restartTimer: Timer? = nil
     @State private var wasAccessibilityGranted: Bool = HotkeyManager.shared.checkAccessibilityPermission()
 
     private let localization = LocalizationHelper.shared
@@ -52,6 +53,7 @@ struct OnboardingView: View {
                             step += 1
                         }
                         .buttonStyle(.borderedProminent)
+                        .disabled(!microphoneGranted || !accessibilityGranted)
                         .accessibilityLabel(localization.localized(.onboardingNextAccessibility))
                         .accessibilityHint("Continue to next step")
                     } else {
@@ -207,7 +209,7 @@ struct OnboardingView: View {
         UserDefaults.standard.set(true, forKey: "has_launched_before")
 
         restartCountdown = 3
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+        restartTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
             DispatchQueue.main.async {
                 guard let current = restartCountdown else {
                     timer.invalidate()
