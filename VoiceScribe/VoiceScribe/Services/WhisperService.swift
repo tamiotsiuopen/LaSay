@@ -107,8 +107,20 @@ class WhisperService {
 
         // 添加音訊檔案
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"audio.m4a\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: audio/m4a\r\n\r\n".data(using: .utf8)!)
+        let fileExtension = audioFileURL.pathExtension.lowercased()
+        let mimeType: String
+        switch fileExtension {
+        case "m4a": mimeType = "audio/mp4"
+        case "mp3", "mpeg": mimeType = "audio/mpeg"
+        case "wav": mimeType = "audio/wav"
+        case "flac": mimeType = "audio/flac"
+        case "ogg", "oga": mimeType = "audio/ogg"
+        case "webm": mimeType = "audio/webm"
+        case "mp4": mimeType = "audio/mp4"
+        default: mimeType = "audio/mp4"
+        }
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"audio.\(fileExtension)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
 
         if let audioData = try? Data(contentsOf: audioFileURL) {
             body.append(audioData)
