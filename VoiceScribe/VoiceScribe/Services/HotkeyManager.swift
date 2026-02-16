@@ -46,7 +46,7 @@ class HotkeyManager {
     /// 請求 Accessibility 權限
     func requestAccessibilityPermission() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true]
-        let result = AXIsProcessTrustedWithOptions(options)
+        _ = AXIsProcessTrustedWithOptions(options)
     }
 
     /// 顯示權限引導視窗

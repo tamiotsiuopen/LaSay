@@ -50,10 +50,7 @@ class AudioRecorder: NSObject {
         content.sound = .defaultCritical
 
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-            }
-        }
+        UNUserNotificationCenter.current().add(request) { _ in }
     }
 
     // MARK: - Recording

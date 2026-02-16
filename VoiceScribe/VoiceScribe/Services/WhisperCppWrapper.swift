@@ -12,7 +12,7 @@ final class WhisperCppWrapper {
     private var ctx: OpaquePointer?
 
     init?(modelPath: String) {
-        var cparams = whisper_context_default_params()
+        let cparams = whisper_context_default_params()
         ctx = whisper_init_from_file_with_params(modelPath, cparams)
         if ctx == nil { return nil }
     }

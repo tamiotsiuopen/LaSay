@@ -209,7 +209,6 @@ struct TechTermsDictionary {
         "markov chain": "Markov Chain",
         "monte carlo": "Monte Carlo",
         "mcmc": "MCMC",
-        "bootstrap": "Bootstrap",
         "cross validation": "Cross-Validation",
         "k fold": "K-Fold",
         "stratified": "Stratified",
@@ -885,7 +884,6 @@ struct TechTermsDictionary {
         "標籤編碼": "Label Encoding",
         "標準化": "標準化",
         "歸一化": "歸一化",
-        "正規化": "正規化",
 
         // 評估指標
         "準確率": "準確率",

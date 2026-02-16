@@ -114,8 +114,7 @@ class OpenAIService {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
             // Debug: 印出請求內容
-            if let jsonString = String(data: request.httpBody!, encoding: .utf8) {
-            }
+            // if let jsonString = String(data: request.httpBody!, encoding: .utf8) { print(jsonString) }
         } catch {
             completion(.failure(.networkError(error)))
             return
@@ -142,8 +141,7 @@ class OpenAIService {
             }
 
             // Debug: 印出原始回應
-            if let responseString = String(data: data, encoding: .utf8) {
-            }
+            // if let responseString = String(data: data, encoding: .utf8) { print(responseString) }
 
             // 解析回應
             do {
