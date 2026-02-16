@@ -10,22 +10,7 @@ import Foundation
 final class SenseVoiceService {
     static let shared = SenseVoiceService()
 
-    struct DownloadProgress {
-        let fraction: Double
-        let bytesReceived: Int64
-        let bytesExpected: Int64
-        let isCompleted: Bool
-    }
-
-    typealias DownloadProgressHandler = (DownloadProgress) -> Void
-
     private let fileManager = FileManager.default
-    private var progressObservation: NSKeyValueObservation?
-
-    // Model files downloaded individually (sandbox-safe, no tar/Process needed)
-    private let modelOnnxURL = URL(string: "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/main/model.int8.onnx")!
-    private let tokensURL = URL(string: "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/main/tokens.txt")!
-
     private var wrapper: SenseVoiceCppWrapper?
     private(set) var isModelLoaded: Bool = false
     private var isLoadingModel: Bool = false
@@ -34,80 +19,42 @@ final class SenseVoiceService {
 
     // MARK: - Paths
 
-    private var baseDirectory: URL {
-        let supportDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return supportDir.appendingPathComponent("LaSay", isDirectory: true)
+    /// Model files are bundled in app Resources/SenseVoiceModel/
+    private var bundledModelDir: String? {
+        Bundle.main.resourcePath.map { ($0 as NSString).appendingPathComponent("SenseVoiceModel") }
     }
 
-    private var modelsDirectory: URL {
-        baseDirectory.appendingPathComponent("models", isDirectory: true)
-    }
-
-    private var senseVoiceModelDir: URL {
-        modelsDirectory.appendingPathComponent("sensevoice", isDirectory: true)
-    }
-
-    private var modelOnnxPath: URL {
-        senseVoiceModelDir.appendingPathComponent("model.int8.onnx")
-    }
-
-    private var tokensPath: URL {
-        senseVoiceModelDir.appendingPathComponent("tokens.txt")
+    var isModelDownloaded: Bool {
+        guard let dir = bundledModelDir else { return false }
+        let modelPath = (dir as NSString).appendingPathComponent("model.int8.onnx")
+        let tokensPath = (dir as NSString).appendingPathComponent("tokens.txt")
+        return fileManager.fileExists(atPath: modelPath) && fileManager.fileExists(atPath: tokensPath)
     }
 
     // MARK: - Public
 
-    var isModelDownloaded: Bool {
-        fileManager.fileExists(atPath: modelOnnxPath.path) &&
-        fileManager.fileExists(atPath: tokensPath.path)
-    }
-
-    func predownload() {
-        ensureModel(progressHandler: nil) { _ in }
-    }
-
-    /// Download model with progress reporting. Completion called on main thread.
-    func downloadModel(progressHandler: @escaping DownloadProgressHandler, completion: @escaping (Bool) -> Void) {
-        ensureModel(progressHandler: progressHandler) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    completion(true)
-                case .failure:
-                    completion(false)
-                }
-            }
-        }
-    }
-
-    /// Pre-load model into memory (call when user switches to SenseVoice mode).
-    /// Completion is called on main thread.
-    func preloadModel(progressHandler: DownloadProgressHandler? = nil, completion: ((Bool) -> Void)? = nil) {
+    /// Pre-load model into memory (call on app launch).
+    func preloadModel(completion: ((Bool) -> Void)? = nil) {
         guard !isModelLoaded, !isLoadingModel else {
             completion?(isModelLoaded)
             return
         }
+        guard let modelDir = bundledModelDir else {
+            completion?(false)
+            return
+        }
+
         isLoadingModel = true
-        ensureModel(progressHandler: progressHandler) { [weak self] result in
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
-            switch result {
-            case .success(let modelDir):
-                DispatchQueue.global(qos: .userInitiated).async {
-                    if self.wrapper == nil {
-                        self.wrapper = SenseVoiceCppWrapper(modelDir: modelDir)
-                    }
-                    let loaded = self.wrapper != nil
-                    DispatchQueue.main.async {
-                        self.isModelLoaded = loaded
-                        self.isLoadingModel = false
-                        completion?(loaded)
-                    }
-                }
-            case .failure:
-                DispatchQueue.main.async {
-                    self.isLoadingModel = false
-                    completion?(false)
-                }
+            if self.wrapper == nil {
+                self.wrapper = SenseVoiceCppWrapper(modelDir: modelDir)
+            }
+            let loaded = self.wrapper != nil
+            DispatchQueue.main.async {
+                self.isModelLoaded = loaded
+                self.isLoadingModel = false
+                completion?(loaded)
             }
         }
     }
@@ -115,7 +62,6 @@ final class SenseVoiceService {
     func transcribe(
         audioFileURL: URL,
         language: String? = nil,
-        progressHandler: DownloadProgressHandler? = nil,
         completion: @escaping (Result<String, WhisperError>) -> Void
     ) {
         guard fileManager.fileExists(atPath: audioFileURL.path) else {
@@ -123,64 +69,15 @@ final class SenseVoiceService {
             return
         }
 
-        ensureModel(progressHandler: progressHandler) { [weak self] result in
-            switch result {
-            case .failure(let error):
-                completion(.failure(error))
-            case .success(let modelDir):
-                self?.runTranscription(modelDir: modelDir, audioFileURL: audioFileURL, language: language, completion: completion)
-            }
-        }
-    }
-
-    // MARK: - Model Download
-
-    private func ensureModel(
-        progressHandler: DownloadProgressHandler?,
-        completion: @escaping (Result<String, WhisperError>) -> Void
-    ) {
-        if isModelDownloaded {
-            completion(.success(senseVoiceModelDir.path))
+        guard let modelDir = bundledModelDir else {
+            completion(.failure(.modelDownloadFailed))
             return
         }
 
-        do {
-            try fileManager.createDirectory(at: senseVoiceModelDir, withIntermediateDirectories: true)
-        } catch {
-            completion(.failure(.networkError(error)))
-            return
-        }
-
-        // Download model.int8.onnx first (large file, ~228MB), then tokens.txt
-        downloadFile(from: modelOnnxURL, to: modelOnnxPath, progressHandler: progressHandler) { [weak self] onnxResult in
-            guard let self = self else { return }
-            switch onnxResult {
-            case .failure:
-                completion(.failure(.modelDownloadFailed))
-            case .success:
-                // Download tokens.txt (small file)
-                self.downloadFile(from: self.tokensURL, to: self.tokensPath, progressHandler: nil) { tokensResult in
-                    switch tokensResult {
-                    case .failure:
-                        // Clean up partial download
-                        try? self.fileManager.removeItem(at: self.modelOnnxPath)
-                        completion(.failure(.modelDownloadFailed))
-                    case .success:
-                        DispatchQueue.main.async {
-                            progressHandler?(DownloadProgress(fraction: 1.0, bytesReceived: 0, bytesExpected: 0, isCompleted: true))
-                            completion(.success(self.senseVoiceModelDir.path))
-                        }
-                    }
-                }
-            }
-        }
+        runTranscription(modelDir: modelDir, audioFileURL: audioFileURL, language: language, completion: completion)
     }
 
     // MARK: - Transcription
-
-    private func convertToWAV(inputURL: URL) -> URL? {
-        AudioConverter.convertToWAV(inputURL: inputURL)
-    }
 
     private func runTranscription(
         modelDir: String,
@@ -194,7 +91,7 @@ final class SenseVoiceService {
             // Convert to WAV if needed
             let wavURL: URL
             if audioFileURL.pathExtension.lowercased() != "wav" {
-                guard let converted = self.convertToWAV(inputURL: audioFileURL) else {
+                guard let converted = AudioConverter.convertToWAV(inputURL: audioFileURL) else {
                     DispatchQueue.main.async { completion(.failure(.invalidAudioFile)) }
                     return
                 }
@@ -223,53 +120,10 @@ final class SenseVoiceService {
                 return
             }
 
-            DispatchQueue.main.async { completion(.success(text)) }
-        }
-    }
-
-    // MARK: - Download Helper
-
-    private func downloadFile(
-        from url: URL,
-        to destination: URL,
-        progressHandler: DownloadProgressHandler?,
-        completion: @escaping (Result<URL, Error>) -> Void
-    ) {
-        let task = URLSession.shared.downloadTask(with: url) { [weak self] tempURL, response, error in
-            self?.progressObservation = nil
-
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-
-            guard let tempURL = tempURL else {
-                completion(.failure(NSError(domain: "SenseVoice", code: -1, userInfo: [NSLocalizedDescriptionKey: "Download failed"])))
-                return
-            }
-
-            do {
-                if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.removeItem(at: destination)
-                }
-                try FileManager.default.moveItem(at: tempURL, to: destination)
-                completion(.success(destination))
-            } catch {
-                completion(.failure(error))
-            }
-        }
-
-        progressObservation = task.progress.observe(\.fractionCompleted) { progress, _ in
             DispatchQueue.main.async {
-                progressHandler?(DownloadProgress(
-                    fraction: progress.fractionCompleted,
-                    bytesReceived: progress.completedUnitCount,
-                    bytesExpected: progress.totalUnitCount,
-                    isCompleted: false
-                ))
+                self.isModelLoaded = true
+                completion(.success(text))
             }
         }
-
-        task.resume()
     }
 }

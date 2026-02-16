@@ -19,8 +19,6 @@ final class RecordingCoordinator {
     private let hotkeyManager: HotkeyManager
     private let localization: LocalizationHelper
 
-    private var downloadPanel: NSPanel?
-    private let downloadProgressModel = DownloadProgressViewModel()
     private var processingTimer: Timer?
     
     /// Cancel all ongoing API requests
@@ -262,62 +260,10 @@ final class RecordingCoordinator {
             senseVoiceService.transcribe(
                 audioFileURL: audioURL,
                 language: languageCode,
-                progressHandler: { [weak self] progress in
-                    self?.handleSenseVoiceDownloadProgress(progress)
-                },
                 completion: transcriptionHandler
             )
         case .cloud:
             cloudService.transcribe(audioFileURL: audioURL, language: languageCode, completion: transcriptionHandler)
-        }
-    }
-
-    // MARK: - Download Progress
-
-    private func handleSenseVoiceDownloadProgress(_ progress: SenseVoiceService.DownloadProgress) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-
-            self.downloadProgressModel.title = self.localization.currentLanguage == "zh" ? "正在下載 SenseVoice 模型…" : "Downloading SenseVoice model…"
-            self.downloadProgressModel.progress = progress.fraction
-            self.downloadProgressModel.sizeText = self.formatByteCount(progress.bytesExpected)
-
-            self.showDownloadPanelIfNeeded()
-
-            if progress.isCompleted {
-                self.closeDownloadPanelAfterDelay()
-            }
-        }
-    }
-
-    private func formatByteCount(_ bytes: Int64) -> String {
-        guard bytes > 0 else { return "" }
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
-    }
-
-    private func showDownloadPanelIfNeeded() {
-        guard downloadPanel == nil else { return }
-
-        let hostingController = NSHostingController(rootView: DownloadProgressView(model: downloadProgressModel))
-        let panel = NSPanel(contentViewController: hostingController)
-        panel.styleMask = [.titled, .closable]
-        panel.title = localization.localized(.downloadingTitle)
-        panel.isFloatingPanel = true
-        panel.level = .floating
-        panel.center()
-        panel.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-
-        downloadPanel = panel
-    }
-
-    private func closeDownloadPanelAfterDelay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-            self?.downloadPanel?.close()
-            self?.downloadPanel = nil
         }
     }
 

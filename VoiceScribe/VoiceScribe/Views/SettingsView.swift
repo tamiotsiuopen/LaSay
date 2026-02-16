@@ -22,12 +22,8 @@ struct SettingsView: View {
     @State private var showAPIKey: Bool = false
     @State private var isAIPolishAdvancedExpanded: Bool = false
     @State private var refreshUI: Bool = false
-    @State private var showModelDownloadConfirm: Bool = false
     @State private var showDeleteAPIKeyConfirm: Bool = false
     @State private var isLoadingModel: Bool = false
-    @State private var isDownloadingModel: Bool = false
-    @State private var downloadProgress: Double = 0
-    @State private var downloadSizeText: String = ""
 
     private var isUsingCustomPrompt: Bool {
         !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -131,13 +127,9 @@ struct SettingsView: View {
                 .onChange(of: transcriptionMode) { newValue in
                     UserDefaults.standard.set(newValue.rawValue, forKey: "transcription_mode")
                     NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
-                    if newValue == .senseVoice {
-                        if !senseVoiceService.isModelDownloaded {
-                            showModelDownloadConfirm = true
-                        } else if !senseVoiceService.isModelLoaded {
-                            isLoadingModel = true
-                            senseVoiceService.preloadModel(completion: { _ in isLoadingModel = false })
-                        }
+                    if newValue == .senseVoice, !senseVoiceService.isModelLoaded {
+                        isLoadingModel = true
+                        senseVoiceService.preloadModel(completion: { _ in isLoadingModel = false })
                     }
                 }
             }
@@ -160,63 +152,15 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            if transcriptionMode == .senseVoice {
-                if isDownloadingModel {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(localization.currentLanguage == "zh"
-                                 ? "正在下載模型\(downloadSizeText.isEmpty ? "" : " (\(downloadSizeText))")…"
-                                 : "Downloading model\(downloadSizeText.isEmpty ? "" : " (\(downloadSizeText))")…")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(Int(downloadProgress * 100))%")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        ProgressView(value: downloadProgress)
-                            .progressViewStyle(.linear)
-                    }
-                } else if isLoadingModel {
-                    HStack(spacing: 6) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text(localization.currentLanguage == "zh" ? "模型載入中…" : "Loading model…")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                } else if senseVoiceService.isModelDownloaded {
-                    Text(localization.currentLanguage == "zh" ? "✅ SenseVoice 模型已就緒" : "✅ SenseVoice model ready")
+            if transcriptionMode == .senseVoice && isLoadingModel {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(localization.currentLanguage == "zh" ? "模型載入中…" : "Loading model…")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                } else {
-                    HStack {
-                        Text(localization.currentLanguage == "zh" ? "尚未下載模型" : "Model not downloaded")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Button(localization.currentLanguage == "zh" ? "下載模型 (234MB)" : "Download (234MB)") {
-                            showModelDownloadConfirm = true
-                        }
-                        .font(.caption)
-                        .buttonStyle(.borderedProminent)
-                    }
                 }
             }
-        }
-        .alert(
-            localization.currentLanguage == "zh" ? "下載語音模型？" : "Download Voice Model?",
-            isPresented: $showModelDownloadConfirm
-        ) {
-            Button(localization.currentLanguage == "zh" ? "立即下載 (234MB)" : "Download Now (234MB)") {
-                startModelDownload()
-            }
-            .keyboardShortcut(.defaultAction)
-            Button(localization.currentLanguage == "zh" ? "稍後再說" : "Later", role: .cancel) {}
-        } message: {
-            Text(localization.currentLanguage == "zh"
-                 ? "SenseVoice 模式需要下載語音辨識模型 (234MB)。下載完成後即可離線使用。"
-                 : "SenseVoice mode requires a voice recognition model (234MB). Once downloaded, it works fully offline.")
         }
     }
 
@@ -481,36 +425,6 @@ struct SettingsView: View {
     }
 
     // MARK: - Methods
-
-    private func startModelDownload() {
-        isDownloadingModel = true
-        downloadProgress = 0
-        downloadSizeText = ""
-
-        senseVoiceService.downloadModel(
-            progressHandler: { progress in
-                DispatchQueue.main.async {
-                    self.downloadProgress = progress.fraction
-                    if progress.bytesExpected > 0 {
-                        let formatter = ByteCountFormatter()
-                        formatter.allowedUnits = [.useMB]
-                        formatter.countStyle = .file
-                        self.downloadSizeText = formatter.string(fromByteCount: progress.bytesExpected)
-                    }
-                }
-            },
-            completion: { success in
-                self.isDownloadingModel = false
-                if success {
-                    // Auto-preload after download
-                    self.isLoadingModel = true
-                    self.senseVoiceService.preloadModel(completion: { _ in
-                        self.isLoadingModel = false
-                    })
-                }
-            }
-        )
-    }
 
     func loadSettings() {
         loadAPIKey()
