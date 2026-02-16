@@ -136,11 +136,6 @@ class AudioRecorder: NSObject {
 
 extension AudioRecorder: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        // 使用 defer 確保在所有路徑都清理 URL 引用（但不刪除檔案，因為可能需要轉錄）
-        defer {
-            // 清理後由呼叫方負責刪除檔案（在轉錄完成後）
-        }
-        
         if flag {
             onRecordingComplete?(recorder.url)
         } else {

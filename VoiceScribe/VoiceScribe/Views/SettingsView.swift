@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var isAIPolishAdvancedExpanded: Bool = false
     @State private var refreshUI: Bool = false
     @State private var showModelDownloadConfirm: Bool = false
+    @State private var showDeleteAPIKeyConfirm: Bool = false
 
     private var isUsingCustomPrompt: Bool {
         !customSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -367,6 +368,13 @@ struct SettingsView: View {
                     .font(.caption)
                     .accessibilityLabel(localization.localized(.update))
                     .accessibilityHint("Update API key")
+
+                    Button(localization.currentLanguage == "zh" ? "刪除" : "Delete") {
+                        showDeleteAPIKeyConfirm = true
+                    }
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .accessibilityLabel("Delete API key")
                 }
                 .frame(maxWidth: 420)
             } else {
@@ -420,6 +428,24 @@ struct SettingsView: View {
 
             Link(localization.localized(.getAPIKey), destination: URL(string: "https://platform.openai.com/api-keys")!)
                 .font(.caption)
+        }
+        .alert(
+            localization.currentLanguage == "zh" ? "確定刪除 API Key？" : "Delete API Key?",
+            isPresented: $showDeleteAPIKeyConfirm
+        ) {
+            Button(localization.currentLanguage == "zh" ? "刪除" : "Delete", role: .destructive) {
+                _ = keychainHelper.delete(key: "openai_api_key")
+                apiKey = ""
+                hasAPIKey = false
+                showingAPIKeyInput = true
+                showAPIKey = false
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshMenu"), object: nil)
+            }
+            Button(localization.currentLanguage == "zh" ? "取消" : "Cancel", role: .cancel) {}
+        } message: {
+            Text(localization.currentLanguage == "zh"
+                 ? "刪除後，雲端模式和 AI 潤飾將無法使用，直到重新輸入 API Key。"
+                 : "Cloud mode and AI polish will be unavailable until you enter a new API key.")
         }
     }
 
