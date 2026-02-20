@@ -136,6 +136,16 @@ final class RecordingCoordinator {
             return
         }
 
+        // 空錄音保護：檔案小於 1KB 視為錄音太短
+        let fileSize = (try? FileManager.default.attributesOfItem(atPath: audioURL.path)[.size] as? Int) ?? 0
+        if fileSize < 1024 {
+            AppLogger.recording.info("RecordingCoordinator: audio file too small (\(fileSize, privacy: .public) bytes), skipping transcription")
+            audioRecorder.deleteRecording(at: audioURL)
+            showNotification(title: "錄音太短", body: "請按住 Fn+Space 說話，放開後自動辨識")
+            appState.updateStatus(.idle)
+            return
+        }
+
         // Start processing timeout timer (60 seconds)
         processingTimer?.invalidate()
         processingTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { [weak self] _ in
@@ -225,15 +235,47 @@ final class RecordingCoordinator {
                                 return PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
                             }()
 
+                            // Helper to decide if an error is retryable (network/response errors only)
+                            func isRetryablePolishError(_ err: OpenAIError) -> Bool {
+                                switch err {
+                                case .networkError, .invalidResponse: return true
+                                default: return false
+                                }
+                            }
+
                             self.openAIService.polishText(transcribedText, customPrompt: customPrompt, punctuationStyle: puncStyle) { [weak self] polishResult in
                                 DispatchQueue.main.async { [weak self] in
                                     guard let self = self else { return }
-                                    
-                                    let finalText: String
+
                                     switch polishResult {
                                     case .success(let polishedText):
                                         AppLogger.transcription.info("RecordingCoordinator: AI Polish succeeded")
-                                        finalText = polishedText
+                                        self.processFinalText(polishedText)
+
+                                    case .failure(let firstError) where isRetryablePolishError(firstError):
+                                        // Retry once for transient errors
+                                        AppLogger.transcription.info("RecordingCoordinator: AI Polish failed (transient), retrying once")
+                                        self.openAIService.polishText(transcribedText, customPrompt: customPrompt, punctuationStyle: puncStyle) { [weak self] retryResult in
+                                            DispatchQueue.main.async { [weak self] in
+                                                guard let self = self else { return }
+                                                let finalText: String
+                                                switch retryResult {
+                                                case .success(let polishedText):
+                                                    AppLogger.transcription.info("RecordingCoordinator: AI Polish retry succeeded")
+                                                    finalText = polishedText
+                                                case .failure(let retryError):
+                                                    AppLogger.transcription.error("RecordingCoordinator: AI Polish retry failed - \(retryError.localizedDescription, privacy: .public)")
+                                                    self.showNotification(
+                                                        title: self.localization.localized(.aiPolishFailed),
+                                                        body: self.localization.localized(.usingOriginalText) + retryError.localizedDescription,
+                                                        isError: false
+                                                    )
+                                                    finalText = transcribedText
+                                                }
+                                                self.processFinalText(finalText)
+                                            }
+                                        }
+
                                     case .failure(let error):
                                         AppLogger.transcription.error("RecordingCoordinator: AI Polish failed - \(error.localizedDescription, privacy: .public)")
                                         self.showNotification(
@@ -241,10 +283,8 @@ final class RecordingCoordinator {
                                             body: self.localization.localized(.usingOriginalText) + error.localizedDescription,
                                             isError: false
                                         )
-                                        finalText = transcribedText
+                                        self.processFinalText(transcribedText)
                                     }
-
-                                    self.processFinalText(finalText)
                                 }
                             }
                         }

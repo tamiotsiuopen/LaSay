@@ -73,7 +73,29 @@ final class SenseVoiceService {
         }
 
         guard let modelDir = bundledModelDir else {
+            AppLogger.transcription.error("SenseVoiceService: bundled model directory not found")
             completion(.failure(.modelDownloadFailed))
+            return
+        }
+
+        // If wrapper is nil (model not yet loaded), attempt one reload before transcribing
+        if wrapper == nil {
+            AppLogger.transcription.info("SenseVoiceService: wrapper nil at transcribe call, attempting reload before transcription")
+            modelQueue.async { [weak self] in
+                guard let self = self else { return }
+                if self.wrapper == nil {
+                    self.wrapper = SenseVoiceCppWrapper(modelDir: modelDir)
+                    if self.wrapper != nil {
+                        AppLogger.transcription.info("SenseVoiceService: reload succeeded")
+                        DispatchQueue.main.async { self.isModelLoaded = true }
+                    } else {
+                        AppLogger.transcription.error("SenseVoiceService: reload failed, returning modelDownloadFailed")
+                        DispatchQueue.main.async { completion(.failure(.modelDownloadFailed)) }
+                        return
+                    }
+                }
+                self.runTranscription(modelDir: modelDir, audioFileURL: audioFileURL, language: language, completion: completion)
+            }
             return
         }
 
