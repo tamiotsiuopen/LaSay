@@ -163,8 +163,8 @@ final class RecordingCoordinator {
             }
         }
 
-        let selectedMode = TranscriptionMode.fromSaved(UserDefaults.standard.string(forKey: "transcription_mode"))
-        let selectedLanguage = TranscriptionLanguage(rawValue: UserDefaults.standard.string(forKey: "transcription_language") ?? "auto") ?? .auto
+        let selectedMode = AppSettings.shared.transcriptionMode
+        let selectedLanguage = AppSettings.shared.transcriptionLanguage
         let languageCode = selectedLanguage.languageCode
 
         if selectedMode == .cloud {
@@ -212,7 +212,7 @@ final class RecordingCoordinator {
                     AppLogger.transcription.info("RecordingCoordinator: transcription succeeded")
                     let transcribedText = self.convertToTraditionalChinese(rawText)
                     // Cloud mode: always enable AI Polish (user already has API key)
-                    let enableAIPolish = (selectedMode == .cloud) ? true : UserDefaults.standard.bool(forKey: "enable_ai_polish")
+                    let enableAIPolish = (selectedMode == .cloud) ? true : AppSettings.shared.enableAIPolish
 
                     // Delete recording immediately — text is already in memory
                     self.audioRecorder.deleteRecording(at: audioURL)
@@ -228,12 +228,9 @@ final class RecordingCoordinator {
                             }
 
                             AppLogger.transcription.info("RecordingCoordinator: AI Polish started")
-                            let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
+                            let customPrompt = AppSettings.shared.customSystemPrompt
                             // Cloud 模式固定全形標點，不額外加指令拖慢 AI Polish
-                            let puncStyle: PunctuationStyle = (selectedMode == .cloud) ? .fullWidth : {
-                                let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
-                                return PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
-                            }()
+                            let puncStyle: PunctuationStyle = (selectedMode == .cloud) ? .fullWidth : AppSettings.shared.punctuationStyle
 
                             // Helper to decide if an error is retryable (network/response errors only)
                             func isRetryablePolishError(_ err: OpenAIError) -> Bool {
@@ -340,10 +337,9 @@ final class RecordingCoordinator {
             
             let correctedText: String = {
                 // TechTermsDictionary only for offline mode — AI Polish handles this contextually
-                let enableAIPolish = UserDefaults.standard.bool(forKey: "enable_ai_polish")
+                let enableAIPolish = AppSettings.shared.enableAIPolish
                 let techCorrected = enableAIPolish ? text : TechTermsDictionary.apply(to: text)
-                let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
-                let style = PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
+                let style = AppSettings.shared.punctuationStyle
                 return PunctuationConverter.convert(techCorrected, to: style)
             }()
             self.appState.saveTranscription(correctedText)
