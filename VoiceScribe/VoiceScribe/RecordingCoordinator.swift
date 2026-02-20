@@ -211,8 +211,7 @@ final class RecordingCoordinator {
                 case .success(let rawText):
                     AppLogger.transcription.info("RecordingCoordinator: transcription succeeded")
                     let transcribedText = self.convertToTraditionalChinese(rawText)
-                    // Cloud mode: always enable AI Polish (user already has API key)
-                    let enableAIPolish = (selectedMode == .cloud) ? true : AppSettings.shared.enableAIPolish
+                    let enableAIPolish = AppSettings.shared.enableAIPolish
 
                     // Delete recording immediately — text is already in memory
                     self.audioRecorder.deleteRecording(at: audioURL)
