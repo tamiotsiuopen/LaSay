@@ -8,6 +8,7 @@
 import Cocoa
 import SwiftUI
 import UserNotifications
+import os.log
 
 final class RecordingCoordinator {
     private let appState: AppState
@@ -119,15 +120,18 @@ final class RecordingCoordinator {
     }
 
     private func startRecording() {
+        AppLogger.recording.info("RecordingCoordinator: recording started")
         appState.updateStatus(.recording)
         audioRecorder.startRecording()
     }
 
     private func stopRecording() {
+        AppLogger.recording.info("RecordingCoordinator: recording stopped")
         audioRecorder.stopRecording()
         appState.updateStatus(.processing)
 
         guard let audioURL = audioRecorder.getLastRecordingURL() else {
+            AppLogger.recording.error("RecordingCoordinator: no audio URL available after stop")
             appState.updateStatus(.idle)
             return
         }
@@ -136,6 +140,7 @@ final class RecordingCoordinator {
         processingTimer?.invalidate()
         processingTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { [weak self] _ in
             guard let self = self else { return }
+            AppLogger.transcription.error("RecordingCoordinator: processing timeout reached")
             DispatchQueue.main.async {
                 self.showNotification(
                     title: self.localization.localized(.transcriptionFailed),
@@ -186,12 +191,15 @@ final class RecordingCoordinator {
             }
         }
 
+        AppLogger.transcription.info("RecordingCoordinator: starting transcription (mode=\(selectedMode.rawValue, privacy: .public))")
+
         let transcriptionHandler: (Result<String, WhisperError>) -> Void = { [weak self] result in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 
                 switch result {
                 case .success(let rawText):
+                    AppLogger.transcription.info("RecordingCoordinator: transcription succeeded")
                     let transcribedText = self.convertToTraditionalChinese(rawText)
                     // Cloud mode: always enable AI Polish (user already has API key)
                     let enableAIPolish = (selectedMode == .cloud) ? true : UserDefaults.standard.bool(forKey: "enable_ai_polish")
@@ -209,6 +217,7 @@ final class RecordingCoordinator {
                                 return
                             }
 
+                            AppLogger.transcription.info("RecordingCoordinator: AI Polish started")
                             let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
                             // Cloud 模式固定全形標點，不額外加指令拖慢 AI Polish
                             let puncStyle: PunctuationStyle = (selectedMode == .cloud) ? .fullWidth : {
@@ -223,8 +232,10 @@ final class RecordingCoordinator {
                                     let finalText: String
                                     switch polishResult {
                                     case .success(let polishedText):
+                                        AppLogger.transcription.info("RecordingCoordinator: AI Polish succeeded")
                                         finalText = polishedText
                                     case .failure(let error):
+                                        AppLogger.transcription.error("RecordingCoordinator: AI Polish failed - \(error.localizedDescription, privacy: .public)")
                                         self.showNotification(
                                             title: self.localization.localized(.aiPolishFailed),
                                             body: self.localization.localized(.usingOriginalText) + error.localizedDescription,
@@ -242,6 +253,7 @@ final class RecordingCoordinator {
                     }
 
                 case .failure(let error):
+                    AppLogger.transcription.error("RecordingCoordinator: transcription failed - \(error.localizedDescription, privacy: .public)")
                     self.processingTimer?.invalidate()
                     self.processingTimer = nil
 

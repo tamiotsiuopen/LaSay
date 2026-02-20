@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import os.log
 
 enum OpenAIError: Error {
     case noAPIKey
@@ -127,6 +128,8 @@ class OpenAIService {
         }
 
 
+        AppLogger.api.info("OpenAIService: starting AI Polish API call")
+
         // 發送請求
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             // Clear the current task reference
@@ -135,19 +138,19 @@ class OpenAIService {
             if let error = error {
                 // Check if it was cancelled
                 if (error as NSError).code == NSURLErrorCancelled {
+                    AppLogger.api.info("OpenAIService: AI Polish request cancelled")
                     return
                 }
+                AppLogger.api.error("OpenAIService: network error - \(error.localizedDescription, privacy: .public)")
                 completion(.failure(.networkError(error)))
                 return
             }
 
             guard let data = data else {
+                AppLogger.api.error("OpenAIService: no data received in response")
                 completion(.failure(.invalidResponse))
                 return
             }
-
-            // Debug: 印出原始回應
-            // if let responseString = String(data: data, encoding: .utf8) { print(responseString) }
 
             // 解析回應
             do {
@@ -155,6 +158,8 @@ class OpenAIService {
                     // 檢查是否有錯誤
                     if let errorObj = json["error"] as? [String: Any],
                        let message = errorObj["message"] as? String {
+                        AppLogger.api.error("OpenAIService: API error received")
+                        AppLogger.api.debug("OpenAIService: API error detail - \(message, privacy: .public)")
                         completion(.failure(.apiError(message)))
                         return
                     }
@@ -165,13 +170,16 @@ class OpenAIService {
                        let message = firstChoice["message"] as? [String: Any],
                        let content = message["content"] as? String {
                         let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+                        AppLogger.api.info("OpenAIService: AI Polish succeeded, length=\(trimmedContent.count, privacy: .public) chars")
                         completion(.success(trimmedContent))
                         return
                     }
                 }
 
+                AppLogger.api.error("OpenAIService: invalid response format")
                 completion(.failure(.invalidResponse))
             } catch {
+                AppLogger.api.error("OpenAIService: JSON parse error - \(error.localizedDescription, privacy: .public)")
                 completion(.failure(.networkError(error)))
             }
         }

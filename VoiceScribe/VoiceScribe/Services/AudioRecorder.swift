@@ -8,6 +8,7 @@
 import Foundation
 import AVFoundation
 import UserNotifications
+import os.log
 
 class AudioRecorder: NSObject {
     private var audioRecorder: AVAudioRecorder?
@@ -59,6 +60,7 @@ class AudioRecorder: NSObject {
     func startRecording() {
         // 檢查權限
         guard checkMicrophonePermission() else {
+            AppLogger.recording.error("Microphone permission denied, cannot start recording")
             showMicrophonePermissionDeniedNotification()
             return
         }
@@ -87,8 +89,9 @@ class AudioRecorder: NSObject {
             audioRecorder = try AVAudioRecorder(url: url, settings: settings)
             audioRecorder?.delegate = self
             audioRecorder?.record()
-
+            AppLogger.recording.info("Recording started")
         } catch {
+            AppLogger.recording.error("Failed to start recording: \(error.localizedDescription, privacy: .public)")
             // 使用 defer 確保錯誤時清理臨時檔案
             defer {
                 if FileManager.default.fileExists(atPath: url.path) {
@@ -108,6 +111,7 @@ class AudioRecorder: NSObject {
         }
 
         recorder.stop()
+        AppLogger.recording.info("Recording stopped")
     }
 
     /// 取得最後一次錄音的 URL
@@ -137,8 +141,10 @@ class AudioRecorder: NSObject {
 extension AudioRecorder: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         if flag {
+            AppLogger.recording.info("Recording finished successfully")
             onRecordingComplete?(recorder.url)
         } else {
+            AppLogger.recording.error("Recording finished unsuccessfully, cleaning up")
             // 錄音失敗，立即清理檔案
             deleteRecording(at: recorder.url)
             recordingURL = nil
@@ -156,6 +162,7 @@ extension AudioRecorder: AVAudioRecorderDelegate {
         }
         
         if let error = error {
+            AppLogger.recording.error("Audio encoding error: \(error.localizedDescription, privacy: .public)")
             onError?(error)
         }
     }

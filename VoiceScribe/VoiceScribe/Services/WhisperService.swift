@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import os.log
 
 enum WhisperError: Error {
     case noAPIKey
@@ -135,6 +136,8 @@ class WhisperService {
 
         request.httpBody = body
 
+        AppLogger.api.info("WhisperService: starting transcription API call")
+
         // 發送請求
         let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             // Clear the current task reference
@@ -143,13 +146,16 @@ class WhisperService {
             if let error = error {
                 // Check if it was cancelled
                 if (error as NSError).code == NSURLErrorCancelled {
+                    AppLogger.api.info("WhisperService: transcription request cancelled")
                     return
                 }
+                AppLogger.api.error("WhisperService: network error - \(error.localizedDescription, privacy: .public)")
                 completion(.failure(.networkError(error)))
                 return
             }
 
             guard let data = data else {
+                AppLogger.api.error("WhisperService: no data received in response")
                 completion(.failure(.invalidResponse))
                 return
             }
@@ -160,19 +166,24 @@ class WhisperService {
                     // 檢查是否有錯誤
                     if let errorObj = json["error"] as? [String: Any],
                        let message = errorObj["message"] as? String {
+                        AppLogger.api.error("WhisperService: API error received")
+                        AppLogger.api.debug("WhisperService: API error detail - \(message, privacy: .public)")
                         completion(.failure(.apiError(message)))
                         return
                     }
 
                     // 取得轉錄文字
                     if let text = json["text"] as? String {
+                        AppLogger.api.info("WhisperService: transcription succeeded, length=\(text.count, privacy: .public) chars")
                         completion(.success(text))
                         return
                     }
                 }
 
+                AppLogger.api.error("WhisperService: invalid response format")
                 completion(.failure(.invalidResponse))
             } catch {
+                AppLogger.api.error("WhisperService: JSON parse error - \(error.localizedDescription, privacy: .public)")
                 completion(.failure(.networkError(error)))
             }
         }

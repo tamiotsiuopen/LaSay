@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import os.log
 
 final class SenseVoiceService {
     static let shared = SenseVoiceService()
@@ -35,10 +36,12 @@ final class SenseVoiceService {
             return
         }
         guard let modelDir = bundledModelDir else {
+            AppLogger.transcription.error("SenseVoiceService: bundled model directory not found")
             completion?(false)
             return
         }
 
+        AppLogger.transcription.info("SenseVoiceService: starting model preload")
         isLoadingModel = true
         modelQueue.async { [weak self] in
             guard let self = self else { return }
@@ -47,6 +50,11 @@ final class SenseVoiceService {
             }
             let loaded = self.wrapper != nil
             DispatchQueue.main.async {
+                if loaded {
+                    AppLogger.transcription.info("SenseVoiceService: model loaded successfully")
+                } else {
+                    AppLogger.transcription.error("SenseVoiceService: model load failed")
+                }
                 self.isModelLoaded = loaded
                 self.isLoadingModel = false
                 completion?(loaded)
@@ -80,6 +88,7 @@ final class SenseVoiceService {
         language: String?,
         completion: @escaping (Result<String, WhisperError>) -> Void
     ) {
+        AppLogger.transcription.info("SenseVoiceService: starting transcription")
         modelQueue.async { [weak self] in
             guard let self = self else { return }
 
@@ -87,6 +96,7 @@ final class SenseVoiceService {
             let wavURL: URL
             if audioFileURL.pathExtension.lowercased() != "wav" {
                 guard let converted = AudioConverter.convertToWAV(inputURL: audioFileURL) else {
+                    AppLogger.transcription.error("SenseVoiceService: audio conversion to WAV failed")
                     DispatchQueue.main.async { completion(.failure(.invalidAudioFile)) }
                     return
                 }
@@ -102,7 +112,13 @@ final class SenseVoiceService {
 
             // Load model if needed
             if self.wrapper == nil {
+                AppLogger.transcription.info("SenseVoiceService: model not loaded, attempting to load now")
                 self.wrapper = SenseVoiceCppWrapper(modelDir: modelDir)
+                if self.wrapper != nil {
+                    AppLogger.transcription.info("SenseVoiceService: model loaded successfully on demand")
+                } else {
+                    AppLogger.transcription.error("SenseVoiceService: on-demand model load failed")
+                }
             }
 
             guard let wrapper = self.wrapper else {
@@ -111,10 +127,12 @@ final class SenseVoiceService {
             }
 
             guard let text = wrapper.transcribe(wavURL: wavURL, language: language) else {
+                AppLogger.transcription.error("SenseVoiceService: transcription returned nil result")
                 DispatchQueue.main.async { completion(.failure(.invalidResponse)) }
                 return
             }
 
+            AppLogger.transcription.info("SenseVoiceService: transcription succeeded, length=\(text.count, privacy: .public) chars")
             DispatchQueue.main.async {
                 self.isModelLoaded = true
                 completion(.success(text))

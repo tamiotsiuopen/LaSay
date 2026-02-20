@@ -7,6 +7,7 @@
 
 import Cocoa
 import ApplicationServices
+import os.log
 
 class HotkeyManager {
     static let shared = HotkeyManager()
@@ -127,12 +128,14 @@ class HotkeyManager {
 
     /// 啟動全域快捷鍵監聽
     func startMonitoring() {
+        AppLogger.ui.info("HotkeyManager: starting hotkey monitoring")
 
         // 檢查權限（使用 prompt 選項強制請求）
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true]
         let hasPermission = AXIsProcessTrustedWithOptions(options)
 
         guard hasPermission else {
+            AppLogger.ui.error("HotkeyManager: accessibility permission not granted, cannot start monitoring")
             return
         }
 
@@ -156,6 +159,7 @@ class HotkeyManager {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
+            AppLogger.ui.error("HotkeyManager: failed to create event tap")
             return
         }
 
@@ -167,7 +171,7 @@ class HotkeyManager {
 
         // 啟用事件監聽
         CGEvent.tapEnable(tap: eventTap, enable: true)
-
+        AppLogger.ui.info("HotkeyManager: hotkey monitoring started successfully")
     }
 
     /// 停止監聽
@@ -177,6 +181,7 @@ class HotkeyManager {
             CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
             self.eventTap = nil
             self.runLoopSource = nil
+            AppLogger.ui.info("HotkeyManager: hotkey monitoring stopped")
         }
         
         // Invalidate permission check timer
