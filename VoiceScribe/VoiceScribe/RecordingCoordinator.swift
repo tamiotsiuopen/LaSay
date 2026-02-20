@@ -210,8 +210,11 @@ final class RecordingCoordinator {
                             }
 
                             let customPrompt = UserDefaults.standard.string(forKey: "custom_system_prompt")
-                            let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
-                            let puncStyle = PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
+                            // Cloud 模式固定全形標點，不額外加指令拖慢 AI Polish
+                            let puncStyle: PunctuationStyle = (selectedMode == .cloud) ? .fullWidth : {
+                                let savedStyle = UserDefaults.standard.string(forKey: "punctuation_style") ?? "fullWidth"
+                                return PunctuationStyle(rawValue: savedStyle) ?? .fullWidth
+                            }()
 
                             self.openAIService.polishText(transcribedText, customPrompt: customPrompt, punctuationStyle: puncStyle) { [weak self] polishResult in
                                 DispatchQueue.main.async { [weak self] in

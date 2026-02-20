@@ -48,10 +48,12 @@ struct SettingsView: View {
 
                         Divider()
 
-                        // MARK: - 標點符號
-                        punctuationSection
+                        // MARK: - 標點符號 (local 模式才顯示)
+                        if transcriptionMode == .senseVoice {
+                            punctuationSection
 
-                        Divider()
+                            Divider()
+                        }
 
                         // MARK: - AI 潤飾
                         aiPolishSection
